@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="SingletonNotepad.Views.MainView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:SingletonNotepad.Views"
+    xmlns:viewmodels="using:SingletonNotepad.ViewModels">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- MenuBar -->
+        <MenuBar Grid.Row="0">
+            <MenuBarItem Title="Édition">
+                <MenuFlyoutItem Text="Rechercher" KeyboardAccelerator="Ctrl+F"/>
+                <MenuFlyoutItem Text="Remplacer" KeyboardAccelerator="Ctrl+H"/>
+            </MenuBarItem>
+            <MenuBarItem Title="Affichage">
+                <MenuFlyoutItem Text="Zoom"/>
+                <MenuFlyoutItem Text="Plein écran"/>
+            </MenuBarItem>
+            <MenuBarItem Title="Paramètres">
+                <MenuFlyoutItem Text="Paramètres" KeyboardAccelerator="Ctrl+,"/>
+            </MenuBarItem>
+        </MenuBar>
+
+        <!-- CommandBar + Editor -->
+        <Grid Grid.Row="1" RowDefinitions="Auto,*">
+            <CommandBar Grid.Row="0" IsOpen="False">
+                <AppBarButton Icon="Open" Label="Ouvrir" Command="{x:Bind ViewModel.LoadFileCommand}"/>
+                <AppBarButton Icon="Save" Label="Enregistrer" Command="{x:Bind ViewModel.SaveFileCommand}"/>
+                <AppBarSeparator/>
+                <AppBarButton Icon="Refresh" Label="Normaliser" Command="{x:Bind ViewModel.NormalizeCommand}"/>
+                <AppBarButton Icon="Copy" Label="Copier"/>
+            </CommandBar>
+
+            <TextBox 
+                Grid.Row="1"
+                Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                AcceptsReturn="True"
+                TextWrapping="Wrap"
+                FontFamily="Consolas"
+                FontSize="14"
+                Padding="16"/>
+        </Grid>
+
+        <!-- StatusBar -->
+        <StatusBar Grid.Row="2">
+            <StatusBarItem>
+                <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="&#xE74E;" Margin="0,0,8,0"/>
+                    <TextBlock Text="UTF-8"/>
+                </StackPanel>
+            </StatusBarItem>
+            <StatusBarItem>
+                <StackPanel Orientation="Horizontal">
+                    <FontIcon Glyph="&#xE74F;" Margin="0,0,8,0"/>
+                    <TextBlock x:Name="LineColText" Text="Ln 1, Col 1"/>
+                </StackPanel>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</UserControl>

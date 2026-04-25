@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <data name="AppDisplayName">
+    <value>Singleton Notepad</value>
+  </data>
+  <data name="AppDescription">
+    <value>One place for all notes</value>
+  </data>
+</root>
