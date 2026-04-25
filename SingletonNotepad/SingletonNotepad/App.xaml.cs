@@ -75,7 +75,8 @@ public partial class App : Application
         
         // ViewModels
         services.AddTransient<MainViewModel>();
-        
+        services.AddTransient<SettingsViewModel>();
+
         // Views
         services.AddTransient<MainWindow>();
     }

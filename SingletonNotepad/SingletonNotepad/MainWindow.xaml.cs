@@ -46,21 +46,26 @@ public sealed partial class MainWindow : Window
         // Validate bounds are reasonable (minimum usable window size)
         if (bounds.Width < 400 || bounds.Height < 300) return;
         
-        _settingsService.Set("WindowLeft", bounds.X);
-        _settingsService.Set("WindowTop", bounds.Y);
-        _settingsService.Set("WindowWidth", bounds.Width);
-        _settingsService.Set("WindowHeight", bounds.Height);
+        // Save via AppSettings model
+        var settings = _settingsService.GetSettings();
+        settings.WindowLeft = bounds.X;
+        settings.WindowTop = bounds.Y;
+        settings.WindowWidth = bounds.Width;
+        settings.WindowHeight = bounds.Height;
+        _settingsService.SaveSettings(settings);
     }
 
     private void RestoreWindowPosition()
     {
-        var left = _settingsService.Get("WindowLeft", double.NaN);
-        var top = _settingsService.Get("WindowTop", double.NaN);
-        var width = _settingsService.Get("WindowWidth", (double)DefaultWidth);
-        var height = _settingsService.Get("WindowHeight", (double)DefaultHeight);
+        var settings = _settingsService.GetSettings();
+        
+        var left = settings.WindowLeft;
+        var top = settings.WindowTop;
+        var width = settings.WindowWidth;
+        var height = settings.WindowHeight;
 
         // Validate position is on primary monitor
-        if (double.IsNaN(left) || double.IsNaN(top) || 
+        if (left == 0 && top == 0 || 
             !MonitorHelper.IsOnPrimaryMonitor(left, top))
         {
             // Center on primary monitor

@@ -8,11 +8,11 @@
 # ── Core Identity ─────────────────────────────────────────────────────────────
 project: "singleton-notepad"           # (required) Project name
 phase: development                       # (required) one of: planning | development | testing | release
-progress: 45
+progress: 60
 last_updated: "2026-04-25"
 
 # ── Chain Protocol (CRITICAL) ─────────────────────────────────────────────────
-next_action: "Fix audit issues in S1-01 code (async void, exception handling, window validation)"
+next_action: "Implement S1-04: MainWindow positioning (primary monitor, restore/center fallback)"
 next_command: "bmad continue"
 next_role: "dev"
 active_role: "dev"
@@ -48,10 +48,10 @@ marketing:
   - "Distribution path: MSIX-packaged → potential Store"
 
 product:
-  - "S1-01 COMPLETE: WinUI 3 scaffold + DI + MVVM wiring done"
-  - "CODE AUDIT: 8/10 health score (0 critical, 3 important, 5 minor)"
-  - "All core services implemented with retry logic, debounce, DPAPI"
-  - "Audit action items: fix async void, exception filtering, window validation"
+  - "S1-03 COMPLETE: SettingsService with JSON serialization, defaults, validation"
+  - "SettingsViewModel with path validation and reset-to-defaults command"
+  - "5/8 Sprint 1 stories complete (S1-01, S1-02, S1-03, S1-05, S1-06, S1-08 done)"
+  - "S1-04 NEXT: MainWindow positioning with primary monitor validation"
 
 marketing:
   - "Tagline locked: 'one place for all notes'"
@@ -91,8 +91,10 @@ sprints:
         test_result: pass
       - id: S1-03
         title: "SettingsService over LocalSettings (paths, window geometry)"
-        status: pending
-        tests_executed: false
+        status: complete
+        tests_executed: true
+        test_output: "bmad/artifacts/test-results/S1-03-test-results.md"
+        test_result: pass
       - id: S1-04
         title: "MainWindow positioning (primary monitor, restore/center fallback)"
         status: pending

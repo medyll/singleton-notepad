@@ -41,6 +41,10 @@ public partial class MainViewModel : ObservableObject
 
         _fileService.FileSaved += OnFileSaved;
         _fileService.SaveFailed += OnSaveFailed;
+        
+        // Initialize file path from settings
+        var settings = _settingsService.GetSettings();
+        _fileService.FilePath = settings.SingletonFilePath;
     }
 
     partial void OnEditorContentChanged(string value)
@@ -104,7 +108,8 @@ public partial class MainViewModel : ObservableObject
         try
         {
             _notificationService.Show("Normalizing...");
-            var rulesPath = _settingsService.Get("RulesFilePath", string.Empty);
+            var settings = _settingsService.GetSettings();
+            var rulesPath = settings.RulesFilePath;
             var result = await _normalizationService.NormalizeAsync(EditorContent, rulesPath);
             
             if (result.HasChanges)
