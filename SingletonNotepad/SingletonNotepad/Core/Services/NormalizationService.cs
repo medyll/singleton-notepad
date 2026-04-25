@@ -2,8 +2,7 @@ namespace SingletonNotepad.Core.Services;
 
 using System.Threading;
 using System.Threading.Tasks;
-using System.Security.Cryptography;
-using System.Text;
+using SingletonNotepad.Core.Models;
 
 /// <summary>
 /// Stub implementation of INormalizationService for Sprint 1.
@@ -19,7 +18,7 @@ public class NormalizationService : INormalizationService
         // TODO: Implement full normalization in Sprint 2
         // For now, return content unchanged
         await Task.Delay(100, cancellationToken); // Simulate minimal work
-        
+
         return new NormalizationResult
         {
             OriginalContent = content,

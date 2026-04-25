@@ -1,0 +1,46 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SingletonNotepad.ViewModels"
+             x:Class="SingletonNotepad.Views.FichiersSettingsPage"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="24" MaxWidth="600">
+            <!-- Singleton File -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Fichier singleton" Classes="h3"/>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding Settings.SingletonFilePath}" Watermark="C:\Users\...\Documents\singleton.txt"/>
+                    <Button Grid.Column="1" Content="Parcourir..." Margin="8,0,0,0" VerticalAlignment="Center" Height="35"/>
+                </Grid>
+                <TextBlock Text="Emplacement de votre fichier de notes principal" Classes="caption"/>
+            </StackPanel>
+
+            <!-- Rules File -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Fichier de règles" Classes="h3"/>
+                <Grid ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding Settings.RulesFilePath}" Watermark="C:\Users\...\Documents\rules.md"/>
+                    <Button Grid.Column="1" Content="Parcourir..." Margin="8,0,0,0" VerticalAlignment="Center" Height="35"/>
+                </Grid>
+                <TextBlock Text="Fichier contenant les règles de normalisation" Classes="caption"/>
+            </StackPanel>
+
+            <!-- Auto-Save -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Enregistrement automatique" Classes="h3"/>
+                <CheckBox Content="Activer l'enregistrement automatique" IsChecked="{Binding Settings.AutoSaveEnabled}"/>
+                <TextBlock Text="Délai (millisecondes)"/>
+                <NumericUpDown Value="{Binding Settings.AutoSaveDebounceMs}" Minimum="100" Maximum="30000" Width="200" HorizontalAlignment="Left" IsEnabled="{Binding Settings.AutoSaveEnabled}"/>
+                <TextBlock Text="Délai d'attente avant l'enregistrement automatique après la dernière frappe" Classes="caption"/>
+            </StackPanel>
+
+            <!-- Backup -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Sauvegarde" Classes="h3"/>
+                <CheckBox Content="Créer des sauvegardes avant normalisation" IsChecked="{Binding Settings.CreateBackups}"/>
+                <TextBlock Text="Conserver une copie de sécurité avant chaque normalisation" Classes="caption"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

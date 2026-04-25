@@ -1,0 +1,9 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:SingletonNotepad.ViewModels"
+        xmlns:views="using:SingletonNotepad.Views"
+        x:Class="SingletonNotepad.MainWindow"
+        Title="Singleton Notepad"
+        Width="1200" Height="800"
+        WindowStartupLocation="CenterScreen">
+</Window>

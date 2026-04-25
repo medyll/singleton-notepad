@@ -1,36 +1,49 @@
 namespace SingletonNotepad.Core.Services;
 
+using System.IO;
 using System.Text.Json;
-using Windows.Security.Credentials;
-using Windows.Storage;
+using Avalonia.Threading;
 using SingletonNotepad.Core.Models;
 
 /// <summary>
-/// Implementation of ISettingsService using LocalSettings and PasswordVault.
+/// Implementation of ISettingsService using JSON file storage (cross-platform).
 /// </summary>
 public class SettingsService : ISettingsService
 {
-    private readonly ApplicationDataContainer _localSettings;
-    private const string ApiKeyResourceName = "SingletonNotepad.ApiKeys";
-    private const string AppSettingsKey = "AppSettings";
+    private readonly string _settingsPath;
+    private readonly string _secureStoragePath;
+    private AppSettings? _cachedSettings;
+    private Dictionary<string, string> _apiKeys = new();
 
     public SettingsService()
     {
-        _localSettings = ApplicationData.Current.LocalSettings;
+        var appDataPath = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "SingletonNotepad");
+
+        Directory.CreateDirectory(appDataPath);
+
+        _settingsPath = Path.Combine(appDataPath, "settings.json");
+        _secureStoragePath = Path.Combine(appDataPath, "apikeys.json");
+
+        LoadApiKeys();
     }
 
     /// <inheritdoc />
     public AppSettings GetSettings()
     {
-        if (_localSettings.Values.TryGetValue(AppSettingsKey, out var value) && value is string json)
+        if (_cachedSettings != null)
+            return _cachedSettings;
+
+        if (File.Exists(_settingsPath))
         {
             try
             {
+                var json = File.ReadAllText(_settingsPath);
                 var settings = JsonSerializer.Deserialize<AppSettings>(json);
                 if (settings != null)
                 {
-                    // Migrate legacy window settings if present
-                    MigrateLegacyWindowSettings(settings);
+                    _cachedSettings = settings;
                     return settings;
                 }
             }
@@ -41,94 +54,99 @@ public class SettingsService : ISettingsService
         }
 
         // Return defaults if no settings exist or deserialization failed
-        return CreateDefaultSettings();
+        _cachedSettings = CreateDefaultSettings();
+        return _cachedSettings;
     }
 
     /// <inheritdoc />
     public void SaveSettings(AppSettings settings)
     {
-        var json = JsonSerializer.Serialize(settings);
-        _localSettings.Values[AppSettingsKey] = json;
-        
-        // Also save window geometry separately for backward compatibility
-        _localSettings.Values["WindowLeft"] = settings.WindowLeft;
-        _localSettings.Values["WindowTop"] = settings.WindowTop;
-        _localSettings.Values["WindowWidth"] = settings.WindowWidth;
-        _localSettings.Values["WindowHeight"] = settings.WindowHeight;
+        _cachedSettings = settings;
+        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(_settingsPath, json);
     }
 
     /// <inheritdoc />
     public void ResetToDefaults()
     {
-        _localSettings.Values.Remove(AppSettingsKey);
-        
-        // Also clear legacy keys
-        _localSettings.Values.Remove("WindowLeft");
-        _localSettings.Values.Remove("WindowTop");
-        _localSettings.Values.Remove("WindowWidth");
-        _localSettings.Values.Remove("WindowHeight");
-        _localSettings.Values.Remove("SingletonFilePath");
-        _localSettings.Values.Remove("RulesFilePath");
+        if (File.Exists(_settingsPath))
+            File.Delete(_settingsPath);
+
+        _cachedSettings = null;
     }
 
     /// <inheritdoc />
     public T Get<T>(string key, T defaultValue)
     {
-        if (_localSettings.Values.TryGetValue(key, out var value))
+        var settings = GetSettings();
+
+        return key switch
         {
-            try
-            {
-                return (T)value;
-            }
-            catch (InvalidCastException)
-            {
-                return defaultValue;
-            }
-        }
-        return defaultValue;
+            "Theme" => (T)(object)(settings.Theme ?? defaultValue.ToString()!),
+            "AutoSaveDebounceMs" => (T)(object)settings.AutoSaveDebounceMs,
+            "WindowWidth" => (T)(object)settings.WindowWidth,
+            "WindowHeight" => (T)(object)settings.WindowHeight,
+            _ => defaultValue
+        };
     }
 
     /// <inheritdoc />
     public void Set<T>(string key, T value)
     {
-        _localSettings.Values[key] = value;
+        var settings = GetSettings();
+
+        switch (key)
+        {
+            case "Theme":
+                settings.Theme = value.ToString();
+                break;
+            case "AutoSaveDebounceMs":
+                settings.AutoSaveDebounceMs = (int)(object)value;
+                break;
+            case "WindowWidth":
+                settings.WindowWidth = (double)(object)value;
+                break;
+            case "WindowHeight":
+                settings.WindowHeight = (double)(object)value;
+                break;
+        }
+
+        SaveSettings(settings);
     }
 
     /// <inheritdoc />
     public string? GetApiKey(string provider)
     {
-        try
-        {
-            var vault = new PasswordVault();
-            var credential = vault.Retrieve(ApiKeyResourceName, provider);
-            return credential.Password;
-        }
-        catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
-        {
-            // Key not found or vault error - log for debugging
-            System.Diagnostics.Debug.WriteLine($"[SettingsService] Failed to retrieve API key: {ex.Message}");
-            return null;
-        }
+        return _apiKeys.TryGetValue(provider, out var key) ? key : null;
     }
 
     /// <inheritdoc />
     public void SetApiKey(string provider, string key)
     {
-        var vault = new PasswordVault();
-        
-        try
-        {
-            // Remove existing credential if present
-            var existing = vault.Retrieve(ApiKeyResourceName, provider);
-            vault.Remove(existing);
-        }
-        catch
-        {
-            // Ignore if doesn't exist
-        }
+        _apiKeys[provider] = key;
+        SaveApiKeys();
+    }
 
-        // Add new credential
-        vault.Add(new PasswordCredential(ApiKeyResourceName, provider, key));
+    private void LoadApiKeys()
+    {
+        if (File.Exists(_secureStoragePath))
+        {
+            try
+            {
+                var json = File.ReadAllText(_secureStoragePath);
+                _apiKeys = JsonSerializer.Deserialize<Dictionary<string, string>>(json) ?? new();
+            }
+            catch
+            {
+                _apiKeys = new();
+            }
+        }
+    }
+
+    private void SaveApiKeys()
+    {
+        var json = JsonSerializer.Serialize(_apiKeys, new JsonSerializerOptions { WriteIndented = true });
+        File.WriteAllText(_secureStoragePath, json);
     }
 
     /// <summary>
@@ -137,7 +155,7 @@ public class SettingsService : ISettingsService
     private AppSettings CreateDefaultSettings()
     {
         var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-        
+
         return new AppSettings
         {
             SingletonFilePath = Path.Combine(documentsPath, "MY_SINGLETON_NOTEPAD.md"),
@@ -153,21 +171,5 @@ public class SettingsService : ISettingsService
             WindowLeft = 0,
             WindowTop = 0
         };
-    }
-
-    /// <summary>
-    /// Migrates legacy individual window settings to the AppSettings model.
-    /// </summary>
-    private void MigrateLegacyWindowSettings(AppSettings settings)
-    {
-        // If window settings exist as individual keys, use them
-        if (_localSettings.Values.TryGetValue("WindowLeft", out var left))
-            settings.WindowLeft = (double)left;
-        if (_localSettings.Values.TryGetValue("WindowTop", out var top))
-            settings.WindowTop = (double)top;
-        if (_localSettings.Values.TryGetValue("WindowWidth", out var width))
-            settings.WindowWidth = (double)width;
-        if (_localSettings.Values.TryGetValue("WindowHeight", out var height))
-            settings.WindowHeight = (double)height;
     }
 }

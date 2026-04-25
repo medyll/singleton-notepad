@@ -1,0 +1,49 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SingletonNotepad.ViewModels"
+             x:Class="SingletonNotepad.Views.ApparenceSettingsPage"
+             x:DataType="vm:SettingsViewModel">
+
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="24" MaxWidth="600">
+            <!-- Theme -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Thème" Classes="h3"/>
+                <RadioButton Content="Clair" GroupName="Theme"/>
+                <RadioButton Content="Sombre" GroupName="Theme"/>
+                <RadioButton Content="Système" GroupName="Theme" IsChecked="True"/>
+            </StackPanel>
+
+            <!-- Font Settings -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Police" Classes="h3"/>
+                <TextBlock Text="Police de caractères"/>
+                <ComboBox SelectedItem="{Binding Settings.FontFamily, Mode=TwoWay}" Width="200" HorizontalAlignment="Left">
+                    <ComboBoxItem Content="Consolas"/>
+                    <ComboBoxItem Content="Cascadia Code"/>
+                    <ComboBoxItem Content="Segoe UI"/>
+                    <ComboBoxItem Content="Courier New"/>
+                </ComboBox>
+                <TextBlock Text="Taille de police" Margin="0,8,0,0"/>
+                <NumericUpDown Value="{Binding Settings.FontSize, Mode=TwoWay}" Minimum="8" Maximum="72" Width="200" HorizontalAlignment="Left"/>
+            </StackPanel>
+
+            <!-- Editor Appearance -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Éditeur" Classes="h3"/>
+                <CheckBox Content="Retour automatique à la ligne" IsChecked="{Binding Settings.WordWrap, Mode=TwoWay}"/>
+                <CheckBox Content="Afficher les numéros de ligne" IsChecked="{Binding Settings.ShowLineNumbers, Mode=TwoWay}"/>
+                <CheckBox Content="Surbrillance des parenthèses" IsChecked="{Binding Settings.HighlightMatchingBrackets, Mode=TwoWay}"/>
+            </StackPanel>
+
+            <!-- Window Appearance -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Fenêtre" Classes="h3"/>
+                <TextBlock Text="Largeur"/>
+                <NumericUpDown Value="{Binding Settings.WindowWidth, Mode=TwoWay}" Minimum="400" Maximum="3840" Width="200" HorizontalAlignment="Left"/>
+                <TextBlock Text="Hauteur" Margin="0,8,0,0"/>
+                <NumericUpDown Value="{Binding Settings.WindowHeight, Mode=TwoWay}" Minimum="300" Maximum="2160" Width="200" HorizontalAlignment="Left"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

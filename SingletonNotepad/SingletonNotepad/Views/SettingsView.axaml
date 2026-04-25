@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:SingletonNotepad.ViewModels"
+             xmlns:views="using:SingletonNotepad.Views"
+             x:Class="SingletonNotepad.Views.SettingsView"
+             x:DataType="vm:SettingsViewModel">
+
+    <Grid RowDefinitions="Auto,*">
+        <!-- Navigation Bar -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,8">
+            <Button Command="{Binding GoBackCommand}" Content="Retour" Margin="4,0"/>
+            <Separator Margin="8,0"/>
+            <Button Command="{Binding SaveSettingsCommand}" Content="Enregistrer" Margin="4,0"/>
+            <Button Command="{Binding ResetToDefaultsCommand}" Content="Rétablir" Margin="4,0"/>
+        </StackPanel>
+
+        <!-- Settings Content -->
+        <TabControl Grid.Row="1">
+            <TabItem Header="Apparence">
+                <views:ApparenceSettingsPage/>
+            </TabItem>
+            <TabItem Header="Fichiers">
+                <views:FichiersSettingsPage/>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

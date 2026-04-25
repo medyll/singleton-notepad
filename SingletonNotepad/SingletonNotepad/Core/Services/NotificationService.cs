@@ -1,20 +1,38 @@
 namespace SingletonNotepad.Core.Services;
 
+using Avalonia.Controls.Notifications;
+
 /// <summary>
-/// Stub implementation of INotificationService for Sprint 1.
-/// Full implementation with WinUI 3 toasts in Sprint 3.
+/// Implementation of INotificationService using Avalonia notifications.
 /// </summary>
 public class NotificationService : INotificationService
 {
+    private WindowNotificationManager? _manager;
+
+    public void SetManager(WindowNotificationManager manager)
+    {
+        _manager = manager;
+    }
+
     public void Show(string message)
     {
-        // TODO: Implement WinUI 3 toast in Sprint 3
-        System.Diagnostics.Debug.WriteLine($"[Notification] {message}");
+        if (_manager == null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Notification] {message}");
+            return;
+        }
+
+        _manager.Show(new Notification("Singleton Notepad", message, NotificationType.Information));
     }
 
     public void ShowError(string message)
     {
-        // TODO: Implement WinUI 3 error toast in Sprint 3
-        System.Diagnostics.Debug.WriteLine($"[Notification ERROR] {message}");
+        if (_manager == null)
+        {
+            System.Diagnostics.Debug.WriteLine($"[Notification ERROR] {message}");
+            return;
+        }
+
+        _manager.Show(new Notification("Error", message, NotificationType.Error));
     }
 }

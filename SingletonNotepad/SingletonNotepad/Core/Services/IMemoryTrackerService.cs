@@ -1,7 +1,9 @@
 namespace SingletonNotepad.Core.Services;
 
+using SingletonNotepad.Core.Models;
+
 /// <summary>
-/// Service for tracking changes in the singleton file.
+/// Service for tracking changes in a local memory file.
 /// </summary>
 public interface IMemoryTrackerService
 {
