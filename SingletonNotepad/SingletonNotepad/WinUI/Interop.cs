@@ -9,9 +9,17 @@ namespace SingletonNotepad.WinUI;
 /// </summary>
 public static class Interop
 {
+    public const int SW_RESTORE = 9;
+
     [DllImport("user32.dll")]
     private static extern bool SetWindowPos(
         IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, uint uFlags);
+
+    [DllImport("user32.dll")]
+    private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+
+    [DllImport("user32.dll")]
+    private static extern bool SetForegroundWindow(IntPtr hWnd);
 
     /// <summary>
     /// Gets the Win32 window handle for a WinUI 3 window.
@@ -29,6 +37,16 @@ public static class Interop
     {
         SetWindowPos(hwnd, insertAfter, x, y, width, height, flags);
     }
+
+    /// <summary>
+    /// Restores a minimized window or shows it normally.
+    /// </summary>
+    public static void ShowWindow(IntPtr hwnd, int nCmdShow) => ShowWindow(hwnd, nCmdShow);
+
+    /// <summary>
+    /// Brings a window to the foreground.
+    /// </summary>
+    public static bool SetForegroundWindow(IntPtr hwnd) => SetForegroundWindow(hwnd);
 
     [ComImport]
     [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

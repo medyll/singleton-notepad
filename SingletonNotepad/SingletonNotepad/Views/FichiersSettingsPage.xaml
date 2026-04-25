@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="SingletonNotepad.Views.FichiersSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:viewmodels="using:SingletonNotepad.ViewModels">
+
+    <ScrollViewer Padding="24">
+        <StackPanel Spacing="24" MaxWidth="600">
+            <!-- Singleton File -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Fichier singleton" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <Grid ColumnDefinitions="*,Auto" RowSpacing="8">
+                    <TextBox 
+                        Grid.Column="0"
+                        Header="Chemin du fichier singleton"
+                        Text="{Binding Settings.SingletonFilePath, Mode=TwoWay}"
+                        PlaceholderText="C:\Users\...\Documents\singleton.txt"/>
+                    <Button 
+                        Grid.Column="1"
+                        Content="Parcourir..."
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Bottom"
+                        Height="35"/>
+                </Grid>
+                <TextBlock 
+                    Text="Emplacement de votre fichier de notes principal"
+                    Style="{StaticResource CaptionTextBlockStyle}"/>
+            </StackPanel>
+
+            <!-- Rules File -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Fichier de règles" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <Grid ColumnDefinitions="*,Auto" RowSpacing="8">
+                    <TextBox 
+                        Grid.Column="0"
+                        Header="Chemin du fichier de règles"
+                        Text="{Binding Settings.RulesFilePath, Mode=TwoWay}"
+                        PlaceholderText="C:\Users\...\Documents\rules.md"/>
+                    <Button 
+                        Grid.Column="1"
+                        Content="Parcourir..."
+                        Margin="8,0,0,0"
+                        VerticalAlignment="Bottom"
+                        Height="35"/>
+                </Grid>
+                <TextBlock 
+                    Text="Fichier contenant les règles de normalisation"
+                    Style="{StaticResource CaptionTextBlockStyle}"/>
+            </StackPanel>
+
+            <!-- Auto-Save -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Enregistrement automatique" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <ToggleSwitch 
+                    Header="Activer l'enregistrement automatique"
+                    IsOn="{Binding Settings.AutoSaveEnabled, Mode=TwoWay}"/>
+                <NumberBox 
+                    Header="Délai (millisecondes)"
+                    Value="{Binding Settings.AutoSaveDebounceMs, Mode=TwoWay}"
+                    Minimum="100"
+                    Maximum="30000"
+                    SpinButtonPlacementMode="Inline"
+                    Width="200"
+                    HorizontalAlignment="Left"
+                    IsEnabled="{Binding Settings.AutoSaveEnabled, Mode=OneWay}"/>
+                <TextBlock 
+                    Text="Délai d'attente avant l'enregistrement automatique après la dernière frappe"
+                    Style="{StaticResource CaptionTextBlockStyle}"/>
+            </StackPanel>
+
+            <!-- Backup -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Sauvegarde" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                <ToggleSwitch 
+                    Header="Créer des sauvegardes avant normalisation"
+                    IsOn="{Binding Settings.CreateBackups, Mode=TwoWay}"/>
+                <TextBlock 
+                    Text="Conserver une copie de sécurité avant chaque normalisation"
+                    Style="{StaticResource CaptionTextBlockStyle}"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Page>

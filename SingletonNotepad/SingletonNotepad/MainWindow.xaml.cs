@@ -1,4 +1,5 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using SingletonNotepad.Core.Helpers;
 using SingletonNotepad.Core.Services;
 using SingletonNotepad.Views;
@@ -11,20 +12,40 @@ namespace SingletonNotepad;
 public sealed partial class MainWindow : Window
 {
     private readonly ISettingsService _settingsService;
+    private readonly MainView _mainView;
+    private readonly SettingsView _settingsView;
     private const int DefaultWidth = 1200;
     private const int DefaultHeight = 800;
 
     public MainWindow(
         ISettingsService settingsService,
-        MainView mainView)
+        MainView mainView,
+        SettingsView settingsView)
     {
         InitializeComponent();
         _settingsService = settingsService;
+        _mainView = mainView;
+        _settingsView = settingsView;
         
-        Content = mainView;
+        // Start with MainView
+        Content = _mainView;
+        
+        // Wire up settings navigation
+        _mainView.RequestSettings += OnRequestSettings;
+        _settingsView.ViewModel.RequestClose += OnRequestCloseSettings;
         
         this.Activated += OnActivated;
         this.Closed += OnClosed;
+    }
+
+    private void OnRequestSettings(object? sender, EventArgs e)
+    {
+        Content = _settingsView;
+    }
+
+    private void OnRequestCloseSettings(object? sender, EventArgs e)
+    {
+        Content = _mainView;
     }
 
     private void OnActivated(object sender, WindowActivatedEventArgs args)

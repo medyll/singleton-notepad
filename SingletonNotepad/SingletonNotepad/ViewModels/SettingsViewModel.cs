@@ -23,6 +23,8 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     private bool _hasValidationError;
 
+    public event EventHandler? RequestClose;
+
     public SettingsViewModel(ISettingsService settingsService, IFileService fileService)
     {
         _settingsService = settingsService;
@@ -30,6 +32,15 @@ public partial class SettingsViewModel : ObservableObject
         
         // Load current settings
         Settings = _settingsService.GetSettings();
+    }
+
+    /// <summary>
+    /// Requests to close the settings view.
+    /// </summary>
+    [RelayCommand]
+    private void GoBack()
+    {
+        RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>

@@ -4,7 +4,8 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:SingletonNotepad.Views"
-    xmlns:viewmodels="using:SingletonNotepad.ViewModels">
+    xmlns:viewmodels="using:SingletonNotepad.ViewModels"
+    x:DataType="local:MainView">
 
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- MenuBar -->
@@ -26,7 +27,7 @@
                 <MenuFlyoutItem Text="Plein écran"/>
             </MenuBarItem>
             <MenuBarItem Title="Paramètres">
-                <MenuFlyoutItem Text="Paramètres">
+                <MenuFlyoutItem Text="Paramètres" Click="OnSettingsClick">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Modifiers="Control" Key="OEM_COMMA"/>
                     </MenuFlyoutItem.KeyboardAccelerators>
@@ -37,16 +38,16 @@
         <!-- CommandBar + Editor -->
         <Grid Grid.Row="1" RowDefinitions="Auto,*">
             <CommandBar Grid.Row="0" IsOpen="False">
-                <AppBarButton Icon="Open" Label="Ouvrir" Command="{x:Bind ViewModel.LoadFileCommand}"/>
-                <AppBarButton Icon="Save" Label="Enregistrer" Command="{x:Bind ViewModel.SaveFileCommand}"/>
+                <AppBarButton Icon="Open" Label="Ouvrir" Command="{Binding ViewModel.LoadFileCommand}"/>
+                <AppBarButton Icon="Save" Label="Enregistrer" Command="{Binding ViewModel.SaveFileCommand}"/>
                 <AppBarSeparator/>
-                <AppBarButton Icon="Refresh" Label="Normaliser" Command="{x:Bind ViewModel.NormalizeCommand}"/>
+                <AppBarButton Icon="Refresh" Label="Normaliser" Command="{Binding ViewModel.NormalizeCommand}"/>
                 <AppBarButton Icon="Copy" Label="Copier"/>
             </CommandBar>
 
             <TextBox
                 Grid.Row="1"
-                Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                Text="{Binding ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 AcceptsReturn="True"
                 TextWrapping="Wrap"
                 FontFamily="Consolas"
@@ -58,7 +59,7 @@
         <Border Grid.Row="2" BorderThickness="0,1,0,0" Padding="8,4">
             <Grid ColumnDefinitions="*,Auto,Auto">
                 <TextBlock Grid.Column="0"
-                           Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                           Text="{Binding ViewModel.StatusMessage, Mode=OneWay}"
                            VerticalAlignment="Center"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0">
                     <FontIcon Glyph="&#xE74E;" Margin="0,0,6,0" FontSize="12"/>
