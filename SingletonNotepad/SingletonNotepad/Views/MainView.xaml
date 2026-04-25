@@ -10,15 +10,27 @@
         <!-- MenuBar -->
         <MenuBar Grid.Row="0">
             <MenuBarItem Title="Édition">
-                <MenuFlyoutItem Text="Rechercher" KeyboardAccelerator="Ctrl+F"/>
-                <MenuFlyoutItem Text="Remplacer" KeyboardAccelerator="Ctrl+H"/>
+                <MenuFlyoutItem Text="Rechercher">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="F"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutItem Text="Remplacer">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="H"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
             </MenuBarItem>
             <MenuBarItem Title="Affichage">
                 <MenuFlyoutItem Text="Zoom"/>
                 <MenuFlyoutItem Text="Plein écran"/>
             </MenuBarItem>
             <MenuBarItem Title="Paramètres">
-                <MenuFlyoutItem Text="Paramètres" KeyboardAccelerator="Ctrl+,"/>
+                <MenuFlyoutItem Text="Paramètres">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Modifiers="Control" Key="OEM_COMMA"/>
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
             </MenuBarItem>
         </MenuBar>
 
@@ -32,7 +44,7 @@
                 <AppBarButton Icon="Copy" Label="Copier"/>
             </CommandBar>
 
-            <TextBox 
+            <TextBox
                 Grid.Row="1"
                 Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 AcceptsReturn="True"
@@ -42,23 +54,21 @@
                 Padding="16"/>
         </Grid>
 
-        <!-- StatusBar -->
-        <StatusBar Grid.Row="2">
-            <StatusBarItem>
-                <TextBlock Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"/>
-            </StatusBarItem>
-            <StatusBarItem>
-                <StackPanel Orientation="Horizontal">
-                    <FontIcon Glyph="&#xE74E;" Margin="0,0,8,0"/>
-                    <TextBlock Text="UTF-8"/>
+        <!-- Status bar (WinUI 3 — no native StatusBar; use styled Grid) -->
+        <Border Grid.Row="2" BorderThickness="0,1,0,0" Padding="8,4">
+            <Grid ColumnDefinitions="*,Auto,Auto">
+                <TextBlock Grid.Column="0"
+                           Text="{x:Bind ViewModel.StatusMessage, Mode=OneWay}"
+                           VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0">
+                    <FontIcon Glyph="&#xE74E;" Margin="0,0,6,0" FontSize="12"/>
+                    <TextBlock Text="UTF-8" VerticalAlignment="Center"/>
                 </StackPanel>
-            </StatusBarItem>
-            <StatusBarItem>
-                <StackPanel Orientation="Horizontal">
-                    <FontIcon Glyph="&#xE74F;" Margin="0,0,8,0"/>
-                    <TextBlock x:Name="LineColText" Text="Ln 1, Col 1"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <FontIcon Glyph="&#xE74F;" Margin="0,0,6,0" FontSize="12"/>
+                    <TextBlock x:Name="LineColText" Text="Ln 1, Col 1" VerticalAlignment="Center"/>
                 </StackPanel>
-            </StatusBarItem>
-        </StatusBar>
+            </Grid>
+        </Border>
     </Grid>
 </UserControl>

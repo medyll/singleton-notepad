@@ -38,9 +38,10 @@ public class SettingsService : ISettingsService
             var credential = vault.Retrieve(ApiKeyResourceName, provider);
             return credential.Password;
         }
-        catch (Exception)
+        catch (Exception ex) when (ex is not OutOfMemoryException and not StackOverflowException)
         {
-            // Key not found or vault error
+            // Key not found or vault error - log for debugging
+            System.Diagnostics.Debug.WriteLine($"[SettingsService] Failed to retrieve API key: {ex.Message}");
             return null;
         }
     }

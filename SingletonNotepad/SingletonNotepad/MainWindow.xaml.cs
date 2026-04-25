@@ -38,8 +38,14 @@ public sealed partial class MainWindow : Window
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
-        // Save window position
+        // Don't save if window is minimized or maximized
+        if (this.PresenterState != WindowPresentMode.Default) return;
+        
         var bounds = this.Bounds;
+        
+        // Validate bounds are reasonable (minimum usable window size)
+        if (bounds.Width < 400 || bounds.Height < 300) return;
+        
         _settingsService.Set("WindowLeft", bounds.X);
         _settingsService.Set("WindowTop", bounds.Y);
         _settingsService.Set("WindowWidth", bounds.Width);

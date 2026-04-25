@@ -18,6 +18,8 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _editorContent = string.Empty;
 
+    private bool _loading;
+
     [ObservableProperty]
     private SyncState _syncState = SyncState.Saved;
 
@@ -36,6 +38,28 @@ public partial class MainViewModel : ObservableObject
         _normalizationService = normalizationService;
         _memoryTrackerService = memoryTrackerService;
         _notificationService = notificationService;
+
+        _fileService.FileSaved += OnFileSaved;
+        _fileService.SaveFailed += OnSaveFailed;
+    }
+
+    partial void OnEditorContentChanged(string value)
+    {
+        if (_loading) return;
+        SyncState = SyncState.Unsaved;
+        _fileService.ScheduleSave(value);
+    }
+
+    private void OnFileSaved()
+    {
+        SyncState = SyncState.Saved;
+        StatusMessage = "Sync ✓";
+    }
+
+    private void OnSaveFailed(Exception ex)
+    {
+        SyncState = SyncState.Saved;
+        _notificationService.ShowError($"Auto-save failed: {ex.Message}");
     }
 
     [RelayCommand]
@@ -43,8 +67,10 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            SyncState = SyncState.Saving;
-            EditorContent = await _fileService.LoadAsync();
+            var content = await _fileService.LoadAsync();
+            _loading = true;
+            EditorContent = content;
+            _loading = false;
             SyncState = SyncState.Saved;
             StatusMessage = "File loaded";
         }
