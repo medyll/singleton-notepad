@@ -8,11 +8,11 @@
 # ── Core Identity ─────────────────────────────────────────────────────────────
 project: "singleton-notepad"           # (required) Project name
 phase: development                       # (required) one of: planning | development | testing | release
-progress: 60
+progress: 75
 last_updated: "2026-04-25"
 
 # ── Chain Protocol (CRITICAL) ─────────────────────────────────────────────────
-next_action: "Implement S1-04: MainWindow positioning (primary monitor, restore/center fallback)"
+next_action: "Implement S1-07: SettingsView shell with NavigationView"
 next_command: "bmad continue"
 next_role: "dev"
 active_role: "dev"
@@ -48,10 +48,10 @@ marketing:
   - "Distribution path: MSIX-packaged → potential Store"
 
 product:
-  - "S1-03 COMPLETE: SettingsService with JSON serialization, defaults, validation"
-  - "SettingsViewModel with path validation and reset-to-defaults command"
-  - "5/8 Sprint 1 stories complete (S1-01, S1-02, S1-03, S1-05, S1-06, S1-08 done)"
-  - "S1-04 NEXT: MainWindow positioning with primary monitor validation"
+  - "S1-04 COMPLETE: MainWindow positioning with 50% visibility validation"
+  - "MonitorHelper with EnsureValidWindowPosition() fallback to center"
+  - "6/8 Sprint 1 stories complete (75% done)"
+  - "S1-07 NEXT: SettingsView shell with NavigationView"
 
 marketing:
   - "Tagline locked: 'one place for all notes'"
@@ -97,8 +97,10 @@ sprints:
         test_result: pass
       - id: S1-04
         title: "MainWindow positioning (primary monitor, restore/center fallback)"
-        status: pending
-        tests_executed: false
+        status: complete
+        tests_executed: true
+        test_output: "bmad/artifacts/test-results/S1-04-test-results.md"
+        test_result: pass
       - id: S1-05
         title: "Single-instance mutex + bring-to-front"
         status: pending

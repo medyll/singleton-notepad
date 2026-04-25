@@ -64,9 +64,11 @@ public sealed partial class MainWindow : Window
         var width = settings.WindowWidth;
         var height = settings.WindowHeight;
 
-        // Validate position is on primary monitor
-        if (left == 0 && top == 0 || 
-            !MonitorHelper.IsOnPrimaryMonitor(left, top))
+        // Ensure window position is valid (at least 50% visible on primary monitor)
+        var (validX, validY) = MonitorHelper.EnsureValidWindowPosition(left, top, width, height);
+        
+        // Check if we had to adjust the position (window was off-screen)
+        if (validX != (int)left || validY != (int)top)
         {
             // Center on primary monitor
             MonitorHelper.CenterOnPrimaryMonitor(
