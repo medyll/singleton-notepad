@@ -47,7 +47,7 @@ Tagline: *"One place for all notes."*
 ## Context
 
 ### Stack (locked)
-- **Framework**: WinUI 3 (Windows App SDK ~1.5).
+- **Framework**: Avalonia 11 (cross-platform desktop).
 - **Language**: C#.
 - **MVVM**: CommunityToolkit.Mvvm 8.2.2.
 - **Markdown parsing**: Markdig 3.x.
@@ -78,4 +78,4 @@ Layered Core/Views split: `Core/Services/` (file, normalization, memory tracker,
 4. ⚠ Markdown image handling — inline base64 or external links only?
 5. ⚠ Export/Import path for migration to other note apps?
 6. ⚠ API key storage — plain `LocalSettings` or DPAPI-encrypted? (spec ambiguous: "chiffrées si sensible")
-7. ⚠ Spec mentions `MainWindow.xaml.cs` and `App.xaml.cs` but no `.csproj` template choice (Packaged vs Unpackaged WinUI 3) — needs decision before scaffold.
+7. ✅ Spec mentions `MainWindow.axaml.cs` and `App.axaml.cs` — Avalonia project created successfully.

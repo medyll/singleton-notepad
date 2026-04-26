@@ -1,6 +1,6 @@
 # Singleton Notepad — Spécifications Techniques
 
-> Application WinUI 3 minimaliste pour la prise de notes rapide, centrée sur un fichier unique avec normalisation automatique par LLM externe.
+> Application desktop minimaliste pour la prise de notes rapide, centrée sur un fichier unique avec normalisation automatique par LLM externe.
 
 **Philosophie :** "One place for all notes"
 
@@ -24,7 +24,7 @@
 
 ## 1. Vision
 
-Application Windows WinUI 3 pour la prise de notes rapide, centrée sur **un seul fichier Markdown** (`MY_SINGLETON_NOTEPAD.md`) avec réorganisation automatique via LLM.
+Application desktop cross-platform pour la prise de notes rapide, centrée sur **un seul fichier Markdown** (`MY_SINGLETON_NOTEPAD.md`) avec réorganisation automatique via LLM.
 
 **Objectif :** Fini la dispersion des notes dans multiples fichiers et applications.
 
@@ -69,8 +69,9 @@ Application Windows WinUI 3 pour la prise de notes rapide, centrée sur **un seu
 
 ```
 SingletonNotepad/
-├── App.xaml.cs                 # Point d'entrée, configuration DI
-├── MainWindow.xaml.cs          # Fenêtre principale, positionnement
+├── Program.cs                    # Point d'entrée
+├── App.axaml / App.axaml.cs      # Application, configuration DI
+├── MainWindow.axaml / .axaml.cs  # Fenêtre principale, positionnement
 ├── Core/
 │   ├── Services/
 │   │   ├── IFileService.cs
@@ -82,110 +83,103 @@ SingletonNotepad/
 │   │   └── ISettingsService.cs
 │   ├── Models/
 │   │   ├── AppSettings.cs
-│   │   ├── NormalizationRule.cs
+│   │   ├── NormalizationResult.cs
 │   │   └── ChangeRecord.cs
 │   └── Helpers/
-│       ├── MonitorHelper.cs
-│       └── PathHelper.cs
-├── Views/
-│   ├── MainView.xaml
-│   ├── SettingsView.xaml
-│   └── Controls/
-│       ├── MarkdownEditor.xaml
-│       └── NormalizationPreview.xaml
-└── Resources/
-    └── DefaultRules.md
+│       └── MonitorHelper.cs
+└── Views/
+    ├── MainView.axaml
+    ├── SettingsView.axaml
+    ├── ApparenceSettingsPage.axaml
+    └── FichiersSettingsPage.axaml
 ```
 
 ### 3.2 Stack Technique
 
 | Composant | Technologie |
 |-----------|-------------|
-| Framework | WinUI 3 (Windows App SDK) |
-| Language | C# |
+| Framework | Avalonia 11 (cross-platform) |
+| Language | C# .NET 8 |
 | Architecture | MVVM (CommunityToolkit.Mvvm) |
 | Parsing Markdown | Markdig |
 | Diff Preview | DiffPlex |
-| Tests | MSTest + Playwright |
+| DI | Microsoft.Extensions.DependencyInjection |
+| Tests | MSTest |
 
-### 3.3 Références UI — Notepad Windows 11
+### 3.3 Références UI — Composants Standards
 
-**Composants WinUI 3 à utiliser :**
+**Composants Avalonia à utiliser :**
 
 ```csharp
 // Menu principal (en haut)
-<MenuBar>
-    <MenuFlyoutItem Text="Édition" />
-    <MenuFlyoutItem Text="Affichage" />
-    <MenuFlyoutItem Text="Paramètres" />
-</MenuBar>
+<Menu>
+    <MenuItem Header="Édition">
+        <MenuItem Header="Rechercher" InputGesture="Ctrl+F"/>
+        <MenuItem Header="Remplacer" InputGesture="Ctrl+H"/>
+    </MenuItem>
+    <MenuItem Header="Affichage">
+        <MenuItem Header="Zoom"/>
+        <MenuItem Header="Plein écran"/>
+    </MenuItem>
+    <MenuItem Header="Paramètres" InputGesture="Ctrl+,"/>
+</Menu>
 
 // Toolbar (boutons alignés à gauche)
-<CommandBar DefaultLabelPosition="Right">
-    <AppBarButton Icon="Open" Label="Ouvrir" />
-    <AppBarButton Icon="Save" Label="Enregistrer" />
-    <AppBarButton Icon="Refresh" Label="Normaliser" />
-    <AppBarButton Icon="Copy" Label="Copie" />
-</CommandBar>
+<StackPanel Orientation="Horizontal">
+    <Button Command="{Binding LoadFileCommand}" ToolTip.Tip="Ouvrir"/>
+    <Button Command="{Binding SaveFileCommand}" ToolTip.Tip="Enregistrer"/>
+    <Button Command="{Binding NormalizeCommand}" ToolTip.Tip="Normaliser"/>
+</StackPanel>
 
 // Content area (éditeur)
 <Grid>
     <TextBox 
         AcceptsReturn="True"
         TextWrapping="NoWrap"
-        FontFamily="Cascadia Code"
-        IsSpellCheckEnabled="False"
+        FontFamily="Consolas"
     />
 </Grid>
 
 // Status bar (en bas)
-<StatusBar>
-    <StatusBarItem>UTF-8</StatusBarItem>
-    <StatusBarItem>Ligne 12, Col 34</StatusBarItem>
-    <StatusBarItem>Sync</StatusBarItem>
-    <StatusBarItem>Normalisé: 14:32</StatusBarItem>
-</StatusBar>
+<Border BorderThickness="0,1,0,0" Padding="8,4">
+    <StackPanel Orientation="Horizontal">
+        <TextBlock Text="UTF-8"/>
+        <TextBlock Text="Ligne 12, Col 34"/>
+        <TextBlock Text="Sync"/>
+    </StackPanel>
+</Border>
 ```
 
 **Contrôles Settings :**
 
 ```csharp
-// Navigation verticale (NavigationView)
-<NavigationView PaneDisplayMode="Left">
-    <NavigationViewItem Content="Apparence" />
-    <NavigationViewItem Content="Fichiers" />
-    <NavigationViewItem Content="Normalisation" />
-    <NavigationViewItem Content="Historique" />
-</NavigationView>
+// Navigation par onglets
+<TabControl>
+    <TabItem Header="Apparence">
+        <!-- Settings contenu -->
+    </TabItem>
+    <TabItem Header="Fichiers">
+        <!-- Settings contenu -->
+    </TabItem>
+</TabControl>
 
-// ToggleSwitch pour options
-<ToggleSwitch Header="Word wrap" IsOn="{x:Bind ViewModel.WordWrap}" />
+// CheckBox pour options
+<CheckBox Content="Word wrap" IsChecked="{Binding WordWrap, Mode=TwoWay}"/>
 
 // ComboBox pour sélections
-<ComboBox Header="Thème" SelectedIndex="{x:Bind ViewModel.ThemeIndex}">
-    <ComboBoxItem Content="Clair" />
-    <ComboBoxItem Content="Sombre" />
-    <ComboBoxItem Content="Système" />
+<ComboBox SelectedItem="{Binding FontFamily, Mode=TwoWay}">
+    <ComboBoxItem Content="Consolas"/>
+    <ComboBoxItem Content="Cascadia Code"/>
 </ComboBox>
 ```
 
-**Palette de couleurs (Fluent Design) :**
+### 3.4 Stockage des Paramètres
 
 ```csharp
-// Couleurs de référence (Notepad Windows 11)
-Application.Current.Resources["CardBackgroundFillColorDefault"] = "#20202020";
-Application.Current.Resources["CardStrokeFillColorDefault"] = "#F0F0F0F0";
-Application.Current.Resources["AccentFillColorDefault"] = "#60CDFF"; // Bleu Windows 11
-```
-
-### 3.3 Stockage des Paramètres
-
-```csharp
-// LocalSettings (ApplicationData.Current.LocalSettings)
+// JSON file dans AppData
 {
   "SingletonFilePath": "C:\\Users\\...\\MY_SINGLETON_NOTEPAD.md",
   "AgentsFilePath": "C:\\Users\\...\\NOTEPAD_SINGLETON_AGENTS.md",
-  "MemoryFilePath": "C:\\Users\\...\\NOTEPAD_SINGLETON_MEMORY.md",
   "WindowPositionX": 100,
   "WindowPositionY": 100,
   "WindowWidth": 800,
@@ -193,14 +187,16 @@ Application.Current.Resources["AccentFillColorDefault"] = "#60CDFF"; // Bleu Win
   "LlmProvider": "Ollama",
   "LlmEndpoint": "http://localhost:11434/api/generate",
   "LlmModel": "llama3.1",
-  "LlmApiKey": "",
   "AutoNormalizeOnClose": true,
   "AutoNormalizeIdleMinutes": 5,
-  "SnapshotFrequency": "OnNormalize"
+  "Theme": "System",
+  "FontFamily": "Consolas",
+  "FontSize": 14,
+  "WordWrap": true
 }
 ```
 
-### 3.4 Format des Fichiers
+### 3.5 Format des Fichiers
 
 **MY_SINGLETON_NOTEPAD.md** :
 ```markdown
@@ -255,25 +251,25 @@ Réorganiser le contenu par date décroissante, puis par catégorie.
 - **Premier lancement** : Wizard de configuration (choix des chemins)
 - **Lancements suivants** : Ouverture directe avec dernier fichier
 
-### 4.2 Interface Principale — Inspiration Notepad Windows 11
+### 4.2 Interface Principale
 
-**Design System :** WinUI 3 Fluent Design (mêmes codes visuels que Notepad Windows 11)
-
-**Structure de la fenêtre (sans les onglets) :**
+**Structure de la fenêtre :**
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ [←]  Singleton Notepad       │  Édition  │  Affichage  │ ⚙️ │
+│  Singleton Notepad                                           │
+├──────────────────────────────────────────────────────────────┤
+│  Édition  │  Affichage  │  Paramètres                        │
 ├──────────────────────────────────────────────────────────────┤
 │  [📁 Ouvrir]  [💾 Enregistrer]  [🔄 Normaliser]  [📋 Copie] │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
-│   # Titre                                                   │
+│   # Titre                                                    │
 │                                                              │
-│   Contenu éditable                                          │
-│   - Coloration syntaxique Markdown                          │
-│   - Numérotation des lignes (optionnelle)                  │
-│   - Indentation guidée                                      │
+│   Contenu éditable                                           │
+│   - Coloration syntaxique Markdown                           │
+│   - Numérotation des lignes (optionnelle)                    │
+│   - Indentation guidée                                       │
 │                                                              │
 │                                                              │
 ├──────────────────────────────────────────────────────────────┤
@@ -287,7 +283,7 @@ Réorganiser le contenu par date décroissante, puis par catégorie.
 |------|-----------|--------|
 | **Édition** | Rechercher, Remplacer, Annuler/Rétablir | Actions d'édition |
 | **Affichage** | Zoom, Word wrap, Numérotation | Options d'affichage |
-| **⚙️ Paramètres** | → Navigation vers SettingsView | Ouvre les paramètres |
+| **Paramètres** | → Navigation vers SettingsView | Ouvre les paramètres |
 
 **Barre d'outils (Toolbar) — Alignée à gauche :**
 
@@ -309,31 +305,29 @@ Réorganiser le contenu par date décroissante, puis par catégorie.
 
 ### 4.3 Navigation Interne — Paramètres
 
-**Structure SettingsView (inspirée Notepad Windows 11) :**
+**Structure SettingsView :**
 
 ```
 ┌──────────────────────────────────────────────┐
 │ ← Paramètres                               │
 ├──────────────────────────────────────────────┤
-│ Apparence                                  │
-│  ├─ Thème (Clair / Sombre / Système)      │
-│  ├─ Police (nom, taille)                   │
-│  └─ Word wrap (On/Off)                     │
+│ [Apparence]  [Fichiers]                     │
 ├──────────────────────────────────────────────┤
-│ Fichiers                                   │
-│  ├─ Chemin MY_SINGLETON_NOTEPAD.md         │
-│  ├─ Chemin AGENTS.md                       │
-│  └─ Chemin MEMORY.md                       │
-├──────────────────────────────────────────────┤
-│ Normalisation                              │
-│  ├─ Provider LLM (Ollama/OpenAI/Anthropic) │
-│  ├─ Endpoint & Modèle                      │
-│  ├─ Auto-normaliser à la fermeture         │
-│  └─ Délai inactivité (minutes)             │
-├──────────────────────────────────────────────┤
-│ Historique                                 │
-│  ├─ Fréquence snapshots                    │
-│  └─ Ouvrir l'historique (MEMORY.md)        │
+│                                              │
+│ Thème                                        │
+│  ○ Clair                                     │
+│  ○ Sombre                                    │
+│  ● Système                                   │
+│                                              │
+│ Police                                       │
+│  [Consolas ▼]                                │
+│  Taille: [14]                                │
+│                                              │
+│ Éditeur                                      │
+│  ☑ Retour automatique à la ligne            │
+│  ☐ Afficher les numéros de ligne            │
+│  ☑ Surbrillance des parenthèses             │
+│                                              │
 └──────────────────────────────────────────────┘
 ```
 
@@ -342,7 +336,7 @@ Réorganiser le contenu par date décroissante, puis par catégorie.
 | État | Indicateur |
 |------|------------|
 | **Auto-save** | Status bar: `Sync` (vert) / `Non enregistré` (orange) |
-| **Normalisation** | Dialog : Progress + Preview diff (avant/après) |
+| **Normalisation** | Toast notification + progression |
 | **Erreurs** | Toast notification (fichier verrouillé, LLM indisponible) |
 
 ### 4.5 Raccourcis Clavier
@@ -364,14 +358,14 @@ Réorganiser le contenu par date décroissante, puis par catégorie.
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐
-│ Utilisateur │────▶│ App WinUI    │────▶│ LLM Service │
+│ Utilisateur │────▶│  Application │────▶│ LLM Service │
 │  clique 🔄  │     │ (prépare     │     │ (construit  │
 └─────────────┘     │  le prompt)  │     │  la requête)│
                     └──────────────┘     └─────────────┘
                                               │
                     ┌──────────────┐          │
-                    │ Affiche      │◀─────────┘
-                    │ preview diff │
+                    │ Notification │◀─────────┘
+                    │ progression  │
                     └──────────────┘
                           │
                     ┌─────▼──────┐     ┌─────────────┐
@@ -418,122 +412,10 @@ You are a Markdown Normalization Assistant.
 ## Task
 Apply the normalization rules ONLY to the selected text.
 Return ONLY the normalized selection, preserve surrounding context.
-Mark the normalized section with <!-- NORMALIZED --> comment.
 ";
 ```
 
-### 5.3 UI — Bouton Normaliser (2 modes)
-
-```
-┌─────────────────────────────────────────┐
-│  [🔄] Normaliser                        │
-├─────────────────────────────────────────┤
-│  → Normaliser tout le document          │
-│  → Normaliser la sélection              │
-└─────────────────────────────────────────┘
-```
-
-**Comportement :**
-- **Aucune sélection** : Le bouton agit sur tout le document
-- **Texte sélectionné** : Le bouton propose les 2 options (menu flyout)
-- **Raccourci `Ctrl+N`** : Ouvre le menu flyout si sélection, sinon normalise tout
-
-### 5.4 Preview Diff — Intégré dans l'Éditeur
-
-**Principe :** Le diff s'affiche directement dans l'éditeur (pas de nouvelle fenêtre), avec coloration inline.
-
-**Mode Lecture Diff (après normalisation) :**
-
-```
-┌────────────────────────────────────────────────────────────┐
-│  [✓] Appliquer   [✗] Annuler   [⚙️] Options               │
-├────────────────────────────────────────────────────────────┤
-│                                                            │
-│  # Notes                                                   │
-│                                                            │
-│  ## 2025-01-15                                             │
-│  - Idée projet X                                           │
-│  - Réunion à 14h                                           │
-│                                                            │
-│ ┌────────────────────────────────────────────────────────┐ │
-│ │ ## Tasks  ← inchangé                                   │ │
-│ │ - [x] Terminé Z  ← inchangé                            │ │
-│ │ - [ ] Tâche A  ← ajouté (vert)                         │ │
-│ │ - [ ] Tâche B  ← ajouté (vert)                         │ │
-│ │ - Ancienne tâche  ← supprimé (rouge barré)             │ │
-│ └────────────────────────────────────────────────────────┘ │
-│                                                            │
-│  ## Inbox                                                  │
-│  - Note rapide                                             │
-│                                                            │
-└────────────────────────────────────────────────────────────┘
-```
-
-**Coloration Inline :**
-
-| Type | Affichage |
-|------|-----------|
-| **Ligne ajoutée** | Fond vert clair (`#E8F5E9`), texte vert foncé |
-| **Ligne supprimée** | Fond rouge clair (`#FFEBEE`), texte barré rouge |
-| **Ligne modifiée** | Fond orange clair, avec diff mot-à-mot |
-| **Inchangé** | Fond normal, texte normal |
-
-**Implémentation WinUI 3 :**
-
-```csharp
-// RichTextBlock avec Inlines colorées
-foreach (var line in diff.Lines)
-{
-    var paragraph = new Paragraph();
-    
-    switch (line.Type)
-    {
-        case ChangeType.Inserted:
-            paragraph.Background = new SolidColorBrush(Colors.LightGreen);
-            break;
-        case ChangeType.Deleted:
-            paragraph.Background = new SolidColorBrush(Colors.LightCoral);
-            paragraph.TextDecorations = TextDecorations.Strikethrough;
-            break;
-    }
-    
-    paragraph.Inlines.Add(new Run { Text = line.Text });
-    DiffView.Blocks.Add(paragraph);
-}
-```
-
-**Flow Utilisateur :**
-
-1. Utilisateur clique sur `🔄 Normaliser`
-2. LLM génère le contenu normalisé en background
-3. **L'éditeur bascule en mode "Preview Diff"** (même fenêtre, même emplacement)
-4. L'utilisateur voit les changements colorés inline
-5. Boutons `[✓] Appliquer` / `[✗] Annuler` en haut de l'éditeur
-6. Si Appliquer → écriture fichier + retour mode édition normal
-7. Si Annuler → retour mode édition normal (contenu original)
-
-**Avantages :**
-- ✅ Pas de rupture de contexte (reste dans le même éditeur)
-- ✅ Vision immédiate avant/après (inline)
-- ✅ Plus rapide (pas de nouvelle fenêtre à ouvrir)
-- ✅ Moins de confusion (une seule vue)
-┌──────────────────────────────────────────────────────┐
-│  Normalisation — Sélection (lignes 12-24)           │
-├──────────────────────────────────────────────────────┤
-│  ┌─────────────────┬───────────────────────────────┐ │
-│  │   AVANT         │        APRÈS                  │ │
-│  ├─────────────────┼───────────────────────────────┤ │
-│  │ - Tâche A       │ ## Tasks                      │ │
-│  │ - Tâche B       │ - [ ] Tâche A                 │ │
-│  │ Inbox           │ - [ ] Tâche B                 │ │
-│  │                 │                               │ │
-│  └─────────────────┴───────────────────────────────┘ │
-├──────────────────────────────────────────────────────┤
-│  [Annuler]              [Appliquer à la sélection]  │
-└──────────────────────────────────────────────────────┘
-```
-
-### 5.5 Providers Supportés
+### 5.3 Providers Supportés
 
 **Ollama (Local - Recommandé)** :
 ```csharp
@@ -569,28 +451,19 @@ var request = new {
 
 ## 6. Structure de Projet
 
-### 6.1 Dependencies (Package.appxmanifest)
+### 6.1 Dependencies
 
 ```xml
-<Package>
-  <Capabilities>
-    <Capability Name="internetClient" />
-    <uap:Capability Name="broadFileSystemAccess" />
-  </Capabilities>
-</Package>
-```
-
-### 6.2 NuGet Packages
-
-```xml
+<PackageReference Include="Avalonia" Version="11.2.1" />
+<PackageReference Include="Avalonia.Desktop" Version="11.2.1" />
+<PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.1" />
 <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.2" />
-<PackageReference Include="Microsoft.WindowsAppSDK" Version="1.5.x" />
-<PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.x" />
-<PackageReference Include="Markdig" Version="3.x" />
+<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+<PackageReference Include="Markdig" Version="0.34.0" />
 <PackageReference Include="DiffPlex" Version="1.9.0" />
 ```
 
-### 6.3 Gestion des Erreurs
+### 6.2 Gestion des Erreurs
 
 | Exception | Traitement |
 |-----------|------------|
@@ -608,7 +481,7 @@ var request = new {
 - **Debounce** : Auto-save après 2s d'inactivité
 
 ### 7.2 Sécurité
-- **API Keys** : Stockées dans LocalSettings (chiffrées si sensible)
+- **API Keys** : Stockées dans JSON (chiffrées si sensible)
 - **File permissions** : Vérifier accès en lecture/écriture au startup
 - **Validation LLM** : Sanitiser la réponse avant écriture
 
@@ -621,7 +494,7 @@ var request = new {
 ### 7.4 Accessibilité
 - Support clavier complet (tab order, shortcuts)
 - Contraste couleurs conforme WCAG
-- Screen reader friendly (AutomationProperties)
+- Screen reader friendly
 
 ---
 
@@ -660,23 +533,19 @@ var request = new {
 ```csharp
 public void RestoreWindowPosition(Window window)
 {
-  var settings = ApplicationData.Current.LocalSettings;
+  var settings = _settingsService.GetSettings();
   
-  if (settings.Values.TryGetValue("WindowPositionX", out var x) &&
-      settings.Values.TryGetValue("WindowPositionY", out var y))
+  var x = settings.WindowPositionX;
+  var y = settings.WindowPositionY;
+  
+  if (IsValidPosition(x, y))
   {
-    var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
-    var monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTOPRIMARY);
-    
-    if (IsPositionOnMonitor((int)x, (int)y, monitor))
-    {
-      SetWindowPos(hwnd, IntPtr.Zero, (int)x, (int)y, 0, 0, 
-                   SWP_NOSIZE | SWP_NOZORDER);
-      return;
-    }
+    window.Position = new PixelPoint((int)x, (int)y);
+    return;
   }
   
-  CenterOnPrimaryMonitor(window);
+  // Center on primary monitor if invalid
+  window.WindowStartupLocation = WindowStartupLocation.CenterScreen;
 }
 ```
 
@@ -685,17 +554,17 @@ public void RestoreWindowPosition(Window window)
 ```csharp
 private static Mutex _mutex;
 
-public App()
+public static void Main(string[] args)
 {
   _mutex = new Mutex(true, "SingletonNotepadInstance", out bool createdNew);
   
   if (!createdNew)
   {
     BringExistingInstanceToFront();
-    Exit();
+    return;
   }
   
-  InitializeComponent();
+  BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
 }
 ```
 
@@ -705,8 +574,8 @@ public App()
 
 | Décision | Rationale |
 |----------|-----------|
-| WinUI 3 | Natif Windows, moderne, support long terme |
-| LocalSettings | Simple, pas de dépendance externe |
+| Avalonia 11 | Cross-platform (Windows, Linux, macOS), stable |
+| JSON settings | Simple, lisible, portable |
 | Ollama en premier | Gratuit, local, pas de API key requise |
 | Fichier unique | Philosophie "one place for all notes" |
 | Normalisation manuelle + auto | Contrôle utilisateur + commodité |

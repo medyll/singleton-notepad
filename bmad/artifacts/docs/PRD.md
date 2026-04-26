@@ -94,14 +94,15 @@ Solo knowledge workers and developers on Windows 11 who:
 | Q4 | Image handling | **External links only** in v1 | Keeps the file portable and small; base64 inflates diffs |
 | Q5 | Export / Import | **Out of scope v1** — file is plain `.md`, copy/move it manually | YAGNI; revisit in Phase 4 alongside cloud sync |
 | Q6 | API key storage | **DPAPI-encrypted** (`ProtectedData` / `PasswordVault`) | Cloud keys are sensitive; defense-in-depth |
-| Q7 | WinUI 3 template | **Packaged (MSIX)** with WindowsAppSDK 1.5+ | Enables `broadFileSystemAccess`, simpler distribution, future Store path |
+| Q7 | Avalonia template | **Cross-platform desktop** with .NET 8 | Enables Windows, Linux, macOS support, simpler distribution |
 
 ## 8. Architecture Snapshot
 
 ```
 SingletonNotepad/
-├── App.xaml.cs                     # DI bootstrap, mutex
-├── MainWindow.xaml(.cs)             # Window positioning, monitor logic
+├── Program.cs                        # Entry point
+├── App.axaml(.cs)                    # DI bootstrap, mutex
+├── MainWindow.axaml(.cs)             # Window positioning, monitor logic
 ├── Core/
 │   ├── Services/                    # FileService, NormalizationService,
 │   │                                # MemoryTrackerService, SettingsService
@@ -109,16 +110,16 @@ SingletonNotepad/
 │   ├── Models/                      # AppSettings, NormalizationRule, ChangeRecord
 │   └── Helpers/                     # MonitorHelper, PathHelper, DpapiHelper
 ├── Views/
-│   ├── MainView.xaml                # MenuBar + CommandBar + Editor + StatusBar
-│   ├── SettingsView.xaml            # NavigationView
+│   ├── MainView.axaml                # Menu + Toolbar + Editor + StatusBar
+│   ├── SettingsView.axaml            # TabControl
 │   └── Controls/
-│       ├── MarkdownEditor.xaml      # TextBox + syntax highlighter
-│       └── InlineDiffEditor.xaml    # RichTextBlock-based diff overlay
+│       ├── MarkdownEditor.axaml      # TextBox + syntax highlighter
+│       └── InlineDiffEditor.axaml    # Text-based diff overlay
 └── Resources/
     └── DefaultRules.md              # Seed for AGENTS.md
 ```
 
-**Stack:** WinUI 3 (Packaged) · C# · CommunityToolkit.Mvvm 8.2 · Markdig 3 · DiffPlex 1.9 · MSTest + Playwright.
+**Stack:** Avalonia 11 · .NET 8 · C# · CommunityToolkit.Mvvm 8.2 · Markdig 3 · DiffPlex 1.9 · MSTest.
 
 ## 9. Roadmap & Sprints
 
@@ -127,7 +128,7 @@ SingletonNotepad/
 
 | ID | Story | Role | Estimate |
 |----|-------|------|----------|
-| S1-01 | Scaffold WinUI 3 (Packaged) project + DI + MVVM wiring | Architect → Dev | M |
+| S1-01 | Scaffold Avalonia project + DI + MVVM wiring | Architect → Dev | M |
 | S1-02 | `FileService` + auto-create + auto-save (2s debounce) | Dev | M |
 | S1-03 | `SettingsService` over `LocalSettings` (paths, window geometry) | Dev | S |
 | S1-04 | `MainWindow` positioning (primary monitor, restore/center fallback) | Dev | M |
@@ -152,7 +153,7 @@ FileSystemWatcher external-edit detection, versioned backups, custom rules plugi
 | Risk | Mitigation |
 |------|-----------|
 | LLM returns malformed Markdown | Sanitize + diff preview + Cancel always available |
-| WinUI 3 single-instance is non-trivial in Packaged apps | Use `AppInstance.FindOrRegisterForKey` (Win App SDK), fallback to mutex |
+| Cross-platform single-instance | Use named mutex in Program.cs |
 | Inline diff in `RichTextBlock` performance on large files | Diff per-paragraph; lazy render past viewport |
 | Ollama not installed on user machine | First-run wizard detects + links to install; OpenAI/Anthropic remain |
 
