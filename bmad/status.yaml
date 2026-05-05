@@ -1,9 +1,9 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 80
-next_action: "Implement S2-03: MemoryTrackerService"
-next_command: "bmad-dev-story S2-03"
+progress: 85
+next_action: "Implement S2-04: InlineDiffEditor control"
+next_command: "bmad-dev-story S2-04"
 next_role: "developer"
 active_role: "developer"
 last_updated: "2026-05-05"
@@ -86,7 +86,7 @@ sprints:
         status: done
       - id: S2-03
         title: "MemoryTrackerService (MEMORY.md)"
-        status: pending
+        status: done
       - id: S2-04
         title: "InlineDiffEditor control (diff preview)"
         status: pending
