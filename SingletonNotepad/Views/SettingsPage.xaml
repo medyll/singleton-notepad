@@ -20,6 +20,7 @@
         <NavigationView.MenuItems>
             <NavigationViewItem Content="Apparence" Icon="Color" Tag="appearance" />
             <NavigationViewItem Content="Fichiers" Icon="Document" Tag="files" />
+            <NavigationViewItem Content="Normalisation" Icon="Edit" Tag="normalization" />
         </NavigationView.MenuItems>
 
         <ScrollViewer Padding="24">
@@ -56,6 +57,26 @@
                             Value="{x:Bind ViewModel.AutoSaveDelayMs, Mode=TwoWay}"
                             Minimum="500"
                             Maximum="10000"
+                            SpinButtonPlacementMode="Inline" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Normalisation Pane -->
+                <StackPanel x:Name="NormalizationPane" Spacing="16" Visibility="Collapsed">
+                    <TextBlock Text="Normalisation" Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                    <ToggleSwitch
+                        Header="Normaliser à la fermeture"
+                        IsOn="{x:Bind ViewModel.AutoNormalizeOnClose, Mode=TwoWay}"
+                        OnContent="Activé"
+                        OffContent="Désactivé" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Délai d'inactivité avant normalisation (minutes)" Style="{ThemeResource BaseTextBlockStyle}" />
+                        <NumberBox
+                            Value="{x:Bind ViewModel.IdleMinutesBeforeNormalize, Mode=TwoWay}"
+                            Minimum="1"
+                            Maximum="120"
                             SpinButtonPlacementMode="Inline" />
                     </StackPanel>
                 </StackPanel>

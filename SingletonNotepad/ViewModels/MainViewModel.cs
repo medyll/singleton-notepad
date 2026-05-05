@@ -13,9 +13,9 @@ public partial class MainViewModel : ObservableObject
     private readonly IFileService _fileService;
     private readonly INormalizationService _normalizationService;
     private readonly IMemoryTrackerService _memoryTrackerService;
+    private readonly ISettingsService _settingsService;
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly Timer _idleTimer;
-    private const int DefaultIdleMinutes = 15;
     private DateTime _lastUserActivity;
 
     [ObservableProperty]
@@ -28,6 +28,9 @@ public partial class MainViewModel : ObservableObject
     public partial string NormalizeStatus { get; set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string LastNormalizeTime { get; set; } = string.Empty;
+
+    [ObservableProperty]
     public partial bool IsNormalizing { get; set; }
 
     [ObservableProperty]
@@ -36,15 +39,20 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial NormalizationResult? PendingNormalization { get; set; }
 
-    public MainViewModel(IFileService fileService, INormalizationService normalizationService, IMemoryTrackerService memoryTrackerService)
+    public MainViewModel(
+        IFileService fileService,
+        INormalizationService normalizationService,
+        IMemoryTrackerService memoryTrackerService,
+        ISettingsService settingsService)
     {
         _fileService = fileService;
         _normalizationService = normalizationService;
         _memoryTrackerService = memoryTrackerService;
+        _settingsService = settingsService;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
         _fileService.FileSaved += OnFileSaved;
 
-        _idleTimer = new Timer(TimeSpan.FromMinutes(DefaultIdleMinutes).TotalMilliseconds);
+        _idleTimer = new Timer();
         _idleTimer.AutoReset = false;
         _idleTimer.Elapsed += OnIdleElapsed;
         _lastUserActivity = DateTime.Now;
@@ -54,7 +62,14 @@ public partial class MainViewModel : ObservableObject
     {
         EditorContent = await _fileService.LoadAsync(ct);
         _fileService.Watch(OnExternalChange);
+        await ConfigureIdleTimerAsync();
         StartIdleTimer();
+    }
+
+    private async Task ConfigureIdleTimerAsync()
+    {
+        var settings = await _settingsService.LoadAsync();
+        _idleTimer.Interval = TimeSpan.FromMinutes(settings.IdleMinutesBeforeNormalize).TotalMilliseconds;
     }
 
     partial void OnEditorContentChanged(string value)
@@ -127,11 +142,13 @@ public partial class MainViewModel : ObservableObject
                 PendingNormalization = result;
                 IsShowingDiff = true;
                 NormalizeStatus = $"Aperçu: +{result.LinesAdded} -{result.LinesDeleted} ~{result.LinesModified}";
+                LastNormalizeTime = DateTime.Now.ToString("HH:mm");
             }
             else
             {
                 NormalizeStatus = "Aucune modification nécessaire";
                 PendingNormalization = result;
+                LastNormalizeTime = DateTime.Now.ToString("HH:mm");
             }
         }
         catch (Exception ex)
@@ -200,6 +217,12 @@ public partial class MainViewModel : ObservableObject
         _idleTimer.Stop();
         _fileService.CancelAutoSave();
 
+        var settings = await _settingsService.LoadAsync(ct);
+        if (settings.AutoNormalizeOnClose && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
+        {
+            await NormalizeAsync();
+        }
+
         if (_fileService is IDisposable fs)
         {
             fs.Dispose();
@@ -212,10 +235,11 @@ public partial class MainViewModel : ObservableObject
         _idleTimer.Start();
     }
 
-    private void OnIdleElapsed(object? sender, ElapsedEventArgs e)
+    private async void OnIdleElapsed(object? sender, ElapsedEventArgs e)
     {
+        var settings = await _settingsService.LoadAsync();
         var idleDuration = DateTime.Now - _lastUserActivity;
-        if (idleDuration >= TimeSpan.FromMinutes(DefaultIdleMinutes) && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
+        if (idleDuration >= TimeSpan.FromMinutes(settings.IdleMinutesBeforeNormalize) && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
         {
             _dispatcherQueue.TryEnqueue(async () =>
             {

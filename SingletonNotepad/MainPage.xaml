@@ -9,6 +9,12 @@
     mc:Ignorable="d">
 
     <Grid>
+        <Grid.Resources>
+            <ResourceDictionary>
+                <local:BoolToVisibilityConverter x:Key="BoolToVisConverter" />
+            </ResourceDictionary>
+        </Grid.Resources>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -63,8 +69,12 @@
             ScrollViewer.VerticalScrollBarVisibility="Auto"
             ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
 
+        <!-- Diff Preview Overlay -->
+        <Border x:Name="DiffOverlay" Grid.Row="2" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Visibility="Collapsed">
+            <local:InlineDiffEditor x:Name="DiffViewer" />
+        </Border>
+
         <!-- StatusBar -->
-        <Border Grid.Row="3" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="12,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />

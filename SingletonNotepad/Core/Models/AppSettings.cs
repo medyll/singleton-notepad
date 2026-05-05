@@ -54,6 +54,16 @@ public class AppSettings
     /// Anthropic API key (plain JSON in Sprint 1, DPAPI in Sprint 3).
     /// </summary>
     public string? AnthropicApiKey { get; set; }
+
+    /// <summary>
+    /// Auto-normalize on file close.
+    /// </summary>
+    public bool AutoNormalizeOnClose { get; set; } = true;
+
+    /// <summary>
+    /// Idle minutes before auto-normalization triggers.
+    /// </summary>
+    public int IdleMinutesBeforeNormalize { get; set; } = 15;
 }
 
 /// <summary>

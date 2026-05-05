@@ -27,10 +27,14 @@ public sealed partial class SettingsPage : Page
     {
         if (args.SelectedItem is NavigationViewItem item)
         {
-            AppearancePane.Visibility = item.Tag as string == "appearance"
+            var tag = item.Tag as string;
+            AppearancePane.Visibility = tag == "appearance"
                 ? Microsoft.UI.Xaml.Visibility.Visible
                 : Microsoft.UI.Xaml.Visibility.Collapsed;
-            FilesPane.Visibility = item.Tag as string == "files"
+            FilesPane.Visibility = tag == "files"
+                ? Microsoft.UI.Xaml.Visibility.Visible
+                : Microsoft.UI.Xaml.Visibility.Collapsed;
+            NormalizationPane.Visibility = tag == "normalization"
                 ? Microsoft.UI.Xaml.Visibility.Visible
                 : Microsoft.UI.Xaml.Visibility.Collapsed;
         }
