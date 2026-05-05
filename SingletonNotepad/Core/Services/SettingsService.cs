@@ -4,7 +4,7 @@ using SingletonNotepad.Core.Models;
 namespace SingletonNotepad.Core.Services;
 
 /// <summary>
-/// Stub implementation — full implementation in S1-03.
+/// Persists and retrieves application settings as JSON in %LocalAppData%\SingletonNotepad\settings.json.
 /// </summary>
 public class SettingsService : ISettingsService
 {
@@ -14,15 +14,42 @@ public class SettingsService : ISettingsService
         PropertyNameCaseInsensitive = true,
     };
 
-    public Task<AppSettings> LoadAsync(CancellationToken ct = default)
+    private readonly string _settingsPath;
+
+    public SettingsService()
     {
-        // Stub: return defaults. Full impl in S1-03.
-        return Task.FromResult(new AppSettings());
+        var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+        var settingsDir = Path.Combine(localAppData, "SingletonNotepad");
+        _settingsPath = Path.Combine(settingsDir, "settings.json");
     }
 
-    public Task SaveAsync(AppSettings settings, CancellationToken ct = default)
+    public async Task<AppSettings> LoadAsync(CancellationToken ct = default)
     {
-        // Stub: no-op. Full impl in S1-03.
-        return Task.CompletedTask;
+        if (!File.Exists(_settingsPath))
+        {
+            return new AppSettings();
+        }
+
+        try
+        {
+            var json = await File.ReadAllTextAsync(_settingsPath, ct);
+            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+        }
+        catch
+        {
+            return new AppSettings();
+        }
+    }
+
+    public async Task SaveAsync(AppSettings settings, CancellationToken ct = default)
+    {
+        var directory = Path.GetDirectoryName(_settingsPath);
+        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+        {
+            Directory.CreateDirectory(directory);
+        }
+
+        var json = JsonSerializer.Serialize(settings, JsonOptions);
+        await File.WriteAllTextAsync(_settingsPath, json, ct);
     }
 }

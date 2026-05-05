@@ -1,41 +1,34 @@
-# Singleton Notepad — Project Status
+# BMAD Status — singleton-notepad
 
-**Last updated:** 2026-05-05
-**Phase:** Sprint 1 — MVP Foundation
-**Overall:** NOT STARTED — clean reset (all code deleted 2026-05-05)
-
----
-
-## Environment
-
-| Item | Value |
-|------|-------|
-| OS | Windows 11 Pro 10.0.26220 |
-| IDE | Visual Studio 2026 |
-| Runtime | .NET 10 |
-| SDK | Windows App SDK 2.0.1 |
-| Solution format | `.slnx` (VS 2026 native) |
-| Build command | `dotnet build -p:Platform=x64` |
-
----
-
-## Sprint 1 Stories
-
-| Story | Title | Status | Tests |
-|-------|-------|--------|-------|
-| S1-01 | Scaffold WinUI3 project + DI + MVVM wiring | pending | - |
-| S1-02 | FileService (load, save, auto-save debounce, watch) | pending | - |
-| S1-03 | SettingsService (JSON persistence in %LocalAppData%) | pending | - |
-| S1-04 | MonitorHelper + window positioning (DisplayArea API) | pending | - |
-| S1-05 | Single-instance guard (named Mutex + P/Invoke) | pending | - |
-| S1-06 | MainView shell (MenuBar + CommandBar + Editor + StatusBar) | pending | - |
-| S1-07 | SettingsView shell (NavigationView left panes) | pending | - |
-| S1-08 | Unit tests for FileService + SettingsService | pending | - |
-
----
+**Phase:** development · **Progress:** 10% · **Last Updated:** 2026-05-05
 
 ## Next Action
+**Implement S1-02:** FileService + auto-create + auto-save (2s debounce)
 
-Start S1-01: scaffold WinUI3 project from `dotnet new winui`, rename FreshRef → SingletonNotepad, wire DI.
+## Sprint 1 — MVP Foundation (in_progress)
 
-See `README.md` for mandatory build constraints before starting.
+| Story | Status |
+|-------|--------|
+| S1-01: Scaffold WinUI 3 + DI + MVVM + AppInstance single-instance | ✅ done |
+| S1-02: FileService + auto-create + auto-save (2s debounce) | 🔄 next |
+| S1-03: SettingsService (LocalSettings + PasswordVault for API keys) | ⬜ pending |
+| S1-04: MainWindow AppWindow positioning (DisplayArea, primary monitor) | ⬜ pending |
+| S1-05: MainPage shell: MenuBar + CommandBar + Editor + StatusBar | ⬜ pending |
+| S1-06: SettingsPage shell: NavigationView + Apparence/Fichiers panes | ⬜ pending |
+| S1-07: Unit tests: FileService + SettingsService | ⬜ pending |
+
+## Stack Migration
+- **From:** Avalonia 11
+- **To:** WinUI 3 (Windows App SDK 1.7)
+- **Reason:** Native Win11 Fluent UX. Previous Avalonia code deleted. Clean restart.
+
+## 3 Dimensions
+
+### Marketing
+A minimalist Windows 11 notepad — one file, zero friction, LLM-powered normalization.
+
+### Product
+WinUI 3 single-file Markdown editor with auto-save, settings, and LLM reorganization.
+
+### Far Vision
+The last note-taking app you'll ever need — one file, self-organizing, always in sync.

@@ -1,12 +1,12 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 5
-next_action: "Implement S1-01: WinUI 3 scaffold + DI + AppInstance"
+progress: 10
+next_action: "Implement S1-02: FileService + auto-create + auto-save (2s debounce)"
 next_command: "bmad dev"
 next_role: "developer"
 active_role: "developer"
-last_updated: "2026-05-04"
+last_updated: "2026-05-05"
 
 stack_migration:
   from: "Avalonia 11"
@@ -47,11 +47,11 @@ artifacts:
 sprints:
   - id: S1
     name: "MVP Foundation"
-    status: not_started
+    status: in_progress
     stories:
       - id: S1-01
         title: "Scaffold WinUI 3 + DI + MVVM + AppInstance single-instance"
-        status: not_started
+        status: done
       - id: S1-02
         title: "FileService + auto-create + auto-save (2s debounce)"
         status: not_started

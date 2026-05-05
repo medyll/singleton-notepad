@@ -39,4 +39,9 @@ public interface IFileService
     /// Event raised after a successful save.
     /// </summary>
     event Action? FileSaved;
+
+    /// <summary>
+    /// Event raised when an external change is detected by the watcher.
+    /// </summary>
+    event Action<string>? ExternalChangeDetected;
 }
