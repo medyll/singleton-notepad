@@ -1,3 +1,13 @@
+<!--
+  ⚠️ BUILD: cibler CE fichier directement, PAS la .slnx.
+  La .slnx ne propage pas -p:Platform → erreur "ProcessorArchitecture neutral".
+
+  COMMANDE CORRECTE (depuis ce dossier):
+    dotnet build SingletonNotepad.csproj -p:Platform=x64
+    dotnet test ..\SingletonNotepad.Tests\SingletonNotepad.Tests.csproj -p:Platform=x64
+
+  Même info dans: README.md · bmad/status.md · SingletonNotepad.slnx · ARCHITECTURE.md
+-->
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>

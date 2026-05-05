@@ -127,13 +127,17 @@ D:\development\singleton-notepad\
 
 ## Build
 
-```bash
-# Always specify platform
-dotnet build -p:Platform=x64
+> ⚠️ **Cibler le `.csproj` directement** — la `.slnx` ne propage pas `-p:Platform` et génère "ProcessorArchitecture neutral".
 
-# Tests (when test project exists)
-dotnet test -p:Platform=x64
+```bash
+# Depuis SingletonNotepad/SingletonNotepad/
+dotnet build SingletonNotepad.csproj -p:Platform=x64
+
+# Tests
+dotnet test ..\SingletonNotepad.Tests\SingletonNotepad.Tests.csproj -p:Platform=x64
 ```
+
+Même info dans : `SingletonNotepad.csproj` (commentaire haut) · `SingletonNotepad.slnx` (commentaire) · `bmad/status.md` · `bmad/artifacts/docs/ARCHITECTURE.md`
 
 ## Roadmap
 

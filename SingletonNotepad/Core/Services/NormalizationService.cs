@@ -16,7 +16,7 @@ public class NormalizationService : INormalizationService
 
     private readonly IFileService _fileService;
     private readonly ISettingsService _settingsService;
-    private readonly ILlmProvider _llmProvider;
+    private readonly ILlmProviderSelector _providerSelector;
     private readonly string _agentsFilePath;
     private readonly string _backupDir;
     private readonly string? _defaultRulesPath;
@@ -26,14 +26,14 @@ public class NormalizationService : INormalizationService
     public NormalizationService(
         IFileService fileService,
         ISettingsService settingsService,
-        ILlmProvider llmProvider,
+        ILlmProviderSelector providerSelector,
         string? agentsFilePath = null,
         string? backupDir = null,
         string? defaultRulesPath = null)
     {
         _fileService = fileService;
         _settingsService = settingsService;
-        _llmProvider = llmProvider;
+        _providerSelector = providerSelector;
         _defaultRulesPath = defaultRulesPath;
 
         var docsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -91,7 +91,7 @@ public class NormalizationService : INormalizationService
         var result = new NormalizationResult
         {
             OriginalContent = content,
-            ProviderName = _llmProvider.Name,
+            ProviderName = _providerSelector.CurrentName,
         };
 
         result.BackupPath = await BackupContentAsync(content, ct);
@@ -99,7 +99,7 @@ public class NormalizationService : INormalizationService
         var prompt = BuildPrompt(rules.Content, content);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var normalizedContent = await _llmProvider.CompleteAsync(prompt, ct);
+        var normalizedContent = await _providerSelector.Current.CompleteAsync(prompt, ct);
         sw.Stop();
 
         result.NormalizedContent = normalizedContent;

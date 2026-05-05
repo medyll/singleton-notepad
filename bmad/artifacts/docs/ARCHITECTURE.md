@@ -220,7 +220,21 @@ SingletonNotepad/
 
 ---
 
-## 6. Key Design Decisions
+## 6. Build
+
+> ⚠️ Toujours cibler le `.csproj` directement — la `.slnx` ne propage pas `-p:Platform`.
+
+```bash
+# Depuis SingletonNotepad/SingletonNotepad/
+dotnet build SingletonNotepad.csproj -p:Platform=x64
+dotnet test ..\SingletonNotepad.Tests\SingletonNotepad.Tests.csproj -p:Platform=x64
+```
+
+Même info dans : `README.md` · `SingletonNotepad.csproj` · `SingletonNotepad.slnx` · `bmad/status.md`
+
+---
+
+## 7. Key Design Decisions
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|

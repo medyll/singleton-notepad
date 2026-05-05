@@ -17,7 +17,11 @@
 
   <ItemGroup>
     <Compile Include="..\SingletonNotepad\Core\Providers\ILlmProvider.cs" Link="Core\Providers\ILlmProvider.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Providers\ILlmProviderSelector.cs" Link="Core\Providers\ILlmProviderSelector.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Providers\LlmProviderSelector.cs" Link="Core\Providers\LlmProviderSelector.cs" />
     <Compile Include="..\SingletonNotepad\Core\Providers\OllamaProvider.cs" Link="Core\Providers\OllamaProvider.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Providers\OpenAiProvider.cs" Link="Core\Providers\OpenAiProvider.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Providers\AnthropicProvider.cs" Link="Core\Providers\AnthropicProvider.cs" />
     <Compile Include="..\SingletonNotepad\Core\Models\AppSettings.cs" Link="Core\Models\AppSettings.cs" />
     <Compile Include="..\SingletonNotepad\Core\Models\NormalizationRule.cs" Link="Core\Models\NormalizationRule.cs" />
     <Compile Include="..\SingletonNotepad\Core\Models\NormalizationResult.cs" Link="Core\Models\NormalizationResult.cs" />

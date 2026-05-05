@@ -95,8 +95,11 @@ public partial class App : Application
         services.AddSingleton<INormalizationService, NormalizationService>();
         services.AddSingleton<IMemoryTrackerService, MemoryTrackerService>();
 
-        // Providers (Sprint 2)
+        // Providers (Sprint 2 + Sprint 3)
         services.AddSingleton<ILlmProvider, OllamaProvider>();
+        services.AddSingleton<OpenAiProvider>();
+        services.AddSingleton<AnthropicProvider>();
+        services.AddSingleton<ILlmProviderSelector, LlmProviderSelector>();
 
         // ViewModels
         services.AddTransient<MainViewModel>();
