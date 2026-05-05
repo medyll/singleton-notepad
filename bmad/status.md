@@ -2,15 +2,15 @@
 
 **Last updated:** 2026-05-05
 **Phase:** Development (in_progress)
-**Progress:** 74%
+**Progress:** 80%
 
 ---
 
 ## Next Action
 
-**Command:** `bmad-dev-story S2-02`
+**Command:** `bmad-dev-story S2-03`
 **Role:** Developer
-**Task:** Implement S2-02: NormalizationService
+**Task:** Implement S2-03: MemoryTrackerService
 
 ---
 
@@ -27,7 +27,7 @@
 
 ### 🔄 Sprint 2 — LLM Normalization (in_progress)
 - S2-01 ✅ ILlmProvider + OllamaProvider
-- S2-02 ⏳ NormalizationService (rules, rate-limit, diff)
+- S2-02 ✅ NormalizationService (rules, rate-limit, diff)
 - S2-03 ⏳ MemoryTrackerService (MEMORY.md)
 - S2-04 ⏳ InlineDiffEditor control (diff preview)
 - S2-05 ⏳ Normalize triggers + ViewModel wiring
@@ -45,8 +45,8 @@ FileSystemWatcher external-edit detection, versioned backups, custom rules plugi
 ## Stack
 
 - **WinUI 3** (Windows App SDK 2.0.1) · .NET 10 · C#
-- CommunityToolkit.Mvvm 8.4 · MSTest 4.0
-- Planned: DiffPlex 1.9, Markdig 3.x
+- CommunityToolkit.Mvvm 8.4 · MSTest 4.0 · DiffPlex 1.9
+- Planned: Markdig 3.x
 
 ---
 
