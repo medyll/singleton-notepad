@@ -5,34 +5,31 @@ using SingletonNotepad.Core.Services;
 
 namespace SingletonNotepad.ViewModels;
 
-/// <summary>
-/// Main editor ViewModel. Manages editor content, sync state, and normalize command.
-/// </summary>
 public partial class MainViewModel : ObservableObject
 {
     private readonly IFileService _fileService;
     private readonly DispatcherQueue _dispatcherQueue;
 
     [ObservableProperty]
-    private string _editorContent = string.Empty;
+    public partial string EditorContent { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private string _syncState = "Ready";
+    public partial string SyncState { get; set; } = "Ready";
 
     [ObservableProperty]
-    private bool _isNormalizing;
+    public partial bool IsNormalizing { get; set; }
 
     public MainViewModel(IFileService fileService)
     {
         _fileService = fileService;
         _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
-
         _fileService.FileSaved += OnFileSaved;
     }
 
     public async Task LoadContentAsync(CancellationToken ct = default)
     {
         EditorContent = await _fileService.LoadAsync(ct);
+        _fileService.Watch(OnExternalChange);
     }
 
     partial void OnEditorContentChanged(string value)
@@ -43,20 +40,60 @@ public partial class MainViewModel : ObservableObject
 
     private void OnFileSaved()
     {
-        _dispatcherQueue.TryEnqueue(() =>
-        {
-            SyncState = "Sync \u2713";
-        });
+        _dispatcherQueue.TryEnqueue(() => SyncState = "Sync ✓");
+    }
+
+    private void OnExternalChange(string newContent)
+    {
+        _dispatcherQueue.TryEnqueue(() => EditorContent = newContent);
+    }
+
+    [RelayCommand]
+    private async Task OpenAsync()
+    {
+        EditorContent = await _fileService.LoadAsync();
+    }
+
+    [RelayCommand]
+    private async Task SaveAsync()
+    {
+        _fileService.CancelAutoSave();
+        await _fileService.SaveAsync(EditorContent);
+    }
+
+    [RelayCommand]
+    private async Task ReloadAsync()
+    {
+        EditorContent = await _fileService.LoadAsync();
+        SyncState = "Reloaded";
     }
 
     [RelayCommand]
     private async Task NormalizeAsync()
     {
-        IsNormalizing = false;
+        IsNormalizing = true;
+        try
+        {
+            // Stub: Sprint 2
+            await Task.Delay(100);
+        }
+        finally
+        {
+            IsNormalizing = false;
+        }
     }
 
     [RelayCommand]
-    private async Task CopyContentAsync()
+    private void CopyContent()
     {
+        var dataPackage = new Windows.ApplicationModel.DataTransfer.DataPackage();
+        dataPackage.SetText(EditorContent);
+        Windows.ApplicationModel.DataTransfer.Clipboard.SetContent(dataPackage);
+    }
+
+    [RelayCommand]
+    private void OpenSettings()
+    {
+        // Stub: navigate to SettingsPage — wired in S1-06
     }
 }

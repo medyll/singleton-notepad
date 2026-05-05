@@ -1,8 +1,8 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 10
-next_action: "Implement S1-02: FileService + auto-create + auto-save (2s debounce)"
+progress: 45
+next_action: "Implement S1-05: MainPage shell: MenuBar + CommandBar + Editor + StatusBar"
 next_command: "bmad dev"
 next_role: "developer"
 active_role: "developer"
@@ -54,13 +54,13 @@ sprints:
         status: done
       - id: S1-02
         title: "FileService + auto-create + auto-save (2s debounce)"
-        status: not_started
+        status: done
       - id: S1-03
         title: "SettingsService (LocalSettings + PasswordVault for API keys)"
-        status: not_started
+        status: done
       - id: S1-04
         title: "MainWindow AppWindow positioning (DisplayArea, primary monitor)"
-        status: not_started
+        status: done
       - id: S1-05
         title: "MainPage shell: MenuBar + CommandBar + Editor + StatusBar"
         status: not_started

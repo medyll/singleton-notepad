@@ -4,24 +4,21 @@ using SingletonNotepad.Core.Services;
 
 namespace SingletonNotepad.ViewModels;
 
-/// <summary>
-/// Settings ViewModel. Manages all settings panes.
-/// </summary>
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
 
     [ObservableProperty]
-    private string _theme = "System";
+    public partial string Theme { get; set; } = "System";
 
     [ObservableProperty]
-    private string _notesFilePath = string.Empty;
+    public partial string NotesFilePath { get; set; } = string.Empty;
 
     [ObservableProperty]
-    private bool _autoSave = true;
+    public partial bool AutoSave { get; set; } = true;
 
     [ObservableProperty]
-    private int _autoSaveDelayMs = 2000;
+    public partial int AutoSaveDelayMs { get; set; } = 2000;
 
     public SettingsViewModel(ISettingsService settingsService)
     {

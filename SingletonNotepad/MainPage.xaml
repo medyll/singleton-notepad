@@ -9,10 +9,73 @@
     mc:Ignorable="d">
 
     <Grid>
-        <TextBlock
-            Text="{x:Bind ViewModel.EditorContent, Mode=OneWay}"
-            HorizontalAlignment="Center"
-            VerticalAlignment="Center"
-            Style="{StaticResource TitleTextBlockStyle}" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- MenuBar -->
+        <MenuBar Grid.Row="0" x:Name="MainMenuBar">
+            <MenuBarItem Title="Édition">
+                <MenuBarItem.KeyboardAccelerators>
+                    <KeyboardAccelerator Key="O" Modifiers="Control" />
+                </MenuBarItem.KeyboardAccelerators>
+                <MenuFlyoutItem Text="Ouvrir" Command="{x:Bind ViewModel.OpenCommand}" />
+                <MenuFlyoutItem Text="Enregistrer" Command="{x:Bind ViewModel.SaveCommand}">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="S" Modifiers="Control" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
+                <MenuFlyoutSeparator />
+                <MenuFlyoutItem Text="Copier" Command="{x:Bind ViewModel.CopyContentCommand}" />
+            </MenuBarItem>
+            <MenuBarItem Title="Affichage">
+                <MenuFlyoutItem Text="Recharger" Command="{x:Bind ViewModel.ReloadCommand}" />
+            </MenuBarItem>
+            <MenuBarItem Title="Paramètres">
+                <MenuFlyoutItem Text="Paramètres" Command="{x:Bind ViewModel.OpenSettingsCommand}" />
+            </MenuBarItem>
+        </MenuBar>
+
+        <!-- CommandBar -->
+        <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
+            <AppBarButton Icon="OpenFile" Label="Ouvrir" Command="{x:Bind ViewModel.OpenCommand}" />
+            <AppBarButton Icon="Save" Label="Enregistrer" Command="{x:Bind ViewModel.SaveCommand}" />
+            <AppBarSeparator />
+            <AppBarButton Icon="Page2" Label="Normaliser" Command="{x:Bind ViewModel.NormalizeCommand}" />
+            <AppBarButton Icon="Copy" Label="Copier" Command="{x:Bind ViewModel.CopyContentCommand}" />
+        </CommandBar>
+
+        <!-- Editor -->
+        <TextBox
+            Grid.Row="2"
+            x:Name="EditorTextBox"
+            Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+            AcceptsReturn="True"
+            TextWrapping="Wrap"
+            FontFamily="Cascadia Mono, Consolas, monospace"
+            FontSize="14"
+            Padding="16"
+            BorderThickness="0"
+            ScrollViewer.VerticalScrollBarVisibility="Auto"
+            ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+        <!-- StatusBar -->
+        <Border Grid.Row="3" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,1,0,0" Padding="12,6">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="UTF-8" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Grid.Column="2" Text="{x:Bind ViewModel.SyncState, Mode=OneWay}" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="16,0" />
+                <TextBlock Grid.Column="3" Text="Ligne 1, Col 1" Style="{ThemeResource CaptionTextBlockStyle}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Grid>
+        </Border>
     </Grid>
 </Page>
