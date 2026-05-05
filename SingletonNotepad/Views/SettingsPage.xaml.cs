@@ -35,4 +35,13 @@ public sealed partial class SettingsPage : Page
                 : Microsoft.UI.Xaml.Visibility.Collapsed;
         }
     }
+
+    private void OnBackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)
+    {
+        var frame = MainWindow.GetRootFrame();
+        if (frame?.CanGoBack == true)
+        {
+            frame.GoBack();
+        }
+    }
 }

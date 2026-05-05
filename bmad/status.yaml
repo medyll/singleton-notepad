@@ -2,11 +2,15 @@
 project: singleton-notepad
 phase: development
 progress: 65
-next_action: "Sprint 1 complete — ready for Sprint 2: Ollama provider + NormalizationService"
-next_command: "bmad-sprint 2"
-next_role: "architect"
-active_role: "developer"
+next_action: "Sprint 2 planned — LLM Normalization: 7 stories ready for Dev"
+next_command: "bmad-dev-story S2-01"
+next_role: "developer"
+active_role: "architect"
 last_updated: "2026-05-05"
+
+marketing: "Single-file Markdown notepad with LLM normalization. Sprint 1 MVP complete (WinUI 3, file I/O, window persist, settings). Sprint 2 adds Ollama-powered content normalization."
+product: "S2 builds normalization pipeline: ILlmProvider strategy, NormalizationService with rules/rate-limit/diff, MemoryTracker, InlineDiffEditor control, 3 trigger modes."
+far_vision: "Phase 3 (Sprint 3-4): Markdown syntax highlighting, OpenAI/Anthropic providers, DPAPI key storage, FileSystemWatcher external-edit, cloud sync."
 
 stack_migration:
   from: "Avalonia 11"
@@ -47,7 +51,7 @@ artifacts:
 sprints:
   - id: S1
     name: "MVP Foundation"
-    status: in_progress
+    status: complete
     stories:
       - id: S1-01
         title: "Scaffold WinUI 3 + DI + MVVM + AppInstance single-instance"
@@ -70,3 +74,28 @@ sprints:
       - id: S1-07
         title: "Unit tests: FileService + SettingsService"
         status: done
+  - id: S2
+    name: "LLM Normalization"
+    status: in_progress
+    stories:
+      - id: S2-01
+        title: "ILlmProvider + OllamaProvider"
+        status: pending
+      - id: S2-02
+        title: "NormalizationService (rules, rate-limit, diff)"
+        status: pending
+      - id: S2-03
+        title: "MemoryTrackerService (MEMORY.md)"
+        status: pending
+      - id: S2-04
+        title: "InlineDiffEditor control (diff preview)"
+        status: pending
+      - id: S2-05
+        title: "Normalize triggers + ViewModel wiring"
+        status: pending
+      - id: S2-06
+        title: "DefaultRules.md + AGENTS.md auto-create"
+        status: pending
+      - id: S2-07
+        title: "Unit tests for Sprint 2 services"
+        status: pending

@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using SingletonNotepad.Core.Helpers;
 using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Services;
@@ -47,6 +48,14 @@ public sealed partial class MainWindow : Window
     public void NavigateToPage(Type pageType)
     {
         RootFrame.Navigate(pageType);
+    }
+
+    /// <summary>
+    /// Get the root frame for navigation operations.
+    /// </summary>
+    public static Frame? GetRootFrame()
+    {
+        return (App.Window as MainWindow)?.RootFrame;
     }
 
     private async Task RestoreWindowPositionAsync()

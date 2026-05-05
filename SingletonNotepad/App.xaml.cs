@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using SingletonNotepad.Core.Providers;
 using SingletonNotepad.Core.Services;
 using SingletonNotepad.ViewModels;
 
@@ -83,9 +84,15 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
+        // HTTP client
+        services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(35) });
+
         // Services (Sprint 1)
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IFileService, FileService>();
+
+        // Providers (Sprint 2)
+        services.AddSingleton<ILlmProvider, OllamaProvider>();
 
         // ViewModels
         services.AddTransient<MainViewModel>();

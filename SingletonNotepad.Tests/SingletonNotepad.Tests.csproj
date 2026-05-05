@@ -15,6 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\SingletonNotepad\Core\Providers\ILlmProvider.cs" Link="Core\Providers\ILlmProvider.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Providers\OllamaProvider.cs" Link="Core\Providers\OllamaProvider.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Models\AppSettings.cs" Link="Core\Models\AppSettings.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\ISettingsService.cs" Link="Core\Services\ISettingsService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\SettingsService.cs" Link="Core\Services\SettingsService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\IFileService.cs" Link="Core\Services\IFileService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\FileService.cs" Link="Core\Services\FileService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 

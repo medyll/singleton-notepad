@@ -10,10 +10,11 @@
 
     <NavigationView
         x:Name="SettingsNavView"
-        IsBackButtonVisible="Collapsed"
+        IsBackButtonVisible="Auto"
         IsSettingsVisible="False"
         PaneDisplayMode="Left"
         SelectionChanged="OnSelectionChanged"
+        BackRequested="OnBackRequested"
         Header="Paramètres">
 
         <NavigationView.MenuItems>

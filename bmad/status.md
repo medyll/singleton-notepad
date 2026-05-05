@@ -7,20 +7,29 @@
 
 ## Current State
 
-**Active Sprint:** S1 — MVP Foundation (in progress)  
-**Next Action:** Sprint 1 complete — ready for Sprint 2: Ollama provider + NormalizationService
+**Active Sprint:** S1 — MVP Foundation (complete)  
+**Next Action:** Sprint 1 complete — Navigation fix applied, ready for Sprint 2
+
+---
+
+## Bug Fixes
+
+| Issue | Fix | Status |
+|-------|-----|--------|
+| SettingsPage: no back navigation | Added NavigationView.BackRequested handler + MainWindow.GetRootFrame() | ✅ Fixed |
+| NETSDK1198 warning (pubxml) | Cosmetic — missing publish profile, not blocking | ⚠️ Ignored |
 
 ---
 
 ## Sprint Progress
 
-### S1 — MVP Foundation
+### S1 — MVP Foundation ✅ COMPLETE
 
 | ID | Title | Status |
 |----|-------|--------|
-| S1-01 | Scaffold WinUI 3 + DI + MVVM + AppInstance single-instance | ✅ Done |
+| S1-01 | Scaffold WinUI 3 + DI + MVVM + named Mutex single-instance | ✅ Done |
 | S1-02 | FileService + auto-create + auto-save (2s debounce) | ✅ Done |
-| S1-03 | SettingsService (LocalSettings + PasswordVault for API keys) | ✅ Done |
+| S1-03 | SettingsService (JSON in %LocalAppData%\SingletonNotepad\settings.json) | ✅ Done |
 | S1-04 | MainWindow AppWindow positioning (DisplayArea, primary monitor) | ✅ Done |
 | S1-05 | MainPage shell: MenuBar + CommandBar + Editor + StatusBar | ✅ Done |
 | S1-06 | SettingsPage shell: NavigationView + Apparence/Fichiers panes | ✅ Done |
