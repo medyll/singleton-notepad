@@ -9,13 +9,13 @@
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  Avalonia 11 (Cross-platform Desktop)                   │
+│  WinUI 3 — Windows App SDK 1.7 (Packaged MSIX)          │
 │                                                         │
 │  ┌──────────┐   ┌──────────────────────────────────┐   │
-│  │ Program  │   │  Views (AXAML + ViewModels)       │   │
-│  │ .cs      │──▶│  MainView / SettingsView          │   │
-│  │ App boot │   │  Pages: Apparence/Fichiers        │   │
-│  │ mutex    │   └──────────┬───────────────────────┘   │
+│  │ App.xaml │   │  Views (XAML + ViewModels)        │   │
+│  │ .cs      │──▶│  MainPage / SettingsPage          │   │
+│  │ DI boot  │   │  Pages: Apparence/Fichiers        │   │
+│  │ AppInst  │   └──────────┬───────────────────────┘   │
 │  └──────────┘              │ binds                      │
 │               ┌────────────▼───────────────────────┐   │
 │               │  Core / Services (interfaces)       │   │
@@ -45,20 +45,15 @@
 
 ## 2. Component Breakdown
 
-### Program.cs — Entry Point
-- Standard Avalonia app builder pattern
-- Configures Fluent theme and platform detection
-- Starts with `ClassicDesktopStyleApplicationLifetime`
+### App.xaml.cs — Bootstrap & DI
+- Registers all services via `Microsoft.Extensions.DependencyInjection`
+- Single-instance via `AppInstance.FindOrRegisterForKey("SingletonNotepad")`
+- On second launch: activates existing window via `AppInstance.RedirectActivationTo()`
 
-### App.axaml.cs — Bootstrap & DI
-- Registers all services in the DI container (`Microsoft.Extensions.DependencyInjection`)
-- Enforces single-instance via named mutex
-- On second launch: brings existing window to front and exits
-
-### MainWindow.axaml.cs — Window Lifecycle
-- On `Opened`: reads `ISettingsService` for saved X/Y/W/H, validates position is on primary monitor
-- On `Closing`: persists current bounds
-- `MonitorHelper` encapsulates position validation — isolated, testable
+### MainWindow.xaml.cs — Window Lifecycle
+- On `Activated`: reads `ISettingsService` for saved X/Y/W/H, positions via `AppWindow.Move()` / `AppWindow.Resize()`
+- On `Closed`: persists current bounds via `AppWindow.Position` / `AppWindow.Size`
+- `MonitorHelper` uses `DisplayArea.GetFromWindowId(windowId, DisplayAreaFallback.Primary)` — isolated, testable
 
 ### IFileService / FileService
 - Single responsibility: read, write, watch one file.
@@ -138,9 +133,9 @@ SettingsViewModel property change
 
 ## 4. Threading Model
 
-- UI thread: all Avalonia controls, ViewModel property changes (via `Avalonia.Threading.Dispatcher`).
+- UI thread: all WinUI 3 controls, ViewModel property changes via `DispatcherQueue`.
 - Background: file I/O (async/await), LLM HTTP call (async/await), `FileSystemWatcher` callbacks.
-- Rule: services never touch `Dispatcher` — ViewModels marshal results back via `Dispatcher.UIThread.Post`.
+- Rule: services never touch `DispatcherQueue` — ViewModels marshal results back via `_dispatcherQueue.TryEnqueue()`.
 
 ---
 
@@ -149,10 +144,13 @@ SettingsViewModel property change
 ```
 SingletonNotepad/
 ├── SingletonNotepad.sln
-├── SingletonNotepad/                       # main project (Avalonia)
-│   ├── Program.cs                          # Entry point
-│   ├── App.axaml(.cs)
-│   ├── MainWindow.axaml(.cs)
+├── SingletonNotepad/                       # main project (WinUI 3)
+│   ├── SingletonNotepad.csproj
+│   ├── App.xaml(.cs)                       # DI bootstrap, AppInstance single-instance
+│   ├── MainWindow.xaml(.cs)               # AppWindow positioning, DispatcherQueue
+│   ├── Package.appxmanifest
+│   ├── app.manifest
+│   ├── Assets/
 │   ├── Core/
 │   │   ├── Services/
 │   │   │   ├── IFileService.cs
@@ -175,18 +173,20 @@ SingletonNotepad/
 │   │   │   ├── ChangeRecord.cs
 │   │   │   └── LlmProviderConfig.cs
 │   │   └── Helpers/
-│   │       └── MonitorHelper.cs
+│   │       └── MonitorHelper.cs           # DisplayArea API
 │   ├── ViewModels/
 │   │   ├── MainViewModel.cs
 │   │   └── SettingsViewModel.cs
 │   ├── Views/
-│   │   ├── MainView.axaml(.cs)
-│   │   ├── SettingsView.axaml(.cs)
-│   │   ├── ApparenceSettingsPage.axaml(.cs)
-│   │   └── FichiersSettingsPage.axaml(.cs)
+│   │   ├── MainPage.xaml(.cs)
+│   │   ├── SettingsPage.xaml(.cs)
+│   │   └── Controls/
+│   │       ├── MarkdownEditor.xaml(.cs)
+│   │       └── InlineDiffEditor.xaml(.cs)
 │   └── Resources/
 │       └── DefaultRules.md
-└── SingletonNotepad.Tests/                 # MSTest
+└── SingletonNotepad.Tests/                 # MSTest (net8.0-windows, UseWinUI=true)
+    ├── SingletonNotepad.Tests.csproj
     ├── FileServiceTests.cs
     ├── SettingsServiceTests.cs
     ├── NormalizationServiceTests.cs        # mocked ILlmProvider
@@ -199,14 +199,15 @@ SingletonNotepad/
 
 | Decision | Choice | Rationale |
 |----------|--------|-----------|
-| DI container | `Microsoft.Extensions.DependencyInjection` | Standard, no extra dep, cross-platform |
-| Single-instance | Named mutex | Simple, works across all platforms |
+| DI container | `Microsoft.Extensions.DependencyInjection` | Standard, no extra dep |
+| Single-instance | `AppInstance.FindOrRegisterForKey()` | WinUI 3 native; handles activation redirect cleanly |
 | LLM abstraction | Strategy via `ILlmProvider` | Swap providers without touching NormalizationService |
-| API key storage | Encrypted JSON file | Cross-platform, secure enough for local apps |
+| API key storage | `PasswordVault` (Windows Credential Locker) | Secure, per-user, native Win32 |
 | Diff library | DiffPlex | Lightweight, line + word diff |
 | Rate limit | In-service hash check (not UI) | Prevents duplicate normalize on identical content |
 | Memory writes | MemoryTrackerService, called by ViewModel | Services stay independent; ViewModel controls the write timing |
-| UI framework | Avalonia 11 | Cross-platform (Windows, Linux, macOS), stable, Fluent theme |
+| UI framework | WinUI 3 — Windows App SDK 1.7 | Native Win11 Fluent, no cross-platform overhead |
+| Settings storage | `ApplicationData.Current.LocalSettings` | Built-in, packaged-app scoped, no JSON needed for primitives |
 
 ---
 
@@ -222,11 +223,11 @@ SingletonNotepad/
 
 | Story | Architecture note |
 |-------|------------------|
-| S1-01 | Wire DI in `App.axaml.cs`; register all interfaces. Use mutex for single-instance. |
+| S1-01 | Wire DI in `App.xaml.cs`; register all interfaces. `AppInstance.FindOrRegisterForKey("SingletonNotepad")` for single-instance. |
 | S1-02 | `FileService` exposes `LoadAsync`, `SaveAsync`, `WatchAsync`(returns `IDisposable`). Debounce in service, not ViewModel. |
-| S1-03 | `SettingsService` typed: `Get<T>(key, defaultValue)` / `Set<T>(key, value)`. JSON-based storage. |
-| S1-04 | `MonitorHelper.IsOnPrimaryMonitor(x, y)` → pure static, easily unit-testable with mock coords. |
-| S1-05 | `Program.cs` creates mutex in `Main()` before `BuildAvaloniaApp()`. |
-| S1-06 | `MainViewModel.SyncState` enum: `Saved / Unsaved / Saving`. StatusBar binds to this. |
-| S1-07 | `SettingsView` uses `TabControl` with tabs for sub-pages (Apparence, Fichiers). |
-| S1-08 | Tests use `[TestInitialize]` to create temp files; `[TestCleanup]` removes them. |
+| S1-03 | `SettingsService`: `ApplicationData.Current.LocalSettings` for primitives; `PasswordVault` for API keys. |
+| S1-04 | `MonitorHelper.GetPrimaryDisplayArea(windowId)` → wraps `DisplayArea.GetFromWindowId()`. Pure logic, unit-testable. |
+| S1-05 | `AppInstance` redirect handled in `App.xaml.cs` `OnActivated`. No separate Program.cs needed. |
+| S1-06 | `MainViewModel.SyncState` enum: `Saved / Unsaved / Saving`. StatusBar binds to this via `DispatcherQueue`. |
+| S1-07 | `SettingsPage` uses `NavigationView` (Left mode, compact) with `Apparence` and `Fichiers` items. |
+| S1-08 | Tests use `[TestInitialize]` to create temp files; `[TestCleanup]` removes them. Test project: `net8.0-windows10.0.19041.0`, `UseWinUI=true`. |

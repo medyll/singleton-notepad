@@ -47,16 +47,16 @@ Tagline: *"One place for all notes."*
 ## Context
 
 ### Stack (locked)
-- **Framework**: Avalonia 11 (cross-platform desktop).
-- **Language**: C#.
-- **MVVM**: CommunityToolkit.Mvvm 8.2.2.
+- **Framework**: WinUI 3 (Windows App SDK 1.7, packaged MSIX).
+- **Language**: C# .NET 8.
+- **MVVM**: CommunityToolkit.Mvvm 8.3.
 - **Markdown parsing**: Markdig 3.x.
 - **Diff**: DiffPlex 1.9.
-- **Tests**: MSTest + Playwright.
+- **Tests**: MSTest.
 - **Capabilities**: `internetClient`, `broadFileSystemAccess`.
 
 ### Architecture
-Layered Core/Views split: `Core/Services/` (file, normalization, memory tracker, settings), `Core/Models/`, `Core/Helpers/` (monitor, path), `Views/` (Main, Settings, Controls), `Resources/DefaultRules.md`.
+Layered Core/Views split: `Core/Services/` (file, normalization, memory tracker, settings), `Core/Models/`, `Core/Helpers/` (monitor, path), `ViewModels/`, `Views/` (Main, Settings, Controls), `Resources/DefaultRules.md`. WinUI 3 XAML files use `.xaml` extension.
 
 ### Non-functional
 - Cold start < 2s.
@@ -78,4 +78,4 @@ Layered Core/Views split: `Core/Services/` (file, normalization, memory tracker,
 4. ⚠ Markdown image handling — inline base64 or external links only?
 5. ⚠ Export/Import path for migration to other note apps?
 6. ⚠ API key storage — plain `LocalSettings` or DPAPI-encrypted? (spec ambiguous: "chiffrées si sensible")
-7. ✅ Spec mentions `MainWindow.axaml.cs` and `App.axaml.cs` — Avalonia project created successfully.
+7. ✅ Stack switched to WinUI 3 (Windows App SDK 1.7). Files use `.xaml`. Project re-initialized 2026-05-04.
