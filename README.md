@@ -28,7 +28,11 @@ A minimalist Windows 11 desktop app for rapid note-taking, anchored on a single 
 
 ## Current Status
 
-**Phase:** Sprint 1 — MVP Foundation — **not started** (clean reset 2026-05-05)
+**Phase:** Sprint 2 — LLM Normalization — **in progress** (74%)
+
+**Completed:** Sprint 1 (MVP: file I/O, settings, window persistence, single-instance, UI shells) + S2-01 (ILlmProvider + OllamaProvider). 16 tests passing.
+
+**Next:** S2-02 — NormalizationService (rules loader, rate-limit, diff computation).
 
 ## ⚠️ Critical Build Constraints
 

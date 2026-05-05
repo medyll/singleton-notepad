@@ -1,69 +1,59 @@
-# BMAD Status Report — singleton-notepad
+# BMAD Status — singleton-notepad
 
-**Generated:** 2026-05-05  
-**Phase:** Development (65% complete)
-
----
-
-## Current State
-
-**Active Sprint:** S1 — MVP Foundation (complete)  
-**Next Action:** Sprint 1 complete — Navigation fix applied, ready for Sprint 2
+**Last updated:** 2026-05-05
+**Phase:** Development (in_progress)
+**Progress:** 74%
 
 ---
 
-## Bug Fixes
+## Next Action
 
-| Issue | Fix | Status |
-|-------|-----|--------|
-| SettingsPage: no back navigation | Added NavigationView.BackRequested handler + MainWindow.GetRootFrame() | ✅ Fixed |
-| NETSDK1198 warning (pubxml) | Cosmetic — missing publish profile, not blocking | ⚠️ Ignored |
+**Command:** `bmad-dev-story S2-02`
+**Role:** Developer
+**Task:** Implement S2-02: NormalizationService
 
 ---
 
 ## Sprint Progress
 
-### S1 — MVP Foundation ✅ COMPLETE
+### ✅ Sprint 1 — MVP Foundation (complete)
+- S1-01 ✅ Scaffold WinUI 3 + DI + MVVM + AppInstance single-instance
+- S1-02 ✅ FileService + auto-create + auto-save (2s debounce)
+- S1-03 ✅ SettingsService (LocalSettings + PasswordVault for API keys)
+- S1-04 ✅ MainWindow AppWindow positioning (DisplayArea, primary monitor)
+- S1-05 ✅ MainPage shell: MenuBar + CommandBar + Editor + StatusBar
+- S1-06 ✅ SettingsPage shell: NavigationView + Apparence/Fichiers panes
+- S1-07 ✅ Unit tests: FileService + SettingsService
 
-| ID | Title | Status |
-|----|-------|--------|
-| S1-01 | Scaffold WinUI 3 + DI + MVVM + named Mutex single-instance | ✅ Done |
-| S1-02 | FileService + auto-create + auto-save (2s debounce) | ✅ Done |
-| S1-03 | SettingsService (JSON in %LocalAppData%\SingletonNotepad\settings.json) | ✅ Done |
-| S1-04 | MainWindow AppWindow positioning (DisplayArea, primary monitor) | ✅ Done |
-| S1-05 | MainPage shell: MenuBar + CommandBar + Editor + StatusBar | ✅ Done |
-| S1-06 | SettingsPage shell: NavigationView + Apparence/Fichiers panes | ✅ Done |
-| S1-07 | Unit tests: FileService + SettingsService | ✅ Done |
+### 🔄 Sprint 2 — LLM Normalization (in_progress)
+- S2-01 ✅ ILlmProvider + OllamaProvider
+- S2-02 ⏳ NormalizationService (rules, rate-limit, diff)
+- S2-03 ⏳ MemoryTrackerService (MEMORY.md)
+- S2-04 ⏳ InlineDiffEditor control (diff preview)
+- S2-05 ⏳ Normalize triggers + ViewModel wiring
+- S2-06 ⏳ DefaultRules.md + AGENTS.md auto-create
+- S2-07 ⏳ Unit tests for Sprint 2 services
 
----
+### ⏳ Sprint 3 — Polish (upcoming)
+Markdown syntax highlighting, full keyboard map, toast notifications, OpenAI + Anthropic providers, DPAPI key storage, theme switcher.
 
-## Test Results
-
-**9/9 tests passing**
-
-- SettingsServiceTests: 4 tests (Load defaults, RoundTrip, CreateDirectory, Corrupt JSON)
-- FileServiceTests: 5 tests (Load creates file, Save writes, Load reads, Retry logic, Save writes)
-
----
-
-## Technical Summary
-
-**Stack:** WinUI 3 + Windows App SDK 2.0.1, .NET 10  
-**Architecture:** MVVM with CommunityToolkit.Mvvm, DI via Microsoft.Extensions.DependencyInjection  
-**Single-instance:** Named mutex + P/Invoke FindWindow/SetForegroundWindow  
-**Settings:** JSON file in %LocalAppData%\SingletonNotepad\settings.json  
-**Auto-save:** 2s debounce via System.Timers.Timer  
-**File retry:** 3 attempts with exponential backoff (200/400/800ms)
+### ⏳ Sprint 4 — Advanced (upcoming)
+FileSystemWatcher external-edit detection, versioned backups, custom rules plugins, optional cloud sync.
 
 ---
 
-## Next Steps (Sprint 2)
+## Stack
 
-1. **ILlmProvider interface** + OllamaProvider implementation
-2. **NormalizationService** with rate limiting and size checks
-3. **Normalization UI** in MainPage (diff preview, apply/cancel)
-4. **MemoryTrackerService** for change history
+- **WinUI 3** (Windows App SDK 2.0.1) · .NET 10 · C#
+- CommunityToolkit.Mvvm 8.4 · MSTest 4.0
+- Planned: DiffPlex 1.9, Markdig 3.x
 
 ---
 
-*Report generated automatically by bmad-method*
+## Summary
+
+**Marketing:** Single-file Markdown notepad with LLM normalization. Sprint 1 MVP complete (WinUI 3, file I/O, window persist, settings). Sprint 2 adds Ollama-powered content normalization.
+
+**Product:** S2 builds normalization pipeline: ILlmProvider strategy, NormalizationService with rules/rate-limit/diff, MemoryTracker, InlineDiffEditor control, 3 trigger modes.
+
+**Vision:** Phase 3 (Sprint 3-4): Markdown syntax highlighting, OpenAI/Anthropic providers, DPAPI key storage, FileSystemWatcher external-edit, cloud sync.
