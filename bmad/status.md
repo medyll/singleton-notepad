@@ -2,15 +2,15 @@
 
 **Last updated:** 2026-05-05
 **Phase:** Development (in_progress)
-**Progress:** 85%
+**Progress:** 88%
 
 ---
 
 ## Next Action
 
-**Command:** `bmad-dev-story S2-04`
+**Command:** `bmad-dev-story S2-05`
 **Role:** Developer
-**Task:** Implement S2-04: InlineDiffEditor control
+**Task:** Implement S2-05: Normalize triggers + ViewModel wiring
 
 ---
 
@@ -29,7 +29,7 @@
 - S2-01 ✅ ILlmProvider + OllamaProvider
 - S2-02 ✅ NormalizationService (rules, rate-limit, diff)
 - S2-03 ✅ MemoryTrackerService (MEMORY.md)
-- S2-04 ⏳ InlineDiffEditor control (diff preview)
+- S2-04 ✅ InlineDiffEditor control (diff preview)
 - S2-05 ⏳ Normalize triggers + ViewModel wiring
 - S2-06 ⏳ DefaultRules.md + AGENTS.md auto-create
 - S2-07 ⏳ Unit tests for Sprint 2 services
