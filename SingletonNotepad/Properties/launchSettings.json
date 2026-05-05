@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SingletonNotepad (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "SingletonNotepad (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
