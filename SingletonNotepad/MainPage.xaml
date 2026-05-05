@@ -48,21 +48,35 @@
             <AppBarSeparator />
             <AppBarButton Icon="Page2" Label="Normaliser" Command="{x:Bind ViewModel.NormalizeCommand}" />
             <AppBarButton Icon="Copy" Label="Copier" Command="{x:Bind ViewModel.CopyContentCommand}" />
+            <AppBarSeparator />
+            <AppBarToggleButton
+                x:Name="SyntaxToggle"
+                Icon="Font"
+                Label="Couleur"
+                IsChecked="{x:Bind ViewModel.IsSyntaxHighlightEnabled, Mode=TwoWay}"
+                ToolTipService.ToolTip="Coloration syntaxique Markdown" />
         </CommandBar>
 
         <!-- Editor -->
-        <TextBox
-            Grid.Row="2"
-            x:Name="EditorTextBox"
-            Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-            AcceptsReturn="True"
-            TextWrapping="Wrap"
-            FontFamily="Cascadia Mono, Consolas, monospace"
-            FontSize="14"
-            Padding="16"
-            BorderThickness="0"
-            ScrollViewer.VerticalScrollBarVisibility="Auto"
-            ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+        <Grid Grid.Row="2">
+            <TextBox
+                x:Name="EditorTextBox"
+                Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                AcceptsReturn="True"
+                TextWrapping="Wrap"
+                FontFamily="Cascadia Mono, Consolas, monospace"
+                FontSize="14"
+                Padding="16"
+                BorderThickness="0"
+                ScrollViewer.VerticalScrollBarVisibility="Auto"
+                ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
+
+            <!-- Markdown preview (visible when syntax highlight is on) -->
+            <controls:MarkdownPreview
+                x:Name="MarkdownPreviewControl"
+                Text="{x:Bind ViewModel.EditorContent, Mode=OneWay}"
+                Visibility="Collapsed" />
+        </Grid>
 
         <!-- Diff Preview Overlay (hidden until normalize runs) -->
         <Border

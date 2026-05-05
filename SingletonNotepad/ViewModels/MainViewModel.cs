@@ -37,6 +37,9 @@ public partial class MainViewModel : ObservableObject
     public partial bool IsShowingDiff { get; set; }
 
     [ObservableProperty]
+    public partial bool IsSyntaxHighlightEnabled { get; set; }
+
+    [ObservableProperty]
     public partial NormalizationResult? PendingNormalization { get; set; }
 
     public MainViewModel(

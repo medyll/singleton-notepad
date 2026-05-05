@@ -3,20 +3,10 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using SingletonNotepad.ViewModels;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
-
 namespace SingletonNotepad;
 
-/// <summary>
-/// The main content page displayed inside the application window.
-/// </summary>
 public sealed partial class MainPage : Page
 {
-    /// <summary>
-    /// Typed ViewModel property — required for x:Bind to compile.
-    /// Resolved from DI in the constructor.
-    /// </summary>
     public MainViewModel ViewModel { get; }
 
     public MainPage()
@@ -36,13 +26,47 @@ public sealed partial class MainPage : Page
             }
             if (args.PropertyName == nameof(ViewModel.IsShowingDiff))
             {
-                DiffOverlay.Visibility = ViewModel.IsShowingDiff
-                    ? Microsoft.UI.Xaml.Visibility.Visible
-                    : Microsoft.UI.Xaml.Visibility.Collapsed;
-                EditorTextBox.Visibility = ViewModel.IsShowingDiff
-                    ? Microsoft.UI.Xaml.Visibility.Collapsed
-                    : Microsoft.UI.Xaml.Visibility.Visible;
+                var showDiff = ViewModel.IsShowingDiff;
+                DiffOverlay.Visibility = showDiff ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+                EditorTextBox.Visibility = showDiff ? Microsoft.UI.Xaml.Visibility.Collapsed : Microsoft.UI.Xaml.Visibility.Visible;
+                MarkdownPreviewControl.Visibility = showDiff ? Microsoft.UI.Xaml.Visibility.Collapsed : Microsoft.UI.Xaml.Visibility.Visible;
+            }
+            if (args.PropertyName == nameof(ViewModel.IsSyntaxHighlightEnabled))
+            {
+                UpdateEditorVisibility();
             }
         };
+
+        SyntaxToggle.Checked += (_, _) =>
+        {
+            ViewModel.IsSyntaxHighlightEnabled = true;
+            UpdateEditorVisibility();
+        };
+        SyntaxToggle.Unchecked += (_, _) =>
+        {
+            ViewModel.IsSyntaxHighlightEnabled = false;
+            UpdateEditorVisibility();
+        };
+    }
+
+    private void UpdateEditorVisibility()
+    {
+        if (ViewModel.IsShowingDiff)
+        {
+            EditorTextBox.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            MarkdownPreviewControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            return;
+        }
+
+        if (ViewModel.IsSyntaxHighlightEnabled)
+        {
+            EditorTextBox.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+            MarkdownPreviewControl.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+        }
+        else
+        {
+            EditorTextBox.Visibility = Microsoft.UI.Xaml.Visibility.Visible;
+            MarkdownPreviewControl.Visibility = Microsoft.UI.Xaml.Visibility.Collapsed;
+        }
     }
 }

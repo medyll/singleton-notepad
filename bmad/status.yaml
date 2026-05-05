@@ -1,11 +1,11 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
-phase: development
+phase: sprint2-review
 progress: 100
-next_action: "Sprint 2 COMPLETE — all 7 stories done, 34 tests passing"
-next_command: "bmad-status"
-next_role: "reviewer"
-active_role: "developer"
+next_action: "Sprint 3 planned — 4 stories: S3-01 Markdown highlighting, S3-02 OpenAI/Anthropic providers, S3-03 DPAPI key storage, S3-04 FileSystemWatcher external-edit"
+next_command: "bmad-dev-story S3-01"
+next_role: "Developer"
+active_role: "PM"
 last_updated: "2026-05-05"
 
 marketing: "Single-file Markdown notepad with LLM normalization. Sprint 1 MVP complete (WinUI 3, file I/O, window persist, settings). Sprint 2 adds Ollama-powered content normalization."
@@ -99,3 +99,19 @@ sprints:
       - id: S2-07
         title: "Unit tests for Sprint 2 services"
         status: done
+  - id: S3
+    name: "Polish & Production Readiness"
+    status: "in_progress"
+    stories:
+      - id: S3-01
+        title: "Markdown syntax highlighting (Markdig)"
+        status: pending
+      - id: S3-02
+        title: "OpenAI + Anthropic providers"
+        status: pending
+      - id: S3-03
+        title: "DPAPI key storage for API keys"
+        status: pending
+      - id: S3-04
+        title: "FileSystemWatcher external-edit detection"
+        status: pending
