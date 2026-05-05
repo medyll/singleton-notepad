@@ -1,9 +1,9 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 88
-next_action: "Implement S2-05: Normalize triggers + ViewModel wiring"
-next_command: "bmad-dev-story S2-05"
+progress: 91
+next_action: "Implement S2-06: DefaultRules.md + AGENTS.md auto-create"
+next_command: "bmad-dev-story S2-06"
 next_role: "developer"
 active_role: "developer"
 last_updated: "2026-05-05"

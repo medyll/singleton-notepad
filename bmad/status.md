@@ -4,6 +4,9 @@
 **Phase:** Development (in_progress)
 **Progress:** 88%
 
+> ⚠️ **STACK FACTS — ne pas modifier** :
+> Single-instance = **named Mutex** (pas AppInstance). Settings = **JSON %LocalAppData%** (pas LocalSettings/PasswordVault). Build = `dotnet build SingletonNotepad.csproj -p:Platform=x64`. Tests = 34/34.
+
 ---
 
 ## Next Action
@@ -17,9 +20,9 @@
 ## Sprint Progress
 
 ### ✅ Sprint 1 — MVP Foundation (complete)
-- S1-01 ✅ Scaffold WinUI 3 + DI + MVVM + AppInstance single-instance
+- S1-01 ✅ Scaffold WinUI 3 + DI + MVVM + **named Mutex** single-instance
 - S1-02 ✅ FileService + auto-create + auto-save (2s debounce)
-- S1-03 ✅ SettingsService (LocalSettings + PasswordVault for API keys)
+- S1-03 ✅ SettingsService (**JSON %LocalAppData%\SingletonNotepad\settings.json**)
 - S1-04 ✅ MainWindow AppWindow positioning (DisplayArea, primary monitor)
 - S1-05 ✅ MainPage shell: MenuBar + CommandBar + Editor + StatusBar
 - S1-06 ✅ SettingsPage shell: NavigationView + Apparence/Fichiers panes

@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
@@ -10,7 +10,7 @@ namespace SingletonNotepad.Core.Services;
 public class NormalizationService : INormalizationService
 {
     private const string AgentsFileName = "NOTEPAD_SINGLETON_AGENTS.md";
-    private const int MaxFileSizeBytes = 500 * 1024; // 500 KB
+    private const int MaxFileSizeBytes = 500 * 1024;
     private const int MaxLineCount = 10_000;
     private const int MinNormalizeIntervalMinutes = 5;
 
@@ -19,26 +19,34 @@ public class NormalizationService : INormalizationService
     private readonly ILlmProvider _llmProvider;
     private readonly string _agentsFilePath;
     private readonly string _backupDir;
+    private readonly string? _defaultRulesPath;
     private DateTime _lastNormalizeTime;
     private string _lastNormalizedHash = string.Empty;
 
-    public NormalizationService(IFileService fileService, ISettingsService settingsService, ILlmProvider llmProvider, string? agentsFilePath = null, string? backupDir = null)
+    public NormalizationService(
+        IFileService fileService,
+        ISettingsService settingsService,
+        ILlmProvider llmProvider,
+        string? agentsFilePath = null,
+        string? backupDir = null,
+        string? defaultRulesPath = null)
     {
         _fileService = fileService;
         _settingsService = settingsService;
         _llmProvider = llmProvider;
+        _defaultRulesPath = defaultRulesPath;
 
         var docsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         _agentsFilePath = agentsFilePath ?? Path.Combine(docsPath, AgentsFileName);
         _backupDir = backupDir ?? Path.Combine(docsPath, "SingletonNotepad", "backups");
+
+        _ = EnsureAgentsFileExistsAsync();
     }
 
     public async Task<NormalizationRule> LoadRulesAsync(CancellationToken ct = default)
     {
         if (!File.Exists(_agentsFilePath))
-        {
             return new NormalizationRule { Content = string.Empty, FilePath = _agentsFilePath };
-        }
 
         var content = await File.ReadAllTextAsync(_agentsFilePath, ct);
         return new NormalizationRule { Content = content, FilePath = _agentsFilePath };
@@ -56,7 +64,6 @@ public class NormalizationService : INormalizationService
                 return true;
             }
         }
-
         remaining = TimeSpan.Zero;
         return false;
     }
@@ -69,14 +76,12 @@ public class NormalizationService : INormalizationService
             reason = $"File size ({byteCount / 1024} KB) exceeds {MaxFileSizeBytes / 1024} KB limit.";
             return true;
         }
-
         var lineCount = content.Split('\n').Length;
         if (lineCount > MaxLineCount)
         {
             reason = $"Line count ({lineCount:N0}) exceeds {MaxLineCount:N0} limit.";
             return true;
         }
-
         reason = string.Empty;
         return false;
     }
@@ -89,28 +94,20 @@ public class NormalizationService : INormalizationService
             ProviderName = _llmProvider.Name,
         };
 
-        // Backup original content
         result.BackupPath = await BackupContentAsync(content, ct);
-
-        // Load rules
         var rules = await LoadRulesAsync(ct);
-
-        // Build prompt
         var prompt = BuildPrompt(rules.Content, content);
 
-        // Call LLM
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var normalizedContent = await _llmProvider.CompleteAsync(prompt, ct);
         sw.Stop();
-        result.Duration = sw.Elapsed;
 
         result.NormalizedContent = normalizedContent;
+        result.Duration = sw.Elapsed;
 
-        // Compute diff
         var differ = new SideBySideDiffBuilder(new Differ());
         result.Diff = differ.BuildDiffModel(content, normalizedContent);
 
-        // Count changes
         foreach (var line in result.Diff.OldText.Lines)
         {
             if (line.Type == DiffPlex.DiffBuilder.Model.ChangeType.Deleted) result.LinesDeleted++;
@@ -122,10 +119,8 @@ public class NormalizationService : INormalizationService
             else if (line.Type == DiffPlex.DiffBuilder.Model.ChangeType.Modified) result.LinesModified++;
         }
 
-        // Update rate-limit tracking
         _lastNormalizeTime = DateTime.Now;
         _lastNormalizedHash = ComputeSha256(content);
-
         return result;
     }
 
@@ -136,12 +131,10 @@ public class NormalizationService : INormalizationService
         sb.AppendLine("Restructure and reorganize the following content according to these rules:");
         sb.AppendLine();
         if (!string.IsNullOrWhiteSpace(rules))
-        {
             sb.AppendLine(rules);
-        }
         else
         {
-            sb.AppendLine("- Maintain clear heading hierarchy (H1 → H2 → H3)");
+            sb.AppendLine("- Maintain clear heading hierarchy (H1 -> H2 -> H3)");
             sb.AppendLine("- Group related content under appropriate headings");
             sb.AppendLine("- Remove redundant whitespace and empty lines");
             sb.AppendLine("- Preserve all meaningful content");
@@ -159,10 +152,7 @@ public class NormalizationService : INormalizationService
     private async Task<string> BackupContentAsync(string content, CancellationToken ct)
     {
         if (!Directory.Exists(_backupDir))
-        {
             Directory.CreateDirectory(_backupDir);
-        }
-
         var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
         var backupPath = Path.Combine(_backupDir, $"backup_{timestamp}.md");
         await File.WriteAllTextAsync(backupPath, content, ct);
@@ -174,5 +164,20 @@ public class NormalizationService : INormalizationService
         var bytes = Encoding.UTF8.GetBytes(input);
         var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash);
+    }
+
+    private async Task EnsureAgentsFileExistsAsync()
+    {
+        if (File.Exists(_agentsFilePath)) return;
+        var source = _defaultRulesPath;
+        if (string.IsNullOrEmpty(source) || !File.Exists(source))
+            source = Path.Combine(AppContext.BaseDirectory, "Resources", "DefaultRules.md");
+        if (!string.IsNullOrEmpty(source) && File.Exists(source))
+        {
+            var dir = Path.GetDirectoryName(_agentsFilePath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+            File.Copy(source, _agentsFilePath, overwrite: false);
+        }
     }
 }
