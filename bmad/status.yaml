@@ -1,9 +1,9 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 85
-next_action: "Implement S2-04: InlineDiffEditor control"
-next_command: "bmad-dev-story S2-04"
+progress: 88
+next_action: "Implement S2-05: Normalize triggers + ViewModel wiring"
+next_command: "bmad-dev-story S2-05"
 next_role: "developer"
 active_role: "developer"
 last_updated: "2026-05-05"
@@ -89,7 +89,7 @@ sprints:
         status: done
       - id: S2-04
         title: "InlineDiffEditor control (diff preview)"
-        status: pending
+        status: done
       - id: S2-05
         title: "Normalize triggers + ViewModel wiring"
         status: pending
