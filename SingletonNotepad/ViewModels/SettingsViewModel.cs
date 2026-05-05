@@ -36,13 +36,12 @@ public partial class SettingsViewModel : ObservableObject
 
     public async Task SaveSettingsAsync(CancellationToken ct = default)
     {
-        var settings = new AppSettings
-        {
-            Theme = Theme,
-            NotesFilePath = NotesFilePath,
-            AutoSave = AutoSave,
-            AutoSaveDelayMs = AutoSaveDelayMs,
-        };
+        // Load first to preserve fields not tracked by this ViewModel (WindowGeometry, LlmProvider, API keys)
+        var settings = await _settingsService.LoadAsync(ct);
+        settings.Theme = Theme;
+        settings.NotesFilePath = NotesFilePath;
+        settings.AutoSave = AutoSave;
+        settings.AutoSaveDelayMs = AutoSaveDelayMs;
         await _settingsService.SaveAsync(settings, ct);
     }
 

@@ -18,18 +18,19 @@
 
         <!-- MenuBar -->
         <MenuBar Grid.Row="0" x:Name="MainMenuBar">
-            <MenuBarItem Title="Édition">
-                <MenuBarItem.KeyboardAccelerators>
-                    <KeyboardAccelerator Key="O" Modifiers="Control" />
-                </MenuBarItem.KeyboardAccelerators>
-                <MenuFlyoutItem Text="Ouvrir" Command="{x:Bind ViewModel.OpenCommand}" />
+            <MenuBarItem Title="Fichier">
+                <MenuFlyoutItem Text="Ouvrir" Command="{x:Bind ViewModel.OpenCommand}">
+                    <MenuFlyoutItem.KeyboardAccelerators>
+                        <KeyboardAccelerator Key="O" Modifiers="Control" />
+                    </MenuFlyoutItem.KeyboardAccelerators>
+                </MenuFlyoutItem>
                 <MenuFlyoutItem Text="Enregistrer" Command="{x:Bind ViewModel.SaveCommand}">
                     <MenuFlyoutItem.KeyboardAccelerators>
                         <KeyboardAccelerator Key="S" Modifiers="Control" />
                     </MenuFlyoutItem.KeyboardAccelerators>
                 </MenuFlyoutItem>
                 <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Copier" Command="{x:Bind ViewModel.CopyContentCommand}" />
+                <MenuFlyoutItem Text="Copier tout" Command="{x:Bind ViewModel.CopyContentCommand}" />
             </MenuBarItem>
             <MenuBarItem Title="Affichage">
                 <MenuFlyoutItem Text="Recharger" Command="{x:Bind ViewModel.ReloadCommand}" />

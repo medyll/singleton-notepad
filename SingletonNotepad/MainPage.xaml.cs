@@ -22,5 +22,6 @@ public sealed partial class MainPage : Page
     {
         ViewModel = App.Services.GetRequiredService<MainViewModel>();
         InitializeComponent();
+        Loaded += async (_, _) => await ViewModel.LoadContentAsync();
     }
 }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="SingletonNotepad.Views.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:SingletonNotepad.Views"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <NavigationView
+        x:Name="SettingsNavView"
+        IsBackButtonVisible="Collapsed"
+        IsSettingsVisible="False"
+        PaneDisplayMode="Left"
+        SelectionChanged="OnSelectionChanged"
+        Header="Paramètres">
+
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="Apparence" Icon="Color" Tag="appearance" />
+            <NavigationViewItem Content="Fichiers" Icon="Document" Tag="files" />
+        </NavigationView.MenuItems>
+
+        <ScrollViewer Padding="24">
+            <StackPanel Spacing="24" MaxWidth="600" HorizontalAlignment="Left">
+
+                <!-- Apparence Pane -->
+                <StackPanel x:Name="AppearancePane" Spacing="16">
+                    <TextBlock Text="Thème" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <RadioButtons Header="Apparence" SelectedItem="{x:Bind ViewModel.Theme, Mode=TwoWay}">
+                        <x:String>Système</x:String>
+                        <x:String>Clair</x:String>
+                        <x:String>Sombre</x:String>
+                    </RadioButtons>
+                </StackPanel>
+
+                <!-- Fichiers Pane -->
+                <StackPanel x:Name="FilesPane" Spacing="16" Visibility="Collapsed">
+                    <TextBlock Text="Fichiers" Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Chemin du fichier de notes" Style="{ThemeResource BaseTextBlockStyle}" />
+                        <TextBox Text="{x:Bind ViewModel.NotesFilePath, Mode=TwoWay}" PlaceholderText="C:\Users\...\MY_SINGLETON_NOTEPAD.md" />
+                    </StackPanel>
+
+                    <ToggleSwitch
+                        Header="Auto-save"
+                        IsOn="{x:Bind ViewModel.AutoSave, Mode=TwoWay}"
+                        OnContent="Activé"
+                        OffContent="Désactivé" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Délai auto-save (ms)" Style="{ThemeResource BaseTextBlockStyle}" />
+                        <NumberBox
+                            Value="{x:Bind ViewModel.AutoSaveDelayMs, Mode=TwoWay}"
+                            Minimum="500"
+                            Maximum="10000"
+                            SpinButtonPlacementMode="Inline" />
+                    </StackPanel>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+    </NavigationView>
+</Page>

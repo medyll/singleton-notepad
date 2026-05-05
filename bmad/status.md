@@ -1,9 +1,9 @@
 # BMAD Status — singleton-notepad
 
-**Phase:** development · **Progress:** 45% · **Last Updated:** 2026-05-05
+**Phase:** development · **Progress:** 75% · **Last Updated:** 2026-05-05
 
 ## Next Action
-**Implement S1-05:** MainPage shell: MenuBar + CommandBar + Editor + StatusBar
+**Implement S1-06:** Wire MainViewModel.OpenSettings() → Frame.Navigate(SettingsPage) + back navigation. Then S1-07 unit tests.
 
 ## Sprint 1 — MVP Foundation (in_progress)
 
@@ -13,8 +13,8 @@
 | S1-02: FileService + auto-create + auto-save (2s debounce) | ✅ done |
 | S1-03: SettingsService (JSON in %LocalAppData%\SingletonNotepad\settings.json) | ✅ done |
 | S1-04: MainWindow AppWindow positioning (DisplayArea.Primary.WorkArea) | ✅ done |
-| S1-05: MainPage shell: MenuBar + CommandBar + Editor + StatusBar | 🔄 next |
-| S1-06: SettingsPage shell: NavigationView + Apparence/Fichiers panes | ⬜ pending |
+| S1-05: MainPage shell: MenuBar + CommandBar + Editor + StatusBar | ✅ done |
+| S1-06: SettingsPage shell + navigation wiring | 🔄 next |
 | S1-07: Unit tests: FileService + SettingsService | ⬜ pending |
 
 ## Stack
