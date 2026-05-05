@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="DiffPlex" Version="1.9.0" />
     <PackageReference Include="MSTest" Version="4.0.2" />
   </ItemGroup>
 
@@ -18,10 +19,15 @@
     <Compile Include="..\SingletonNotepad\Core\Providers\ILlmProvider.cs" Link="Core\Providers\ILlmProvider.cs" />
     <Compile Include="..\SingletonNotepad\Core\Providers\OllamaProvider.cs" Link="Core\Providers\OllamaProvider.cs" />
     <Compile Include="..\SingletonNotepad\Core\Models\AppSettings.cs" Link="Core\Models\AppSettings.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Models\NormalizationRule.cs" Link="Core\Models\NormalizationRule.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Models\NormalizationResult.cs" Link="Core\Models\NormalizationResult.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Models\ChangeRecord.cs" Link="Core\Models\ChangeRecord.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\ISettingsService.cs" Link="Core\Services\ISettingsService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\SettingsService.cs" Link="Core\Services\SettingsService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\IFileService.cs" Link="Core\Services\IFileService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\FileService.cs" Link="Core\Services\FileService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\INormalizationService.cs" Link="Core\Services\INormalizationService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\NormalizationService.cs" Link="Core\Services\NormalizationService.cs" />
   </ItemGroup>
 
   <ItemGroup>

@@ -91,6 +91,9 @@ public partial class App : Application
         services.AddSingleton<ISettingsService, SettingsService>();
         services.AddSingleton<IFileService, FileService>();
 
+        // Services (Sprint 2)
+        services.AddSingleton<INormalizationService, NormalizationService>();
+
         // Providers (Sprint 2)
         services.AddSingleton<ILlmProvider, OllamaProvider>();
 
