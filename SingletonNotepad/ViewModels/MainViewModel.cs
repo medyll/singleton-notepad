@@ -94,6 +94,9 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void OpenSettings()
     {
-        // Stub: navigate to SettingsPage — wired in S1-06
+        if (App.Window is MainWindow mw)
+        {
+            mw.NavigateToPage(typeof(SingletonNotepad.Views.SettingsPage));
+        }
     }
 }

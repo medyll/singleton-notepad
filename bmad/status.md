@@ -1,40 +1,60 @@
-# BMAD Status — singleton-notepad
+# BMAD Status Report — singleton-notepad
 
-**Phase:** development · **Progress:** 75% · **Last Updated:** 2026-05-05
+**Generated:** 2026-05-05  
+**Phase:** Development (65% complete)
 
-## Next Action
-**Implement S1-06:** Wire MainViewModel.OpenSettings() → Frame.Navigate(SettingsPage) + back navigation. Then S1-07 unit tests.
+---
 
-## Sprint 1 — MVP Foundation (in_progress)
+## Current State
 
-| Story | Status |
-|-------|--------|
-| S1-01: Scaffold WinUI 3 + DI + MVVM + named Mutex single-instance | ✅ done |
-| S1-02: FileService + auto-create + auto-save (2s debounce) | ✅ done |
-| S1-03: SettingsService (JSON in %LocalAppData%\SingletonNotepad\settings.json) | ✅ done |
-| S1-04: MainWindow AppWindow positioning (DisplayArea.Primary.WorkArea) | ✅ done |
-| S1-05: MainPage shell: MenuBar + CommandBar + Editor + StatusBar | ✅ done |
-| S1-06: SettingsPage shell + navigation wiring | 🔄 next |
-| S1-07: Unit tests: FileService + SettingsService | ⬜ pending |
+**Active Sprint:** S1 — MVP Foundation (in progress)  
+**Next Action:** Sprint 1 complete — ready for Sprint 2: Ollama provider + NormalizationService
 
-## Stack
+---
 
-- **UI:** WinUI 3 / Windows App SDK **2.0.1** (MSIX packaged)
-- **Runtime:** .NET 10 — `net10.0-windows10.0.26100.0`
-- **MVVM:** CommunityToolkit.Mvvm 8.4.2 — `[ObservableProperty]` on **partial properties** (not fields)
-- **DI:** Microsoft.Extensions.DependencyInjection 8.0.1
-- **Single-instance:** named Mutex `"SingletonNotepad-7B3F9A2C-Instance"` + P/Invoke FindWindow/SetForegroundWindow
-- **Settings storage:** JSON file — NOT LocalSettings, NOT PasswordVault
-- **Monitor API:** `DisplayArea.Primary.WorkArea` — NOT System.Windows.Forms.Screen
-- **Build:** `dotnet build -p:Platform=x64` (platform flag mandatory)
+## Sprint Progress
 
-## 3 Dimensions
+### S1 — MVP Foundation
 
-### Marketing
-A minimalist Windows 11 notepad — one file, zero friction, LLM-powered normalization.
+| ID | Title | Status |
+|----|-------|--------|
+| S1-01 | Scaffold WinUI 3 + DI + MVVM + AppInstance single-instance | ✅ Done |
+| S1-02 | FileService + auto-create + auto-save (2s debounce) | ✅ Done |
+| S1-03 | SettingsService (LocalSettings + PasswordVault for API keys) | ✅ Done |
+| S1-04 | MainWindow AppWindow positioning (DisplayArea, primary monitor) | ✅ Done |
+| S1-05 | MainPage shell: MenuBar + CommandBar + Editor + StatusBar | ✅ Done |
+| S1-06 | SettingsPage shell: NavigationView + Apparence/Fichiers panes | ✅ Done |
+| S1-07 | Unit tests: FileService + SettingsService | ✅ Done |
 
-### Product
-WinUI 3 single-file Markdown editor with auto-save, settings, and LLM reorganization.
+---
 
-### Far Vision
-The last note-taking app you'll ever need — one file, self-organizing, always in sync.
+## Test Results
+
+**9/9 tests passing**
+
+- SettingsServiceTests: 4 tests (Load defaults, RoundTrip, CreateDirectory, Corrupt JSON)
+- FileServiceTests: 5 tests (Load creates file, Save writes, Load reads, Retry logic, Save writes)
+
+---
+
+## Technical Summary
+
+**Stack:** WinUI 3 + Windows App SDK 2.0.1, .NET 10  
+**Architecture:** MVVM with CommunityToolkit.Mvvm, DI via Microsoft.Extensions.DependencyInjection  
+**Single-instance:** Named mutex + P/Invoke FindWindow/SetForegroundWindow  
+**Settings:** JSON file in %LocalAppData%\SingletonNotepad\settings.json  
+**Auto-save:** 2s debounce via System.Timers.Timer  
+**File retry:** 3 attempts with exponential backoff (200/400/800ms)
+
+---
+
+## Next Steps (Sprint 2)
+
+1. **ILlmProvider interface** + OllamaProvider implementation
+2. **NormalizationService** with rate limiting and size checks
+3. **Normalization UI** in MainPage (diff preview, apply/cancel)
+4. **MemoryTrackerService** for change history
+
+---
+
+*Report generated automatically by bmad-method*

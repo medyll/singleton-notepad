@@ -40,6 +40,15 @@ public sealed partial class MainWindow : Window
         Closed += OnClosed;
     }
 
+    /// <summary>
+    /// Navigate the root frame to the specified page type.
+    /// Exposed for ViewModels that need to trigger navigation.
+    /// </summary>
+    public void NavigateToPage(Type pageType)
+    {
+        RootFrame.Navigate(pageType);
+    }
+
     private async Task RestoreWindowPositionAsync()
     {
         try

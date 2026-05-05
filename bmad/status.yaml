@@ -1,10 +1,10 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 45
-next_action: "Implement S1-05: MainPage shell: MenuBar + CommandBar + Editor + StatusBar"
-next_command: "bmad dev"
-next_role: "developer"
+progress: 65
+next_action: "Sprint 1 complete — ready for Sprint 2: Ollama provider + NormalizationService"
+next_command: "bmad-sprint 2"
+next_role: "architect"
 active_role: "developer"
 last_updated: "2026-05-05"
 
@@ -63,10 +63,10 @@ sprints:
         status: done
       - id: S1-05
         title: "MainPage shell: MenuBar + CommandBar + Editor + StatusBar"
-        status: not_started
+        status: done
       - id: S1-06
         title: "SettingsPage shell: NavigationView + Apparence/Fichiers panes"
-        status: not_started
+        status: done
       - id: S1-07
         title: "Unit tests: FileService + SettingsService"
-        status: not_started
+        status: done

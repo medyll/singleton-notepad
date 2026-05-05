@@ -16,11 +16,25 @@ public class SettingsService : ISettingsService
 
     private readonly string _settingsPath;
 
-    public SettingsService()
+    public SettingsService(string? customPath = null)
+    {
+        if (!string.IsNullOrEmpty(customPath))
+        {
+            _settingsPath = Path.Combine(customPath, "settings.json");
+        }
+        else
+        {
+            var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            var settingsDir = Path.Combine(localAppData, "SingletonNotepad");
+            _settingsPath = Path.Combine(settingsDir, "settings.json");
+        }
+    }
+
+    public static string GetDefaultSettingsPath()
     {
         var localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
         var settingsDir = Path.Combine(localAppData, "SingletonNotepad");
-        _settingsPath = Path.Combine(settingsDir, "settings.json");
+        return Path.Combine(settingsDir, "settings.json");
     }
 
     public async Task<AppSettings> LoadAsync(CancellationToken ct = default)

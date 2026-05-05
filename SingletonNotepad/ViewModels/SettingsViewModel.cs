@@ -36,7 +36,6 @@ public partial class SettingsViewModel : ObservableObject
 
     public async Task SaveSettingsAsync(CancellationToken ct = default)
     {
-        // Load first to preserve fields not tracked by this ViewModel (WindowGeometry, LlmProvider, API keys)
         var settings = await _settingsService.LoadAsync(ct);
         settings.Theme = Theme;
         settings.NotesFilePath = NotesFilePath;
