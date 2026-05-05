@@ -92,8 +92,9 @@ public class NormalizationServiceTests
 
         var result = _service.ExceedsSizeLimit(manyLines, out var reason);
 
-        Assert.IsTrue(result, $"reason={reason}");
-Assert.IsTrue(reason.Contains("10,000") || reason.Contains("10 000") || reason.Contains("10000"));
+        Assert.IsTrue(result);
+        var normalized = reason.Replace("\u00A0", "").Replace("\u202F", "").Replace(",", "").Replace(" ", "");
+        Assert.IsTrue(normalized.Contains("10000"), $"reason={reason}, normalized={normalized}");
     }
 
     [TestMethod]
