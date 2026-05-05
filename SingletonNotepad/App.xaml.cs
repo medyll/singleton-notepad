@@ -93,6 +93,7 @@ public partial class App : Application
 
         // Services (Sprint 2)
         services.AddSingleton<INormalizationService, NormalizationService>();
+        services.AddSingleton<IMemoryTrackerService, MemoryTrackerService>();
 
         // Providers (Sprint 2)
         services.AddSingleton<ILlmProvider, OllamaProvider>();

@@ -28,6 +28,8 @@
     <Compile Include="..\SingletonNotepad\Core\Services\FileService.cs" Link="Core\Services\FileService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\INormalizationService.cs" Link="Core\Services\INormalizationService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\NormalizationService.cs" Link="Core\Services\NormalizationService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\IMemoryTrackerService.cs" Link="Core\Services\IMemoryTrackerService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\MemoryTrackerService.cs" Link="Core\Services\MemoryTrackerService.cs" />
   </ItemGroup>
 
   <ItemGroup>
