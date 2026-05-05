@@ -77,7 +77,7 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnEditorContentChanged(string value)
     {
-        _lastUserActivity = DateTime.Now;
+        _lastUserActivity = DateTime.UtcNow;
         SyncState = "Saving...";
         _fileService.QueueAutoSave(value);
     }
@@ -138,20 +138,20 @@ public partial class MainViewModel : ObservableObject
 
         try
         {
-            var result = await _normalizationService.NormalizeAsync(EditorContent);
+            var result = await _normalizationService.NormalizeAsync(EditorContent, CancellationToken.None);
 
             if (result.HasChanges)
             {
                 PendingNormalization = result;
                 IsShowingDiff = true;
                 NormalizeStatus = $"Aperçu: +{result.LinesAdded} -{result.LinesDeleted} ~{result.LinesModified}";
-                LastNormalizeTime = DateTime.Now.ToString("HH:mm");
+                LastNormalizeTime = DateTime.UtcNow.ToString("HH:mm");
             }
             else
             {
                 NormalizeStatus = "Aucune modification nécessaire";
                 PendingNormalization = result;
-                LastNormalizeTime = DateTime.Now.ToString("HH:mm");
+                LastNormalizeTime = DateTime.UtcNow.ToString("HH:mm");
             }
         }
         catch (Exception ex)
@@ -240,16 +240,25 @@ public partial class MainViewModel : ObservableObject
 
     private async void OnIdleElapsed(object? sender, ElapsedEventArgs e)
     {
-        var settings = await _settingsService.LoadAsync();
-        var idleDuration = DateTime.Now - _lastUserActivity;
-        if (idleDuration >= TimeSpan.FromMinutes(settings.IdleMinutesBeforeNormalize) && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
+        try
         {
-            _dispatcherQueue.TryEnqueue(async () =>
+            var settings = await _settingsService.LoadAsync();
+            var idleDuration = DateTime.UtcNow - _lastUserActivity;
+            if (idleDuration >= TimeSpan.FromMinutes(settings.IdleMinutesBeforeNormalize) && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
             {
-                await NormalizeAsync();
-            });
+                _dispatcherQueue.TryEnqueue(async () =>
+                {
+                    await NormalizeAsync();
+                });
+            }
         }
-
-        _dispatcherQueue.TryEnqueue(() => _idleTimer.Start());
+        catch (IOException)
+        {
+            // Settings file unavailable — skip idle normalization
+        }
+        finally
+        {
+            _dispatcherQueue.TryEnqueue(() => _idleTimer.Start());
+        }
     }
 }

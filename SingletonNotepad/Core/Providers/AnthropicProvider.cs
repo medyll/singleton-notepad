@@ -7,13 +7,15 @@ namespace SingletonNotepad.Core.Providers;
 public class AnthropicProvider : ILlmProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _apiKey;
     private readonly string _model;
 
     public string Name => "Anthropic";
 
-    public AnthropicProvider(HttpClient httpClient, string model = "claude-3-5-haiku-20240620")
+    public AnthropicProvider(HttpClient httpClient, string apiKey, string model = "claude-3-5-haiku-20240620")
     {
         _httpClient = httpClient;
+        _apiKey = apiKey;
         _model = model;
     }
 
@@ -32,10 +34,16 @@ public class AnthropicProvider : ILlmProvider
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(30));
 
-        var response = await _httpClient.PostAsJsonAsync("https://api.anthropic.com/v1/messages", request, new JsonSerializerOptions
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, "https://api.anthropic.com/v1/messages");
+        httpRequest.Headers.Add("x-api-key", _apiKey);
+        httpRequest.Headers.Add("anthropic-version", "2023-06-01");
+        var json = JsonSerializer.Serialize(request, new JsonSerializerOptions
         {
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
-        }, cts.Token);
+        });
+        httpRequest.Content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var response = await _httpClient.SendAsync(httpRequest, cts.Token);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<AnthropicMessageResponse>(new JsonSerializerOptions

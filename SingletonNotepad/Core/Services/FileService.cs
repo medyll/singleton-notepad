@@ -116,7 +116,7 @@ public class FileService : IFileService
 
     private async void OnAutoSaveElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (_isSaving || _pendingContent is null)
+        if (_isSaving || string.IsNullOrEmpty(_pendingContent))
         {
             return;
         }
@@ -126,9 +126,13 @@ public class FileService : IFileService
         {
             await SaveAsync(_pendingContent);
         }
-        catch
+        catch (IOException)
         {
-            // Best-effort auto-save; user can manually save if needed
+            // Best-effort auto-save; disk busy or file locked
+        }
+        catch (UnauthorizedAccessException)
+        {
+            // Cannot write to file — permissions issue
         }
         finally
         {
@@ -138,21 +142,24 @@ public class FileService : IFileService
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
-        // Marshal to avoid blocking the watcher thread
         Task.Run(async () =>
         {
             try
             {
-                await Task.Delay(500); // Debounce rapid changes
+                await Task.Delay(500);
                 if (!string.IsNullOrEmpty(_currentFilePath) && File.Exists(_currentFilePath))
                 {
-                    var content = await File.ReadAllTextAsync(_currentFilePath);
+                    var content = await File.ReadAllTextAsync(_currentFilePath, CancellationToken.None);
                     ExternalChangeDetected?.Invoke(content);
                 }
             }
-            catch
+            catch (IOException)
             {
-                // File might be locked by another process
+                // File locked by another process — skip this change event
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Cannot read file — permissions issue
             }
         });
     }

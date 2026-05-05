@@ -6,14 +6,16 @@ namespace SingletonNotepad.Core.Providers;
 public class OpenAiProvider : ILlmProvider
 {
     private readonly HttpClient _httpClient;
+    private readonly string _apiKey;
     private readonly string _endpoint;
     private readonly string _model;
 
     public string Name => "OpenAI";
 
-    public OpenAiProvider(HttpClient httpClient, string endpoint = "https://api.openai.com/v1", string model = "gpt-4o-mini")
+    public OpenAiProvider(HttpClient httpClient, string apiKey, string endpoint = "https://api.openai.com/v1", string model = "gpt-4o-mini")
     {
         _httpClient = httpClient;
+        _apiKey = apiKey;
         _endpoint = endpoint.TrimEnd('/');
         _model = model;
     }
@@ -34,7 +36,11 @@ public class OpenAiProvider : ILlmProvider
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
         cts.CancelAfter(TimeSpan.FromSeconds(30));
 
-        var response = await _httpClient.PostAsJsonAsync($"{_endpoint}/chat/completions", request, cts.Token);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, $"{_endpoint}/chat/completions");
+        httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
+        httpRequest.Content = JsonContent.Create(request);
+
+        var response = await _httpClient.SendAsync(httpRequest, cts.Token);
         response.EnsureSuccessStatusCode();
 
         var result = await response.Content.ReadFromJsonAsync<OpenAiChatResponse>(cancellationToken: cts.Token);

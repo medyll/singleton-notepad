@@ -11,6 +11,10 @@ namespace SingletonNotepad.Views.Controls;
 
 public sealed partial class MarkdownPreview : UserControl
 {
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .Build();
+
     public static readonly DependencyProperty TextProperty =
         DependencyProperty.Register(nameof(Text), typeof(string), typeof(MarkdownPreview),
             new PropertyMetadata(string.Empty, OnTextChanged));
@@ -39,11 +43,7 @@ public sealed partial class MarkdownPreview : UserControl
         if (string.IsNullOrWhiteSpace(markdown))
             return;
 
-        var pipeline = new MarkdownPipelineBuilder()
-            .UseAdvancedExtensions()
-            .Build();
-
-        var doc = Markdown.Parse(markdown, pipeline);
+        var doc = Markdown.Parse(markdown, Pipeline);
 
         foreach (var block in doc)
         {

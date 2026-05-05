@@ -11,7 +11,7 @@ public class OpenAiProviderTests
     public void Name_ReturnsOpenAi()
     {
         var httpClient = new HttpClient();
-        var provider = new OpenAiProvider(httpClient);
+        var provider = new OpenAiProvider(httpClient, "sk-test-key");
         Assert.AreEqual("OpenAI", provider.Name);
     }
 
@@ -34,7 +34,7 @@ public class OpenAiProviderTests
                 }
             });
 
-        var provider = new OpenAiProvider(httpClient, "https://api.openai.com/v1", "gpt-4o-mini");
+        var provider = new OpenAiProvider(httpClient, "sk-test-key", "https://api.openai.com/v1", "gpt-4o-mini");
         var result = await provider.CompleteAsync("Fix my markdown");
 
         Assert.AreEqual("Normalized markdown content", result);
@@ -53,7 +53,7 @@ public class OpenAiProviderTests
             "https://api.openai.com/v1/chat/completions",
             new OpenAiChatResponse { Choices = Array.Empty<OpenAiChoice>() });
 
-        var provider = new OpenAiProvider(httpClient);
+        var provider = new OpenAiProvider(httpClient, "sk-test-key");
         var result = await provider.CompleteAsync("test");
 
         Assert.AreEqual(string.Empty, result);
@@ -67,7 +67,7 @@ public class OpenAiProviderTests
 
         mockHandler.SetupError("https://api.openai.com/v1/chat/completions", System.Net.HttpStatusCode.BadRequest);
 
-        var provider = new OpenAiProvider(httpClient);
+        var provider = new OpenAiProvider(httpClient, "sk-test-key");
 
         try
         {

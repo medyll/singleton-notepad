@@ -11,7 +11,7 @@ public class AnthropicProviderTests
     public void Name_ReturnsAnthropic()
     {
         var httpClient = new HttpClient();
-        var provider = new AnthropicProvider(httpClient);
+        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
 
         Assert.AreEqual("Anthropic", provider.Name);
     }
@@ -37,7 +37,7 @@ public class AnthropicProviderTests
         });
 
         var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient);
+        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
 
         var result = await provider.CompleteAsync("Hello");
 
@@ -56,7 +56,7 @@ public class AnthropicProviderTests
         });
 
         var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient);
+        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
 
         var result = await provider.CompleteAsync("Hello");
 
@@ -72,7 +72,7 @@ public class AnthropicProviderTests
         });
 
         var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient);
+        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
 
         try
         {
@@ -99,7 +99,7 @@ public class AnthropicProviderTests
         });
 
         var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient, "claude-3-5-sonnet-20240701");
+        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key", "claude-3-5-sonnet-20240701");
 
         await provider.CompleteAsync("Hello");
     }
@@ -114,7 +114,7 @@ public class AnthropicProviderTests
         });
 
         var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient);
+        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
 
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
         try

@@ -49,7 +49,11 @@ public class SettingsService : ISettingsService
             var json = await File.ReadAllTextAsync(_settingsPath, ct);
             return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
         }
-        catch
+        catch (JsonException)
+        {
+            return new AppSettings();
+        }
+        catch (IOException)
         {
             return new AppSettings();
         }

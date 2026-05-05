@@ -88,7 +88,8 @@ public partial class App : Application
         services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(35) });
 
         // Services (Sprint 1)
-        services.AddSingleton<ISettingsService, SettingsService>();
+        var settingsService = new SettingsService();
+        services.AddSingleton<ISettingsService>(settingsService);
         services.AddSingleton<IFileService, FileService>();
 
         // Services (Sprint 2)
@@ -97,8 +98,12 @@ public partial class App : Application
 
         // Providers (Sprint 2 + Sprint 3)
         services.AddSingleton<ILlmProvider, OllamaProvider>();
-        services.AddSingleton<OpenAiProvider>();
-        services.AddSingleton<AnthropicProvider>();
+        services.AddSingleton(sp => new OpenAiProvider(
+            sp.GetRequiredService<HttpClient>(),
+            sp.GetRequiredService<ISettingsService>().LoadAsync().Result.OpenAiApiKey ?? string.Empty));
+        services.AddSingleton(sp => new AnthropicProvider(
+            sp.GetRequiredService<HttpClient>(),
+            sp.GetRequiredService<ISettingsService>().LoadAsync().Result.AnthropicApiKey ?? string.Empty));
         services.AddSingleton<ILlmProviderSelector, LlmProviderSelector>();
 
         // ViewModels

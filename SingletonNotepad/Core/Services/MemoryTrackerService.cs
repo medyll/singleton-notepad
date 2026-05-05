@@ -100,7 +100,7 @@ public class MemoryTrackerService : IMemoryTrackerService
         {
             return dt;
         }
-        return DateTime.Now;
+        return DateTime.UtcNow;
     }
 
     private static int ParseLinesChanged(string text)

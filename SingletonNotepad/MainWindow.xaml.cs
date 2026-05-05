@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml.Controls;
 using SingletonNotepad.Core.Helpers;
 using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Services;
+using System.Text.Json;
 using Windows.Graphics;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -115,9 +116,13 @@ public sealed partial class MainWindow : Window
 
             await _settingsService.SaveAsync(settings);
         }
-        catch
+        catch (IOException)
         {
-            // Best-effort persistence
+            // Best-effort persistence — disk busy
+        }
+        catch (JsonException)
+        {
+            // Best-effort persistence — serialization error
         }
     }
 }

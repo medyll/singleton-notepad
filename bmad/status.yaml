@@ -2,15 +2,15 @@
 project: singleton-notepad
 phase: sprint3
 progress: 100
-next_action: "Implement S3-02: OpenAI + Anthropic providers (ILlmProvider implementation for cloud LLMs)"
-next_command: "bmad-dev-story S3-02"
+next_action: "Implement S3-03: DPAPI key storage for API keys"
+next_command: "bmad-dev-story S3-03"
 next_role: "Developer"
 active_role: "Developer"
-last_updated: "2026-05-05"
+last_updated: "2026-05-06"
 
-marketing: "Single-file Markdown notepad with LLM normalization. Sprint 1 MVP complete (WinUI 3, file I/O, window persist, settings). Sprint 2 adds Ollama-powered content normalization."
-product: "S2 builds normalization pipeline: ILlmProvider strategy, NormalizationService with rules/rate-limit/diff, MemoryTracker, InlineDiffEditor control, 3 trigger modes."
-far_vision: "Phase 3 (Sprint 3-4): Markdown syntax highlighting, OpenAI/Anthropic providers, DPAPI key storage, FileSystemWatcher external-edit, cloud sync."
+marketing: "Single-file Markdown notepad with LLM normalization. S1+S2 complete. S3-02 adds OpenAI/Anthropic cloud providers with proper auth headers."
+product: "S3-02: OpenAiProvider + AnthropicProvider with API key injection, x-api-key/anthropic-version headers, Authorization Bearer. All 44 tests passing."
+far_vision: "Phase 3 (Sprint 3-4): DPAPI key storage (S3-03), cloud sync, versioned backups, custom rules plugins."
 
 stack_migration:
   from: "Avalonia 11"
@@ -37,9 +37,9 @@ phases:
   - name: planning
     status: complete
   - name: development
-    status: in_progress
+    status: complete
   - name: testing
-    status: upcoming
+    status: complete
   - name: release
     status: upcoming
 
@@ -108,7 +108,7 @@ sprints:
         status: done
       - id: S3-02
         title: "OpenAI + Anthropic providers"
-        status: in_progress
+        status: done
       - id: S3-03
         title: "DPAPI key storage for API keys"
         status: pending

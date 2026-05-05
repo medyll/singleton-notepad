@@ -54,7 +54,7 @@ public class NormalizationService : INormalizationService
 
     public bool IsRateLimited(string content, out TimeSpan remaining)
     {
-        var elapsed = DateTime.Now - _lastNormalizeTime;
+        var elapsed = DateTime.UtcNow - _lastNormalizeTime;
         if (elapsed < TimeSpan.FromMinutes(MinNormalizeIntervalMinutes))
         {
             var contentHash = ComputeSha256(content);
@@ -116,10 +116,9 @@ public class NormalizationService : INormalizationService
         foreach (var line in result.Diff.NewText.Lines)
         {
             if (line.Type == DiffPlex.DiffBuilder.Model.ChangeType.Inserted) result.LinesAdded++;
-            else if (line.Type == DiffPlex.DiffBuilder.Model.ChangeType.Modified) result.LinesModified++;
         }
 
-        _lastNormalizeTime = DateTime.Now;
+        _lastNormalizeTime = DateTime.UtcNow;
         _lastNormalizedHash = ComputeSha256(content);
         return result;
     }
@@ -153,7 +152,7 @@ public class NormalizationService : INormalizationService
     {
         if (!Directory.Exists(_backupDir))
             Directory.CreateDirectory(_backupDir);
-        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+        var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
         var backupPath = Path.Combine(_backupDir, $"backup_{timestamp}.md");
         await File.WriteAllTextAsync(backupPath, content, ct);
         return backupPath;
