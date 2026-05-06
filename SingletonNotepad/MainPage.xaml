@@ -59,8 +59,28 @@
 
         <!-- Editor -->
         <Grid Grid.Row="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- External change notification banner -->
+            <InfoBar
+                x:Name="ExternalChangeBanner"
+                Grid.Row="0"
+                IsOpen="{x:Bind ViewModel.HasExternalChange, Mode=TwoWay}"
+                Severity="Informational"
+                Title="Fichier modifié"
+                Message="Le fichier a été modifié par un autre programme."
+                IsClosable="False">
+                <InfoBar.ActionButton>
+                    <Button Content="Recharger" Command="{x:Bind ViewModel.ReloadCommand}" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+
             <TextBox
                 x:Name="EditorTextBox"
+                Grid.Row="1"
                 Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 AcceptsReturn="True"
                 TextWrapping="Wrap"
@@ -74,6 +94,7 @@
             <!-- Markdown preview (visible when syntax highlight is on) -->
             <controls:MarkdownPreview
                 x:Name="MarkdownPreviewControl"
+                Grid.Row="1"
                 Text="{x:Bind ViewModel.EditorContent, Mode=OneWay}"
                 Visibility="Collapsed" />
         </Grid>

@@ -1,16 +1,16 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: sprint3
-progress: 75
-next_action: "Implement S3-04: FileSystemWatcher external-edit detection"
-next_command: "bmad-dev-story S3-04"
-next_role: "Developer"
+progress: 100
+next_action: "Sprint 3 complete. All 4 stories done. Next: Sprint 4 planning."
+next_command: "bmad-sprint"
+next_role: "Scrum Master"
 active_role: "Developer"
 last_updated: "2026-05-06"
 
-marketing: "Single-file Markdown notepad with LLM normalization. S1+S2+S3-01+S3-02+S3-03 done. DPAPI-secured API keys, OpenAI/Anthropic cloud providers."
-product: "S3-03: DPAPI-protected API key storage via SettingsService. API keys encrypted before JSON save, decrypted on load. SettingsPage with API Keys pane."
-far_vision: "Phase 3 (Sprint 3-4): FileSystemWatcher (S3-04), cloud sync, versioned backups, custom rules plugins."
+marketing: "Single-file Markdown notepad with LLM normalization. S3 complete: syntax highlighting, OpenAI/Anthropic providers, DPAPI key storage, FileSystemWatcher."
+product: "S3: All stories done. S3-04: FileSystemWatcher with conflict dialog, external change banner in MainPage, skip own save detection. Sprint 3 complete."
+far_vision: "Sprint 4: cloud sync, versioned backups, custom rules plugins, release candidate."
 
 stack_migration:
   from: "Avalonia 11"
@@ -101,7 +101,7 @@ sprints:
         status: done
   - id: S3
     name: "Polish & Production Readiness"
-    status: "in_progress"
+    status: complete
     stories:
       - id: S3-01
         title: "Markdown syntax highlighting (Markdig)"
@@ -114,4 +114,4 @@ sprints:
         status: done
       - id: S3-04
         title: "FileSystemWatcher external-edit detection"
-        status: pending
+        status: done

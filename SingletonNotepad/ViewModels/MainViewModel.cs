@@ -17,6 +17,8 @@ public partial class MainViewModel : ObservableObject
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly Timer _idleTimer;
     private DateTime _lastUserActivity;
+    private string _lastSavedContent = string.Empty;
+    private bool _skipNextExternalChange;
 
     [ObservableProperty]
     public partial string EditorContent { get; set; } = string.Empty;
@@ -42,6 +44,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial NormalizationResult? PendingNormalization { get; set; }
 
+    [ObservableProperty]
+    public partial bool HasExternalChange { get; set; }
+
     public MainViewModel(
         IFileService fileService,
         INormalizationService normalizationService,
@@ -64,6 +69,7 @@ public partial class MainViewModel : ObservableObject
     public async Task LoadContentAsync(CancellationToken ct = default)
     {
         EditorContent = await _fileService.LoadAsync(ct);
+        _lastSavedContent = EditorContent;
         _fileService.Watch(OnExternalChange);
         await ConfigureIdleTimerAsync();
         StartIdleTimer();
@@ -84,12 +90,45 @@ public partial class MainViewModel : ObservableObject
 
     private void OnFileSaved()
     {
+        _skipNextExternalChange = true;
+        _lastSavedContent = EditorContent;
         _dispatcherQueue.TryEnqueue(() => SyncState = "Sync ✓");
     }
 
     private void OnExternalChange(string newContent)
     {
-        _dispatcherQueue.TryEnqueue(() => EditorContent = newContent);
+        if (_skipNextExternalChange)
+        {
+            _skipNextExternalChange = false;
+            return;
+        }
+
+        _dispatcherQueue.TryEnqueue(async () =>
+        {
+            HasExternalChange = true;
+            if (EditorContent != _lastSavedContent)
+            {
+                var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
+                {
+                    Title = "Fichier modifié",
+                    Content = "Le fichier a été modifié par un autre programme. Voulez-vous charger les modifications (et perdre vos changements locaux) ?",
+                    PrimaryButtonText = "Recharger",
+                    SecondaryButtonText = "Ignorer",
+                    DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Secondary,
+                };
+                var result = await dialog.ShowAsync();
+                if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
+                {
+                    await ReloadAsync();
+                }
+                HasExternalChange = false;
+            }
+            else
+            {
+                EditorContent = newContent;
+                HasExternalChange = false;
+            }
+        });
     }
 
     [RelayCommand]
