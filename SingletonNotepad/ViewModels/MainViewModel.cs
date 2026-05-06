@@ -103,30 +103,19 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        _dispatcherQueue.TryEnqueue(async () =>
+        _dispatcherQueue.TryEnqueue(() =>
         {
-            HasExternalChange = true;
-            if (EditorContent != _lastSavedContent)
+            if (EditorContent == _lastSavedContent)
             {
-                var dialog = new Microsoft.UI.Xaml.Controls.ContentDialog
-                {
-                    Title = "Fichier modifié",
-                    Content = "Le fichier a été modifié par un autre programme. Voulez-vous charger les modifications (et perdre vos changements locaux) ?",
-                    PrimaryButtonText = "Recharger",
-                    SecondaryButtonText = "Ignorer",
-                    DefaultButton = Microsoft.UI.Xaml.Controls.ContentDialogButton.Secondary,
-                };
-                var result = await dialog.ShowAsync();
-                if (result == Microsoft.UI.Xaml.Controls.ContentDialogResult.Primary)
-                {
-                    await ReloadAsync();
-                }
-                HasExternalChange = false;
+                // Pas de changements locaux — recharger silencieusement
+                EditorContent = newContent;
+                _lastSavedContent = newContent;
             }
             else
             {
-                EditorContent = newContent;
-                HasExternalChange = false;
+                // Changements locaux non sauvegardés — afficher la bannière InfoBar
+                // L'utilisateur clique "Recharger" sur l'InfoBar quand prêt
+                HasExternalChange = true;
             }
         });
     }

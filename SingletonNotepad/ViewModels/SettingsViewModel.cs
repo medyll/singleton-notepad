@@ -142,7 +142,11 @@ public partial class SettingsViewModel : ObservableObject
         await File.WriteAllTextAsync(_normalizationService.RulesFilePath, RulesContent, ct);
     }
 
-    partial void OnThemeChanged(string value) => _ = SaveSettingsAsync();
+    partial void OnThemeChanged(string value)
+    {
+        App.ApplyTheme(value);
+        _ = SaveSettingsAsync();
+    }
     partial void OnNotesFilePathChanged(string value) => _ = SaveSettingsAsync();
     partial void OnAutoSaveChanged(bool value) => _ = SaveSettingsAsync();
     partial void OnAutoSaveDelayMsChanged(int value) => _ = SaveSettingsAsync();

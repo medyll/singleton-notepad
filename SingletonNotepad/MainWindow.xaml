@@ -18,7 +18,9 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <TitleBar x:Name="AppTitleBar" Title="SingletonNotepad">
+        <TitleBar x:Name="AppTitleBar" Title="SingletonNotepad"
+                  IsBackButtonVisible="False"
+                  BackRequested="OnTitleBarBackRequested">
             <TitleBar.IconSource>
                 <ImageIconSource ImageSource="Assets/AppIcon.ico" />
             </TitleBar.IconSource>

@@ -6,172 +6,330 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:SingletonNotepad.Views"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <NavigationView
-        x:Name="SettingsNavView"
-        IsBackButtonVisible="Auto"
-        IsSettingsVisible="False"
-        PaneDisplayMode="Left"
-        SelectionChanged="OnSelectionChanged"
-        BackRequested="OnBackRequested"
-        Header="Paramètres">
+    <Page.Resources>
+        <Style x:Key="GroupHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
+            <Setter Property="Margin" Value="4,20,0,6" />
+        </Style>
+        <Style x:Key="SettingCard" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+    </Page.Resources>
 
-        <NavigationView.MenuItems>
-            <NavigationViewItem Content="Apparence" Icon="Color" Tag="appearance" />
-            <NavigationViewItem Content="Fichiers" Icon="Document" Tag="files" />
-            <NavigationViewItem Content="Historique" Icon="History" Tag="history" />
-            <NavigationViewItem Content="Clés API" Icon="Key" Tag="apikeys" />
-            <NavigationViewItem Content="Règles" Icon="Edit" Tag="rules" />
-            <NavigationViewItem Content="Normalisation" Icon="Edit" Tag="normalization" />
-        </NavigationView.MenuItems>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Spacing="0" Padding="24,16,24,32">
 
-        <ScrollViewer Padding="24">
-            <StackPanel Spacing="24" MaxWidth="600" HorizontalAlignment="Left">
+            <!-- Title -->
+            <TextBlock Text="Paramètres" Style="{ThemeResource TitleTextBlockStyle}" Margin="0,0,0,8" />
 
-                <!-- Apparence Pane -->
-                <StackPanel x:Name="AppearancePane" Spacing="16">
-                    <TextBlock Text="Thème" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                    <RadioButtons Header="Apparence" SelectedItem="{x:Bind ViewModel.Theme, Mode=TwoWay}">
-                        <x:String>Système</x:String>
-                        <x:String>Clair</x:String>
-                        <x:String>Sombre</x:String>
-                    </RadioButtons>
+            <!-- ══ APPARENCE ══ -->
+            <TextBlock Text="Apparence" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <!-- Thème -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE790;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Thème d'application" />
+                            <TextBlock Text="Clair, sombre ou thème système"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ComboBox Grid.Column="2" VerticalAlignment="Center" MinWidth="160"
+                                  SelectedItem="{x:Bind ViewModel.Theme, Mode=TwoWay}">
+                            <x:String>System</x:String>
+                            <x:String>Light</x:String>
+                            <x:String>Dark</x:String>
+                        </ComboBox>
+                    </Grid>
                 </StackPanel>
+            </Border>
 
-                <!-- Fichiers Pane -->
-                <StackPanel x:Name="FilesPane" Spacing="16" Visibility="Collapsed">
-                    <TextBlock Text="Fichiers" Style="{ThemeResource SubtitleTextBlockStyle}" />
+            <!-- ══ FICHIERS ══ -->
+            <TextBlock Text="Fichiers" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
 
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Chemin du fichier de notes" Style="{ThemeResource BaseTextBlockStyle}" />
-                        <TextBox Text="{x:Bind ViewModel.NotesFilePath, Mode=TwoWay}" PlaceholderText="C:\Users\...\MY_SINGLETON_NOTEPAD.md" />
-                    </StackPanel>
-
-                    <ToggleSwitch
-                        Header="Auto-save"
-                        IsOn="{x:Bind ViewModel.AutoSave, Mode=TwoWay}"
-                        OnContent="Activé"
-                        OffContent="Désactivé" />
-
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Délai auto-save (ms)" Style="{ThemeResource BaseTextBlockStyle}" />
-                        <NumberBox
-                            Value="{x:Bind ViewModel.AutoSaveDelayMs, Mode=TwoWay}"
-                            Minimum="500"
-                            Maximum="10000"
-                            SpinButtonPlacementMode="Inline" />
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- API Keys Pane -->
-                <StackPanel x:Name="ApiKeysPane" Spacing="16" Visibility="Collapsed">
-                    <TextBlock Text="Clés API" Style="{ThemeResource SubtitleTextBlockStyle}" />
-                    <InfoBar
-                        Severity="Informational"
-                        Title="Sécurité DPAPI"
-                        Message="Les clés sont chiffrées avec DPAPI (Windows Data Protection). Seul votre compte peut les déchiffrer." />
-
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Clé OpenAI" Style="{ThemeResource BaseTextBlockStyle}" />
-                        <PasswordBox
-                            x:Name="OpenAiKeyBox"
-                            Password="{x:Bind ViewModel.OpenAiApiKey, Mode=TwoWay}"
-                            PlaceholderText="sk-..." />
-                        <TextBlock
-                            Text="Stockée chiffrée avec DPAPI"
-                            Style="{ThemeResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-                    </StackPanel>
-
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Clé Anthropic" Style="{ThemeResource BaseTextBlockStyle}" />
-                        <PasswordBox
-                            x:Name="AnthropicKeyBox"
-                            Password="{x:Bind ViewModel.AnthropicApiKey, Mode=TwoWay}"
-                            PlaceholderText="sk-ant-..." />
-                        <TextBlock
-                            Text="Stockée chiffrée avec DPAPI"
-                            Style="{ThemeResource CaptionTextBlockStyle}"
-                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
-                    </StackPanel>
-                </StackPanel>
-
-                <!-- Historique / Backup Pane -->
-                <StackPanel x:Name="HistoryPane" Spacing="16" Visibility="Collapsed">
-                    <TextBlock Text="Historique des sauvegardes" Style="{ThemeResource SubtitleTextBlockStyle}" />
-
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Nombre max de sauvegardes" Style="{ThemeResource BaseTextBlockStyle}" />
-                        <NumberBox
-                            Value="{x:Bind ViewModel.MaxBackupCount, Mode=TwoWay}"
-                            Minimum="3"
-                            Maximum="100"
-                            SpinButtonPlacementMode="Inline" />
-                    </StackPanel>
-
-                    <ListView
-                        x:Name="BackupsListView"
-                        ItemsSource="{x:Bind ViewModel.Backups, Mode=OneWay}"
-                        SelectionMode="Single"
-                        Height="300">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="40" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{Binding VersionDisplay}" FontWeight="Bold" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="1" Text="{Binding TimestampDisplay}" VerticalAlignment="Center" />
-                                    <TextBlock Grid.Column="2" Text="{Binding SizeDisplay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
-                                    <Button Grid.Column="3" Content="Restaurer" Tag="{Binding Path}" Click="OnRestoreBackup" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-
-                    <Button Content="Actualiser" Click="OnRefreshBackups" HorizontalAlignment="Left" />
-                </StackPanel>
-
-                <!-- Rules Editor Pane -->
-                <StackPanel x:Name="RulesPane" Spacing="16" Visibility="Collapsed">
-                    <TextBlock Text="Règles de normalisation" Style="{ThemeResource SubtitleTextBlockStyle}" />
-
-                    <ScrollViewer Height="400" VerticalScrollBarVisibility="Auto">
+                    <!-- Fichier de notes -->
+                    <StackPanel Padding="16,14" Spacing="6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <FontIcon Grid.Column="0" Glyph="&#xE8A5;" FontSize="18"
+                                      VerticalAlignment="Center" Margin="0,0,16,0"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <TextBlock Text="Fichier de notes" />
+                                <TextBlock Text="Chemin vers MY_SINGLETON_NOTEPAD.md"
+                                           Style="{ThemeResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
+                        </Grid>
                         <TextBox
-                            Text="{x:Bind ViewModel.RulesContent, Mode=TwoWay}"
-                            AcceptsReturn="True"
-                            TextWrapping="Wrap"
-                            FontFamily="Cascadia Mono, Consolas, monospace"
-                            FontSize="13" />
-                    </ScrollViewer>
-
-                    <Button Content="Enregistrer les règles" Click="OnSaveRules" HorizontalAlignment="Left" />
-                </StackPanel>
-
-                <!-- Normalisation Pane -->
-                <StackPanel x:Name="NormalizationPane" Spacing="16" Visibility="Collapsed">
-                    <TextBlock Text="Normalisation" Style="{ThemeResource SubtitleTextBlockStyle}" />
-
-                    <ToggleSwitch
-                        Header="Normaliser à la fermeture"
-                        IsOn="{x:Bind ViewModel.AutoNormalizeOnClose, Mode=TwoWay}"
-                        OnContent="Activé"
-                        OffContent="Désactivé" />
-
-                    <StackPanel Spacing="8">
-                        <TextBlock Text="Délai d'inactivité avant normalisation (minutes)" Style="{ThemeResource BaseTextBlockStyle}" />
-                        <NumberBox
-                            Value="{x:Bind ViewModel.IdleMinutesBeforeNormalize, Mode=TwoWay}"
-                            Minimum="1"
-                            Maximum="120"
-                            SpinButtonPlacementMode="Inline" />
+                            Text="{x:Bind ViewModel.NotesFilePath, Mode=TwoWay}"
+                            PlaceholderText="C:\Users\...\MY_SINGLETON_NOTEPAD.md"
+                            HorizontalAlignment="Stretch" />
                     </StackPanel>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- Enregistrement auto -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE74E;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Enregistrement automatique" />
+                            <TextBlock Text="Sauvegarde 2 secondes après la dernière frappe"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
+                                      IsOn="{x:Bind ViewModel.AutoSave, Mode=TwoWay}"
+                                      OnContent="" OffContent="" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- Délai auto-save -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE916;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Délai auto-save (ms)" />
+                            <TextBlock Text="Entre 500 et 10 000 ms"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <NumberBox Grid.Column="2" VerticalAlignment="Center"
+                                   Value="{x:Bind ViewModel.AutoSaveDelayMs, Mode=TwoWay}"
+                                   Minimum="500" Maximum="10000"
+                                   SpinButtonPlacementMode="Inline" MinWidth="140" />
+                    </Grid>
+
                 </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
-    </NavigationView>
+            </Border>
+
+            <!-- ══ NORMALISATION ══ -->
+            <TextBlock Text="Normalisation LLM" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+
+                    <!-- Normaliser à la fermeture -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE72C;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Normaliser à la fermeture" />
+                            <TextBlock Text="Lance le LLM avant de quitter l'application"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
+                                      IsOn="{x:Bind ViewModel.AutoNormalizeOnClose, Mode=TwoWay}"
+                                      OnContent="" OffContent="" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- Délai inactivité -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE823;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Délai d'inactivité (minutes)" />
+                            <TextBlock Text="Déclenche la normalisation automatique après N minutes"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <NumberBox Grid.Column="2" VerticalAlignment="Center"
+                                   Value="{x:Bind ViewModel.IdleMinutesBeforeNormalize, Mode=TwoWay}"
+                                   Minimum="1" Maximum="120"
+                                   SpinButtonPlacementMode="Inline" MinWidth="140" />
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- ══ CLÉS API ══ -->
+            <TextBlock Text="Clés API" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel Padding="16,12" Spacing="0">
+
+                    <InfoBar
+                        Margin="0,0,0,12"
+                        IsOpen="True" IsClosable="False"
+                        Severity="Informational"
+                        Title="Chiffrées avec DPAPI"
+                        Message="Seul votre compte Windows peut déchiffrer ces clés." />
+
+                    <!-- OpenAI -->
+                    <Grid MinHeight="54">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="200" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE785;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Clé OpenAI" />
+                            <TextBlock Text="GPT-4o-mini"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <PasswordBox Grid.Column="2" VerticalAlignment="Center"
+                                     Password="{x:Bind ViewModel.OpenAiApiKey, Mode=TwoWay}"
+                                     PlaceholderText="sk-..." />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,8" />
+
+                    <!-- Anthropic -->
+                    <Grid MinHeight="54">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="200" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE785;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Clé Anthropic" />
+                            <TextBlock Text="Claude"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <PasswordBox Grid.Column="2" VerticalAlignment="Center"
+                                     Password="{x:Bind ViewModel.AnthropicApiKey, Mode=TwoWay}"
+                                     PlaceholderText="sk-ant-..." />
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+
+            <!-- ══ RÈGLES ══ -->
+            <TextBlock Text="Règles de normalisation" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel Padding="16,14" Spacing="10">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE292;" FontSize="18"
+                                  VerticalAlignment="Top" Margin="0,2,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" Spacing="8">
+                            <TextBlock Text="Instructions envoyées au LLM (AGENTS.md)" />
+                            <TextBox
+                                Text="{x:Bind ViewModel.RulesContent, Mode=TwoWay}"
+                                AcceptsReturn="True" TextWrapping="Wrap"
+                                FontFamily="Cascadia Mono, Consolas, monospace"
+                                FontSize="13" MinHeight="180"
+                                HorizontalAlignment="Stretch" />
+                            <Button Content="Enregistrer les règles" Click="OnSaveRules" />
+                        </StackPanel>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
+            <!-- ══ SAUVEGARDES ══ -->
+            <TextBlock Text="Sauvegardes" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+
+                    <!-- Nombre max -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE81C;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <TextBlock Grid.Column="1" Text="Nombre maximum de sauvegardes" VerticalAlignment="Center" />
+                        <NumberBox Grid.Column="2" VerticalAlignment="Center"
+                                   Value="{x:Bind ViewModel.MaxBackupCount, Mode=TwoWay}"
+                                   Minimum="3" Maximum="100"
+                                   SpinButtonPlacementMode="Inline" MinWidth="120" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- Liste -->
+                    <StackPanel Padding="16,12" Spacing="8">
+                        <ListView
+                            ItemsSource="{x:Bind ViewModel.Backups, Mode=OneWay}"
+                            SelectionMode="None" MinHeight="40">
+                            <ListView.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Padding="0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="40" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="70" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="{Binding VersionDisplay}"
+                                                   FontWeight="SemiBold" VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="1" Text="{Binding TimestampDisplay}"
+                                                   VerticalAlignment="Center" />
+                                        <TextBlock Grid.Column="2" Text="{Binding SizeDisplay}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                   VerticalAlignment="Center" />
+                                        <Button Grid.Column="3" Content="Restaurer"
+                                                Tag="{Binding Path}" Click="OnRestoreBackup" />
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                        <Button Content="Actualiser" Click="OnRefreshBackups" />
+                    </StackPanel>
+
+                </StackPanel>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
 </Page>

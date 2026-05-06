@@ -37,6 +37,8 @@ public sealed partial class MainWindow : Window
 
         // Navigate the root frame to the main page on startup.
         RootFrame.Navigate(typeof(MainPage));
+        RootFrame.Navigated += (_, _) =>
+            AppTitleBar.IsBackButtonVisible = RootFrame.CanGoBack;
 
         // Persist position on close
         Closed += OnClosed;
@@ -57,6 +59,15 @@ public sealed partial class MainWindow : Window
     public static Frame? GetRootFrame()
     {
         return (App.Window as MainWindow)?.RootFrame;
+    }
+
+    private void OnTitleBarBackRequested(TitleBar sender, object args)
+    {
+        if (RootFrame.CanGoBack)
+        {
+            RootFrame.GoBack();
+            AppTitleBar.IsBackButtonVisible = RootFrame.CanGoBack;
+        }
     }
 
     private async Task RestoreWindowPositionAsync()

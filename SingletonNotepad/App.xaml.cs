@@ -49,6 +49,22 @@ public partial class App : Application
     /// </summary>
     public static IServiceProvider Services { get; private set; } = null!;
 
+    public static void ApplyTheme(string? theme)
+    {
+        if (Window?.Content is not FrameworkElement root)
+        {
+            return;
+        }
+
+        var normalized = (theme ?? "System").Trim().ToLowerInvariant();
+        root.RequestedTheme = normalized switch
+        {
+            "light" or "clair" => ElementTheme.Light,
+            "dark" or "sombre" => ElementTheme.Dark,
+            _ => ElementTheme.Default,
+        };
+    }
+
     /// <summary>
     /// Initializes the singleton application object.
     /// </summary>
@@ -77,7 +93,22 @@ public partial class App : Application
 
         Window = new MainWindow();
         DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
+        _ = ApplyInitialThemeAsync();
         Window.Activate();
+    }
+
+    private static async Task ApplyInitialThemeAsync()
+    {
+        try
+        {
+            var settingsService = Services.GetRequiredService<ISettingsService>();
+            var settings = await settingsService.LoadAsync();
+            ApplyTheme(settings.Theme);
+        }
+        catch
+        {
+            ApplyTheme("System");
+        }
     }
 
     private static IServiceProvider ConfigureServices()

@@ -20,69 +20,19 @@ public sealed partial class SettingsPage : Page
     {
         base.OnNavigatedTo(e);
         await ViewModel.LoadSettingsAsync();
-        // Select first nav item by default
-        SettingsNavView.SelectedItem = SettingsNavView.MenuItems[0];
-    }
-
-    private void OnSelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
-    {
-        if (args.SelectedItem is NavigationViewItem item)
-        {
-            var tag = item.Tag as string;
-            AppearancePane.Visibility = tag == "appearance"
-                ? Microsoft.UI.Xaml.Visibility.Visible
-                : Microsoft.UI.Xaml.Visibility.Collapsed;
-            FilesPane.Visibility = tag == "files"
-                ? Microsoft.UI.Xaml.Visibility.Visible
-                : Microsoft.UI.Xaml.Visibility.Collapsed;
-            HistoryPane.Visibility = tag == "history"
-                ? Microsoft.UI.Xaml.Visibility.Visible
-                : Microsoft.UI.Xaml.Visibility.Collapsed;
-            ApiKeysPane.Visibility = tag == "apikeys"
-                ? Microsoft.UI.Xaml.Visibility.Visible
-                : Microsoft.UI.Xaml.Visibility.Collapsed;
-            RulesPane.Visibility = tag == "rules"
-                ? Microsoft.UI.Xaml.Visibility.Visible
-                : Microsoft.UI.Xaml.Visibility.Collapsed;
-            NormalizationPane.Visibility = tag == "normalization"
-                ? Microsoft.UI.Xaml.Visibility.Visible
-                : Microsoft.UI.Xaml.Visibility.Collapsed;
-
-            if (tag == "history")
-            {
-                _ = ViewModel.LoadBackupsAsync();
-            }
-            else if (tag == "rules")
-            {
-                _ = ViewModel.LoadRulesAsync();
-            }
-        }
+        await ViewModel.LoadRulesAsync();
+        await ViewModel.LoadBackupsAsync();
     }
 
     private async void OnSaveRules(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.SaveRulesAsync();
-    }
+        => await ViewModel.SaveRulesAsync();
 
     private async void OnRefreshBackups(object sender, RoutedEventArgs e)
-    {
-        await ViewModel.LoadBackupsAsync();
-    }
+        => await ViewModel.LoadBackupsAsync();
 
     private async void OnRestoreBackup(object sender, RoutedEventArgs e)
     {
         if (sender is Button btn && btn.Tag is string path)
-        {
             await ViewModel.RestoreBackupAsync(path);
-        }
-    }
-
-    private void OnBackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)
-    {
-        var frame = MainWindow.GetRootFrame();
-        if (frame?.CanGoBack == true)
-        {
-            frame.GoBack();
-        }
     }
 }
