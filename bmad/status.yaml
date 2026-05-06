@@ -1,15 +1,15 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
-phase: sprint4
-progress: 0
-next_action: "Implement S4-01: Versioned backup system"
-next_command: "bmad-dev-story S4-01"
-next_role: "Developer"
-active_role: "Developer"
+phase: release
+progress: 100
+next_action: "Sprint 4 complete. v1.0 release candidate ready."
+next_command: ""
+next_role: ""
+active_role: ""
 last_updated: "2026-05-06"
 
-marketing: "Single-file Markdown notepad with LLM normalization. S3 complete. Sprint 4: versioned backups, backup UI, rules editor, release candidate."
-product: "S4 planning done. 4 stories: versioned backups, backup management UI, custom rules editor, release prep."
+marketing: "Single-file Markdown notepad with LLM normalization. S4 complete. Versioned backups, backup management UI, rules editor, OpenAI/Anthropic providers, DPAPI key storage, FileSystemWatcher detection."
+product: "S4 complete. All 4 sprints done. v1.0 release candidate."
 far_vision: "v1.0 release candidate. Cloud sync deferred to post-v1."
 
 stack_migration:
@@ -41,7 +41,7 @@ phases:
   - name: testing
     status: complete
   - name: release
-    status: upcoming
+    status: in_progress
 
 artifacts:
   prd: "bmad/artifacts/docs/PRD.md"
@@ -102,22 +102,6 @@ sprints:
   - id: S3
     name: "Polish & Production Readiness"
     status: complete
-  - id: S4
-    name: "Advanced & Release Candidate"
-    status: "in_progress"
-    stories:
-      - id: S4-01
-        title: "Versioned backup system with numbered versions and cleanup"
-        status: pending
-      - id: S4-02
-        title: "Backup management UI in Settings"
-        status: pending
-      - id: S4-03
-        title: "Custom rules editor pane in Settings"
-        status: pending
-      - id: S4-04
-        title: "Release candidate: polish, smoke test, packaging"
-        status: pending
     stories:
       - id: S3-01
         title: "Markdown syntax highlighting (Markdig)"
@@ -131,3 +115,19 @@ sprints:
       - id: S3-04
         title: "FileSystemWatcher external-edit detection"
         status: done
+  - id: S4
+    name: "Advanced & Release Candidate"
+    status: complete
+    stories:
+      - id: S4-01
+        title: "Versioned backup system with numbered versions and cleanup"
+        status: done
+      - id: S4-02
+        title: "Backup management UI in Settings"
+        status: done
+      - id: S4-03
+        title: "Custom rules editor pane in Settings"
+        status: done
+      - id: S4-04
+        title: "Release candidate: polish, smoke test, packaging"
+        status: pending
