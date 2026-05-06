@@ -116,7 +116,7 @@ public class FileService : IFileService
 
     private async void OnAutoSaveElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (_isSaving || string.IsNullOrEmpty(_pendingContent))
+        if (_isSaving || _pendingContent is null)
         {
             return;
         }

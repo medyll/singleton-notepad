@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Providers;
 
 namespace SingletonNotepad.Tests;
@@ -7,35 +8,24 @@ namespace SingletonNotepad.Tests;
 [TestClass]
 public class OpenAiProviderTests
 {
+    private static OpenAiProvider Make(HttpClient http, string apiKey = "sk-test-key")
+        => new(http, new StubSettingsService(new AppSettings { OpenAiApiKey = apiKey }));
+
     [TestMethod]
     public void Name_ReturnsOpenAi()
     {
-        var httpClient = new HttpClient();
-        var provider = new OpenAiProvider(httpClient, "sk-test-key");
-        Assert.AreEqual("OpenAI", provider.Name);
+        Assert.AreEqual("OpenAI", Make(new HttpClient()).Name);
     }
 
     [TestMethod]
     public async Task CompleteAsync_SendsCorrectRequest()
     {
         var mockHandler = new MockHttpMessageHandler();
-        var httpClient = new HttpClient(mockHandler);
-
         mockHandler.SetupResponse(
             "https://api.openai.com/v1/chat/completions",
-            new OpenAiChatResponse
-            {
-                Choices = new[]
-                {
-                    new OpenAiChoice
-                    {
-                        Message = new OpenAiMessage { Role = "assistant", Content = "Normalized markdown content" }
-                    }
-                }
-            });
+            new { choices = new[] { new { message = new { role = "assistant", content = "Normalized markdown content" } } } });
 
-        var provider = new OpenAiProvider(httpClient, "sk-test-key", "https://api.openai.com/v1", "gpt-4o-mini");
-        var result = await provider.CompleteAsync("Fix my markdown");
+        var result = await Make(new HttpClient(mockHandler)).CompleteAsync("Fix my markdown");
 
         Assert.AreEqual("Normalized markdown content", result);
         var sentRequest = mockHandler.SentRequests.First();
@@ -47,15 +37,11 @@ public class OpenAiProviderTests
     public async Task CompleteAsync_ReturnsEmpty_WhenNoChoices()
     {
         var mockHandler = new MockHttpMessageHandler();
-        var httpClient = new HttpClient(mockHandler);
-
         mockHandler.SetupResponse(
             "https://api.openai.com/v1/chat/completions",
-            new OpenAiChatResponse { Choices = Array.Empty<OpenAiChoice>() });
+            new { choices = Array.Empty<object>() });
 
-        var provider = new OpenAiProvider(httpClient, "sk-test-key");
-        var result = await provider.CompleteAsync("test");
-
+        var result = await Make(new HttpClient(mockHandler)).CompleteAsync("test");
         Assert.AreEqual(string.Empty, result);
     }
 
@@ -63,20 +49,14 @@ public class OpenAiProviderTests
     public async Task CompleteAsync_Throws_OnHttpError()
     {
         var mockHandler = new MockHttpMessageHandler();
-        var httpClient = new HttpClient(mockHandler);
-
-        mockHandler.SetupError("https://api.openai.com/v1/chat/completions", System.Net.HttpStatusCode.BadRequest);
-
-        var provider = new OpenAiProvider(httpClient, "sk-test-key");
+        mockHandler.SetupError("https://api.openai.com/v1/chat/completions", HttpStatusCode.BadRequest);
 
         try
         {
-            await provider.CompleteAsync("test");
+            await Make(new HttpClient(mockHandler)).CompleteAsync("test");
             Assert.Fail("Expected HttpRequestException");
         }
-        catch (System.Net.Http.HttpRequestException)
-        {
-        }
+        catch (HttpRequestException) { }
     }
 }
 
@@ -88,49 +68,36 @@ internal class MockHttpMessageHandler : HttpMessageHandler
 
     public IReadOnlyList<MockRequest> SentRequests => _sentRequests;
 
-    public void SetupResponse(string url, object response)
-    {
-        _responses[url] = response;
-    }
+    public void SetupResponse(string url, object response) => _responses[url] = response;
 
-    public void SetupError(string url, System.Net.HttpStatusCode statusCode)
-    {
-        _errors[url] = new System.Net.Http.HttpRequestException($"HTTP {statusCode}");
-    }
+    public void SetupError(string url, HttpStatusCode statusCode)
+        => _errors[url] = new HttpRequestException($"HTTP {statusCode}");
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var url = request.RequestUri?.ToString() ?? "";
-
         _sentRequests.Add(new MockRequest
         {
-            Method = request.Method.ToString(),
-            Url = url,
-            Content = await request.Content?.ReadAsStringAsync(cancellationToken) ?? ""
+            Method  = request.Method.ToString(),
+            Url     = url,
+            Content = await (request.Content?.ReadAsStringAsync(cancellationToken) ?? Task.FromResult(string.Empty)),
         });
 
-        if (_errors.TryGetValue(url, out var error))
-            throw error;
+        if (_errors.TryGetValue(url, out var error)) throw error;
 
         if (_responses.TryGetValue(url, out var response))
         {
-            var json = JsonSerializer.Serialize(response, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-            });
-            return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
-            {
-                Content = new StringContent(json)
-            };
+            var json = JsonSerializer.Serialize(response, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json) };
         }
 
-        return new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+        return new HttpResponseMessage(HttpStatusCode.NotFound);
     }
 }
 
 internal class MockRequest
 {
-    public string Method { get; set; } = "";
-    public string Url { get; set; } = "";
+    public string Method  { get; set; } = "";
+    public string Url     { get; set; } = "";
     public string Content { get; set; } = "";
 }

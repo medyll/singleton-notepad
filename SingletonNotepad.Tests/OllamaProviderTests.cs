@@ -1,19 +1,21 @@
 using System.Net;
 using System.Text.Json;
+using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Providers;
+using SingletonNotepad.Core.Services;
 
 namespace SingletonNotepad.Tests;
 
 [TestClass]
 public class OllamaProviderTests
 {
+    private static OllamaProvider Make(HttpClient http, string endpoint = "http://localhost:11434", string model = "llama3")
+        => new(http, new StubSettingsService(new AppSettings { OllamaEndpoint = endpoint, OllamaModel = model }));
+
     [TestMethod]
     public void Name_ReturnsOllama()
     {
-        var httpClient = new HttpClient();
-        var provider = new OllamaProvider(httpClient);
-
-        Assert.AreEqual("Ollama", provider.Name);
+        Assert.AreEqual("Ollama", Make(new HttpClient()).Name);
     }
 
     [TestMethod]
@@ -35,52 +37,31 @@ public class OllamaProviderTests
             };
         });
 
-        var httpClient = new HttpClient(handler);
-        var provider = new OllamaProvider(httpClient);
-
-        var result = await provider.CompleteAsync("Hello");
-
+        var result = await Make(new HttpClient(handler)).CompleteAsync("Hello");
         Assert.AreEqual("Hi there!", result);
     }
 
     [TestMethod]
     public async Task CompleteAsync_ReturnsEmpty_WhenResponseIsEmpty()
     {
-        var handler = new MockHttpHandler(_ =>
+        var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("""{"response":""}"""),
-            });
-        });
+            Content = new StringContent("""{"response":""}"""),
+        }));
 
-        var httpClient = new HttpClient(handler);
-        var provider = new OllamaProvider(httpClient);
-
-        var result = await provider.CompleteAsync("Hello");
-
-        Assert.AreEqual(string.Empty, result);
+        Assert.AreEqual(string.Empty, await Make(new HttpClient(handler)).CompleteAsync("Hello"));
     }
 
     [TestMethod]
     public async Task CompleteAsync_ThrowsOnHttpError()
     {
-        var handler = new MockHttpHandler(_ =>
-        {
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError));
-        });
-
-        var httpClient = new HttpClient(handler);
-        var provider = new OllamaProvider(httpClient);
-
+        var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
         try
         {
-            await provider.CompleteAsync("Hello");
+            await Make(new HttpClient(handler)).CompleteAsync("Hello");
             Assert.Fail("Expected HttpRequestException");
         }
-        catch (HttpRequestException)
-        {
-        }
+        catch (HttpRequestException) { }
     }
 
     [TestMethod]
@@ -92,20 +73,13 @@ public class OllamaProviderTests
             return new HttpResponseMessage(HttpStatusCode.OK);
         });
 
-        var httpClient = new HttpClient(handler)
-        {
-            Timeout = TimeSpan.FromMilliseconds(100),
-        };
-        var provider = new OllamaProvider(httpClient);
-
+        var http = new HttpClient(handler) { Timeout = TimeSpan.FromMilliseconds(100) };
         try
         {
-            await provider.CompleteAsync("Hello");
+            await Make(http).CompleteAsync("Hello");
             Assert.Fail("Expected TaskCanceledException");
         }
-        catch (TaskCanceledException)
-        {
-        }
+        catch (TaskCanceledException) { }
     }
 
     [TestMethod]
@@ -120,10 +94,7 @@ public class OllamaProviderTests
             });
         });
 
-        var httpClient = new HttpClient(handler);
-        var provider = new OllamaProvider(httpClient, "http://192.168.1.42:11434", "mistral");
-
-        await provider.CompleteAsync("Hello");
+        await Make(new HttpClient(handler), "http://192.168.1.42:11434", "mistral").CompleteAsync("Hello");
     }
 
     [TestMethod]
@@ -140,10 +111,7 @@ public class OllamaProviderTests
             };
         });
 
-        var httpClient = new HttpClient(handler);
-        var provider = new OllamaProvider(httpClient, "http://localhost:11434", "mistral");
-
-        await provider.CompleteAsync("Hello");
+        await Make(new HttpClient(handler), model: "mistral").CompleteAsync("Hello");
     }
 
     [TestMethod]
@@ -155,32 +123,29 @@ public class OllamaProviderTests
             return new HttpResponseMessage(HttpStatusCode.OK);
         });
 
-        var httpClient = new HttpClient(handler);
-        var provider = new OllamaProvider(httpClient);
-
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
         try
         {
-            await provider.CompleteAsync("Hello", cts.Token);
+            await Make(new HttpClient(handler)).CompleteAsync("Hello", cts.Token);
             Assert.Fail("Expected OperationCanceledException");
         }
-        catch (OperationCanceledException)
-        {
-        }
+        catch (OperationCanceledException) { }
     }
+}
+
+// Shared across provider test files
+internal class StubSettingsService : ISettingsService
+{
+    private readonly AppSettings _settings;
+    public StubSettingsService(AppSettings? settings = null) => _settings = settings ?? new AppSettings();
+    public Task<AppSettings> LoadAsync(CancellationToken ct = default) => Task.FromResult(_settings);
+    public Task SaveAsync(AppSettings settings, CancellationToken ct = default) => Task.CompletedTask;
 }
 
 internal class MockHttpHandler : HttpMessageHandler
 {
     private readonly Func<HttpRequestMessage, Task<HttpResponseMessage>> _handler;
-
-    public MockHttpHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler)
-    {
-        _handler = handler;
-    }
-
+    public MockHttpHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler) => _handler = handler;
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        return await _handler(request);
-    }
+        => await _handler(request);
 }

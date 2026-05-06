@@ -96,14 +96,11 @@ public partial class App : Application
         services.AddSingleton<INormalizationService, NormalizationService>();
         services.AddSingleton<IMemoryTrackerService, MemoryTrackerService>();
 
-        // Providers (Sprint 2 + Sprint 3)
+        // Providers — ISettingsService injected; keys read lazily at call time (no .Result blocking)
+        services.AddSingleton<OllamaProvider>();
+        services.AddSingleton<OpenAiProvider>();
+        services.AddSingleton<AnthropicProvider>();
         services.AddSingleton<ILlmProvider, OllamaProvider>();
-        services.AddSingleton(sp => new OpenAiProvider(
-            sp.GetRequiredService<HttpClient>(),
-            sp.GetRequiredService<ISettingsService>().LoadAsync().Result.OpenAiApiKey ?? string.Empty));
-        services.AddSingleton(sp => new AnthropicProvider(
-            sp.GetRequiredService<HttpClient>(),
-            sp.GetRequiredService<ISettingsService>().LoadAsync().Result.AnthropicApiKey ?? string.Empty));
         services.AddSingleton<ILlmProviderSelector, LlmProviderSelector>();
 
         // ViewModels

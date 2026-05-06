@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Providers;
 
 namespace SingletonNotepad.Tests;
@@ -7,13 +8,15 @@ namespace SingletonNotepad.Tests;
 [TestClass]
 public class AnthropicProviderTests
 {
+    private const string DefaultModel = "claude-haiku-4-5-20251001";
+
+    private static AnthropicProvider Make(HttpClient http, string apiKey = "sk-ant-test-key")
+        => new(http, new StubSettingsService(new AppSettings { AnthropicApiKey = apiKey }));
+
     [TestMethod]
     public void Name_ReturnsAnthropic()
     {
-        var httpClient = new HttpClient();
-        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
-
-        Assert.AreEqual("Anthropic", provider.Name);
+        Assert.AreEqual("Anthropic", Make(new HttpClient()).Name);
     }
 
     [TestMethod]
@@ -24,11 +27,13 @@ public class AnthropicProviderTests
             var body = await request.Content!.ReadAsStringAsync();
             var json = JsonDocument.Parse(body);
 
-            Assert.AreEqual("claude-3-5-haiku-20240620", json.RootElement.GetProperty("model").GetString());
+            Assert.AreEqual(DefaultModel, json.RootElement.GetProperty("model").GetString());
             var messages = json.RootElement.GetProperty("messages");
             Assert.AreEqual("user", messages[0].GetProperty("role").GetString());
             Assert.AreEqual("Hello", messages[0].GetProperty("content").GetString());
             Assert.AreEqual("https://api.anthropic.com/v1/messages", request.RequestUri!.AbsoluteUri);
+            Assert.IsTrue(request.Headers.Contains("x-api-key"));
+            Assert.IsTrue(request.Headers.Contains("anthropic-version"));
 
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
@@ -36,72 +41,47 @@ public class AnthropicProviderTests
             };
         });
 
-        var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
-
-        var result = await provider.CompleteAsync("Hello");
-
+        var result = await Make(new HttpClient(handler)).CompleteAsync("Hello");
         Assert.AreEqual("Hi there!", result);
     }
 
     [TestMethod]
     public async Task CompleteAsync_ReturnsEmpty_WhenNoContent()
     {
-        var handler = new MockHttpHandler(_ =>
+        var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
-            {
-                Content = new StringContent("""{"content":[]}"""),
-            });
-        });
+            Content = new StringContent("""{"content":[]}"""),
+        }));
 
-        var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
-
-        var result = await provider.CompleteAsync("Hello");
-
-        Assert.AreEqual(string.Empty, result);
+        Assert.AreEqual(string.Empty, await Make(new HttpClient(handler)).CompleteAsync("Hello"));
     }
 
     [TestMethod]
     public async Task CompleteAsync_ThrowsOnHttpError()
     {
-        var handler = new MockHttpHandler(_ =>
-        {
-            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError));
-        });
-
-        var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
-
+        var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
         try
         {
-            await provider.CompleteAsync("Hello");
+            await Make(new HttpClient(handler)).CompleteAsync("Hello");
             Assert.Fail("Expected HttpRequestException");
         }
-        catch (HttpRequestException)
-        {
-        }
+        catch (HttpRequestException) { }
     }
 
     [TestMethod]
-    public async Task CompleteAsync_UsesCustomModel()
+    public async Task CompleteAsync_SendsApiKeyInHeader()
     {
-        var handler = new MockHttpHandler(async request =>
+        var handler = new MockHttpHandler(request =>
         {
-            var body = await request.Content!.ReadAsStringAsync();
-            var json = JsonDocument.Parse(body);
-            Assert.AreEqual("claude-3-5-sonnet-20240701", json.RootElement.GetProperty("model").GetString());
-            return new HttpResponseMessage(HttpStatusCode.OK)
+            Assert.IsTrue(request.Headers.TryGetValues("x-api-key", out var vals));
+            Assert.AreEqual("sk-ant-test-key", vals!.First());
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
                 Content = new StringContent("""{"content":[{"text":"ok"}]}"""),
-            };
+            });
         });
 
-        var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key", "claude-3-5-sonnet-20240701");
-
-        await provider.CompleteAsync("Hello");
+        await Make(new HttpClient(handler)).CompleteAsync("Hello");
     }
 
     [TestMethod]
@@ -113,32 +93,12 @@ public class AnthropicProviderTests
             return new HttpResponseMessage(HttpStatusCode.OK);
         });
 
-        var httpClient = new HttpClient(handler);
-        var provider = new AnthropicProvider(httpClient, "sk-ant-test-key");
-
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
         try
         {
-            await provider.CompleteAsync("Hello", cts.Token);
+            await Make(new HttpClient(handler)).CompleteAsync("Hello", cts.Token);
             Assert.Fail("Expected OperationCanceledException");
         }
-        catch (OperationCanceledException)
-        {
-        }
-    }
-}
-
-internal class AnthropicMockHttpHandler : HttpMessageHandler
-{
-    private readonly Func<HttpRequestMessage, Task<HttpResponseMessage>> _handler;
-
-    public AnthropicMockHttpHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> handler)
-    {
-        _handler = handler;
-    }
-
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        return await _handler(request);
+        catch (OperationCanceledException) { }
     }
 }
