@@ -34,6 +34,9 @@ public sealed partial class SettingsPage : Page
             FilesPane.Visibility = tag == "files"
                 ? Microsoft.UI.Xaml.Visibility.Visible
                 : Microsoft.UI.Xaml.Visibility.Collapsed;
+            ApiKeysPane.Visibility = tag == "apikeys"
+                ? Microsoft.UI.Xaml.Visibility.Visible
+                : Microsoft.UI.Xaml.Visibility.Collapsed;
             NormalizationPane.Visibility = tag == "normalization"
                 ? Microsoft.UI.Xaml.Visibility.Visible
                 : Microsoft.UI.Xaml.Visibility.Collapsed;

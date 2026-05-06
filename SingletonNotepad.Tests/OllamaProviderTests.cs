@@ -140,6 +140,8 @@ internal class StubSettingsService : ISettingsService
     public StubSettingsService(AppSettings? settings = null) => _settings = settings ?? new AppSettings();
     public Task<AppSettings> LoadAsync(CancellationToken ct = default) => Task.FromResult(_settings);
     public Task SaveAsync(AppSettings settings, CancellationToken ct = default) => Task.CompletedTask;
+    public Task<string> ProtectApiKeyAsync(string plainText, CancellationToken ct = default) => Task.FromResult(plainText ?? string.Empty);
+    public Task<string> UnprotectApiKeyAsync(string protectedText, CancellationToken ct = default) => Task.FromResult(protectedText ?? string.Empty);
 }
 
 internal class MockHttpHandler : HttpMessageHandler

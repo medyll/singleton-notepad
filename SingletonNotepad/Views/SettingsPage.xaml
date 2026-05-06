@@ -20,6 +20,7 @@
         <NavigationView.MenuItems>
             <NavigationViewItem Content="Apparence" Icon="Color" Tag="appearance" />
             <NavigationViewItem Content="Fichiers" Icon="Document" Tag="files" />
+            <NavigationViewItem Content="Clés API" Icon="Key" Tag="apikeys" />
             <NavigationViewItem Content="Normalisation" Icon="Edit" Tag="normalization" />
         </NavigationView.MenuItems>
 
@@ -58,6 +59,39 @@
                             Minimum="500"
                             Maximum="10000"
                             SpinButtonPlacementMode="Inline" />
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- API Keys Pane -->
+                <StackPanel x:Name="ApiKeysPane" Spacing="16" Visibility="Collapsed">
+                    <TextBlock Text="Clés API" Style="{ThemeResource SubtitleTextBlockStyle}" />
+                    <InfoBar
+                        Severity="Informational"
+                        Title="Sécurité DPAPI"
+                        Message="Les clés sont chiffrées avec DPAPI (Windows Data Protection). Seul votre compte peut les déchiffrer." />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Clé OpenAI" Style="{ThemeResource BaseTextBlockStyle}" />
+                        <PasswordBox
+                            x:Name="OpenAiKeyBox"
+                            Password="{x:Bind ViewModel.OpenAiApiKey, Mode=TwoWay}"
+                            PlaceholderText="sk-..." />
+                        <TextBlock
+                            Text="Stockée chiffrée avec DPAPI"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Clé Anthropic" Style="{ThemeResource BaseTextBlockStyle}" />
+                        <PasswordBox
+                            x:Name="AnthropicKeyBox"
+                            Password="{x:Bind ViewModel.AnthropicApiKey, Mode=TwoWay}"
+                            PlaceholderText="sk-ant-..." />
+                        <TextBlock
+                            Text="Stockée chiffrée avec DPAPI"
+                            Style="{ThemeResource CaptionTextBlockStyle}"
+                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
                 </StackPanel>
 

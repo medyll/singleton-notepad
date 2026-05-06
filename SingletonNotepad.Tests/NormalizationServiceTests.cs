@@ -152,6 +152,8 @@ internal class MockSettingsService : ISettingsService
 {
     public Task<AppSettings> LoadAsync(CancellationToken ct = default) => Task.FromResult(new AppSettings());
     public Task SaveAsync(AppSettings settings, CancellationToken ct = default) => Task.CompletedTask;
+    public Task<string> ProtectApiKeyAsync(string plainText, CancellationToken ct = default) => Task.FromResult(plainText ?? string.Empty);
+    public Task<string> UnprotectApiKeyAsync(string protectedText, CancellationToken ct = default) => Task.FromResult(protectedText ?? string.Empty);
 }
 
 internal class MockLlmProvider : ILlmProvider

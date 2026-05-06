@@ -1,11 +1,10 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using SingletonNotepad.Core.Models;
 
 namespace SingletonNotepad.Core.Services;
 
-/// <summary>
-/// Persists and retrieves application settings as JSON in %LocalAppData%\SingletonNotepad\settings.json.
-/// </summary>
 public class SettingsService : ISettingsService
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -69,5 +68,32 @@ public class SettingsService : ISettingsService
 
         var json = JsonSerializer.Serialize(settings, JsonOptions);
         await File.WriteAllTextAsync(_settingsPath, json, ct);
+    }
+
+    public Task<string> ProtectApiKeyAsync(string plainText, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(plainText))
+            return Task.FromResult(string.Empty);
+
+        var plainBytes = Encoding.UTF8.GetBytes(plainText);
+        var protectedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
+        return Task.FromResult(Convert.ToBase64String(protectedBytes));
+    }
+
+    public Task<string> UnprotectApiKeyAsync(string protectedText, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(protectedText))
+            return Task.FromResult(string.Empty);
+
+        try
+        {
+            var protectedBytes = Convert.FromBase64String(protectedText);
+            var plainBytes = ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.CurrentUser);
+            return Task.FromResult(Encoding.UTF8.GetString(plainBytes));
+        }
+        catch (CryptographicException)
+        {
+            return Task.FromResult(string.Empty);
+        }
     }
 }
