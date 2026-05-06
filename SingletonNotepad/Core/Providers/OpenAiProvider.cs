@@ -22,7 +22,7 @@ public class OpenAiProvider : ILlmProvider
     public async Task<string> CompleteAsync(string prompt, CancellationToken ct = default)
     {
         var settings = await _settingsService.LoadAsync(ct);
-        var apiKey = settings.OpenAiApiKey ?? string.Empty;
+        var apiKey = await _settingsService.UnprotectApiKeyAsync(settings.OpenAiApiKey ?? string.Empty, ct);
 
         var request = new OpenAiChatRequest
         {

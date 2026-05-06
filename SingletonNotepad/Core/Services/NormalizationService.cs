@@ -13,6 +13,7 @@ public class NormalizationService : INormalizationService
     private const int MaxFileSizeBytes = 500 * 1024;
     private const int MaxLineCount = 10_000;
     private const int MinNormalizeIntervalMinutes = 5;
+    private const int DefaultMaxBackupCount = 10;
 
     private readonly IFileService _fileService;
     private readonly ISettingsService _settingsService;
@@ -22,6 +23,8 @@ public class NormalizationService : INormalizationService
     private readonly string? _defaultRulesPath;
     private DateTime _lastNormalizeTime;
     private string _lastNormalizedHash = string.Empty;
+
+    public string RulesFilePath => _agentsFilePath;
 
     public NormalizationService(
         IFileService fileService,
@@ -152,10 +155,62 @@ public class NormalizationService : INormalizationService
     {
         if (!Directory.Exists(_backupDir))
             Directory.CreateDirectory(_backupDir);
+
+        var settings = await _settingsService.LoadAsync(ct);
+        var maxBackups = settings.MaxBackupCount ?? DefaultMaxBackupCount;
+
+        var existingBackups = Directory.GetFiles(_backupDir, "backup_*.md")
+            .Select(f => new FileInfo(f))
+            .Where(f => f.Exists)
+            .OrderByDescending(f => f.CreationTimeUtc)
+            .ToList();
+
+        var nextVersion = existingBackups.Count + 1;
         var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
-        var backupPath = Path.Combine(_backupDir, $"backup_{timestamp}.md");
+        var backupPath = Path.Combine(_backupDir, $"backup_{timestamp}_v{nextVersion}.md");
         await File.WriteAllTextAsync(backupPath, content, ct);
+
+        var allBackups = Directory.GetFiles(_backupDir, "backup_*.md")
+            .Select(f => new FileInfo(f))
+            .Where(f => f.Exists)
+            .OrderByDescending(f => f.CreationTimeUtc)
+            .ToList();
+
+        if (allBackups.Count > maxBackups)
+        {
+            var toDelete = allBackups.Skip(maxBackups);
+            foreach (var oldBackup in toDelete)
+            {
+                try { oldBackup.Delete(); } catch { }
+            }
+        }
+
         return backupPath;
+    }
+
+    public async Task<IReadOnlyList<BackupInfo>> GetBackupsAsync(CancellationToken ct = default)
+    {
+        if (!Directory.Exists(_backupDir))
+            return Array.Empty<BackupInfo>();
+
+        var settings = await _settingsService.LoadAsync(ct);
+        var maxBackups = settings.MaxBackupCount ?? DefaultMaxBackupCount;
+
+        var backups = Directory.GetFiles(_backupDir, "backup_*.md")
+            .Select(f => new FileInfo(f))
+            .Where(f => f.Exists)
+            .OrderByDescending(f => f.CreationTimeUtc)
+            .Take(maxBackups)
+            .Select((f, idx) => new BackupInfo
+            {
+                Path = f.FullName,
+                Timestamp = f.CreationTimeUtc,
+                Version = idx + 1,
+                SizeBytes = f.Length,
+            })
+            .ToList();
+
+        return backups.AsReadOnly();
     }
 
     private static string ComputeSha256(string input)

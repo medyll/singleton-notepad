@@ -20,7 +20,9 @@
         <NavigationView.MenuItems>
             <NavigationViewItem Content="Apparence" Icon="Color" Tag="appearance" />
             <NavigationViewItem Content="Fichiers" Icon="Document" Tag="files" />
+            <NavigationViewItem Content="Historique" Icon="History" Tag="history" />
             <NavigationViewItem Content="Clés API" Icon="Key" Tag="apikeys" />
+            <NavigationViewItem Content="Règles" Icon="Edit" Tag="rules" />
             <NavigationViewItem Content="Normalisation" Icon="Edit" Tag="normalization" />
         </NavigationView.MenuItems>
 
@@ -93,6 +95,61 @@
                             Style="{ThemeResource CaptionTextBlockStyle}"
                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}" />
                     </StackPanel>
+                </StackPanel>
+
+                <!-- Historique / Backup Pane -->
+                <StackPanel x:Name="HistoryPane" Spacing="16" Visibility="Collapsed">
+                    <TextBlock Text="Historique des sauvegardes" Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                    <StackPanel Spacing="8">
+                        <TextBlock Text="Nombre max de sauvegardes" Style="{ThemeResource BaseTextBlockStyle}" />
+                        <NumberBox
+                            Value="{x:Bind ViewModel.MaxBackupCount, Mode=TwoWay}"
+                            Minimum="3"
+                            Maximum="100"
+                            SpinButtonPlacementMode="Inline" />
+                    </StackPanel>
+
+                    <ListView
+                        x:Name="BackupsListView"
+                        ItemsSource="{x:Bind ViewModel.Backups, Mode=OneWay}"
+                        SelectionMode="Single"
+                        Height="300">
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="40" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding VersionDisplay}" FontWeight="Bold" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="1" Text="{Binding TimestampDisplay}" VerticalAlignment="Center" />
+                                    <TextBlock Grid.Column="2" Text="{Binding SizeDisplay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                                    <Button Grid.Column="3" Content="Restaurer" Tag="{Binding Path}" Click="OnRestoreBackup" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <Button Content="Actualiser" Click="OnRefreshBackups" HorizontalAlignment="Left" />
+                </StackPanel>
+
+                <!-- Rules Editor Pane -->
+                <StackPanel x:Name="RulesPane" Spacing="16" Visibility="Collapsed">
+                    <TextBlock Text="Règles de normalisation" Style="{ThemeResource SubtitleTextBlockStyle}" />
+
+                    <ScrollViewer Height="400" VerticalScrollBarVisibility="Auto">
+                        <TextBox
+                            Text="{x:Bind ViewModel.RulesContent, Mode=TwoWay}"
+                            AcceptsReturn="True"
+                            TextWrapping="Wrap"
+                            FontFamily="Cascadia Mono, Consolas, monospace"
+                            FontSize="13" />
+                    </ScrollViewer>
+
+                    <Button Content="Enregistrer les règles" Click="OnSaveRules" HorizontalAlignment="Left" />
                 </StackPanel>
 
                 <!-- Normalisation Pane -->

@@ -29,7 +29,7 @@ public class AnthropicProvider : ILlmProvider
     public async Task<string> CompleteAsync(string prompt, CancellationToken ct = default)
     {
         var settings = await _settingsService.LoadAsync(ct);
-        var apiKey = settings.AnthropicApiKey ?? string.Empty;
+        var apiKey = await _settingsService.UnprotectApiKeyAsync(settings.AnthropicApiKey ?? string.Empty, ct);
 
         var request = new AnthropicMessageRequest
         {

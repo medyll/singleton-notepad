@@ -64,6 +64,11 @@ public class AppSettings
     /// Idle minutes before auto-normalization triggers.
     /// </summary>
     public int IdleMinutesBeforeNormalize { get; set; } = 15;
+
+    /// <summary>
+    /// Maximum number of versioned backups to keep.
+    /// </summary>
+    public int? MaxBackupCount { get; set; } = 10;
 }
 
 /// <summary>

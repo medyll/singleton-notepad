@@ -1,4 +1,6 @@
+using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Services;
 
@@ -7,6 +9,7 @@ namespace SingletonNotepad.ViewModels;
 public partial class SettingsViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
+    private readonly INormalizationService _normalizationService;
 
     [ObservableProperty]
     public partial string Theme { get; set; } = "System";
@@ -32,9 +35,19 @@ public partial class SettingsViewModel : ObservableObject
     [ObservableProperty]
     public partial string AnthropicApiKey { get; set; } = string.Empty;
 
-    public SettingsViewModel(ISettingsService settingsService)
+    [ObservableProperty]
+    public partial int MaxBackupCount { get; set; } = 10;
+
+    [ObservableProperty]
+    public partial ObservableCollection<BackupDisplayItem> Backups { get; set; } = new();
+
+    [ObservableProperty]
+    public partial string RulesContent { get; set; } = string.Empty;
+
+    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService)
     {
         _settingsService = settingsService;
+        _normalizationService = normalizationService;
     }
 
     public async Task LoadSettingsAsync(CancellationToken ct = default)
@@ -46,6 +59,7 @@ public partial class SettingsViewModel : ObservableObject
         AutoSaveDelayMs = settings.AutoSaveDelayMs;
         AutoNormalizeOnClose = settings.AutoNormalizeOnClose;
         IdleMinutesBeforeNormalize = settings.IdleMinutesBeforeNormalize;
+        MaxBackupCount = settings.MaxBackupCount ?? 10;
 
         if (!string.IsNullOrEmpty(settings.OpenAiApiKey))
         {
@@ -66,6 +80,7 @@ public partial class SettingsViewModel : ObservableObject
         settings.AutoSaveDelayMs = AutoSaveDelayMs;
         settings.AutoNormalizeOnClose = AutoNormalizeOnClose;
         settings.IdleMinutesBeforeNormalize = IdleMinutesBeforeNormalize;
+        settings.MaxBackupCount = MaxBackupCount;
 
         if (!string.IsNullOrEmpty(OpenAiApiKey))
         {
@@ -88,6 +103,45 @@ public partial class SettingsViewModel : ObservableObject
         await _settingsService.SaveAsync(settings, ct);
     }
 
+    public async Task LoadBackupsAsync(CancellationToken ct = default)
+    {
+        var backups = await _normalizationService.GetBackupsAsync(ct);
+        Backups.Clear();
+        foreach (var b in backups)
+        {
+            Backups.Add(new BackupDisplayItem(b));
+        }
+    }
+
+    public async Task RestoreBackupAsync(string path, CancellationToken ct = default)
+    {
+        if (!File.Exists(path)) return;
+        var content = await File.ReadAllTextAsync(path, ct);
+        var fileService = App.Services.GetService(typeof(IFileService)) as IFileService;
+        if (fileService != null)
+        {
+            await fileService.SaveAsync(content, ct);
+        }
+    }
+
+    public async Task DeleteBackupAsync(string path, CancellationToken ct = default)
+    {
+        if (!File.Exists(path)) return;
+        File.Delete(path);
+        await LoadBackupsAsync(ct);
+    }
+
+    public async Task LoadRulesAsync(CancellationToken ct = default)
+    {
+        var rule = await _normalizationService.LoadRulesAsync(ct);
+        RulesContent = rule.Content;
+    }
+
+    public async Task SaveRulesAsync(CancellationToken ct = default)
+    {
+        await File.WriteAllTextAsync(_normalizationService.RulesFilePath, RulesContent, ct);
+    }
+
     partial void OnThemeChanged(string value) => _ = SaveSettingsAsync();
     partial void OnNotesFilePathChanged(string value) => _ = SaveSettingsAsync();
     partial void OnAutoSaveChanged(bool value) => _ = SaveSettingsAsync();
@@ -96,4 +150,19 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnIdleMinutesBeforeNormalizeChanged(int value) => _ = SaveSettingsAsync();
     partial void OnOpenAiApiKeyChanged(string value) => _ = SaveSettingsAsync();
     partial void OnAnthropicApiKeyChanged(string value) => _ = SaveSettingsAsync();
+    partial void OnMaxBackupCountChanged(int value) => _ = SaveSettingsAsync();
+}
+
+public class BackupDisplayItem
+{
+    private readonly BackupInfo _info;
+
+    public BackupDisplayItem(BackupInfo info) => _info = info;
+
+    public string Path => _info.Path;
+    public string VersionDisplay => $"v{_info.Version}";
+    public string TimestampDisplay => _info.Timestamp.ToString("yyyy-MM-dd HH:mm:ss");
+    public string SizeDisplay => _info.SizeBytes < 1024
+        ? $"{_info.SizeBytes} B"
+        : $"{_info.SizeBytes / 1024.0:F1} KB";
 }
