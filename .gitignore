@@ -81,3 +81,4 @@ Tests/
 
 # Local BMAD settings
 .claude/settings.local.json
+_tiptap-build

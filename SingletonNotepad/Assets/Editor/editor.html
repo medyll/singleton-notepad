@@ -94,8 +94,10 @@
 <script src="tiptap.bundle.js"></script>
 <script>
 const { Editor, StarterKit, Placeholder, Markdown } = window.__TipTap;
+let isApplyingHostContent = false;
+let lastPostedMarkdown = '';
 
-const editor = new Editor({
+window.__editor = new Editor({
   element: document.getElementById('editor'),
   extensions: [
     StarterKit.configure({ codeBlock: { HTMLAttributes: {} } }),
@@ -110,10 +112,23 @@ const editor = new Editor({
   content: '',
   autofocus: false,
   onUpdate({ editor }) {
+    if (isApplyingHostContent) return;
     const md = editor.storage.markdown.getMarkdown();
+    if (md === lastPostedMarkdown) return;
+    lastPostedMarkdown = md;
     postToHost({ type: 'change', content: md });
   },
 });
+
+const editor = window.__editor;
+
+// Called directly via ExecuteScriptAsync from C# (thread-safe path)
+window.__setContent = function(content) {
+  isApplyingHostContent = true;
+  editor.commands.setContent(content, false);
+  lastPostedMarkdown = content;
+  isApplyingHostContent = false;
+};
 
 // C# → JS message handler
 window.chrome.webview.addEventListener('message', e => {
@@ -122,7 +137,10 @@ window.chrome.webview.addEventListener('message', e => {
 
   switch (msg.type) {
     case 'setContent':
-      editor.commands.setContent(msg.content ?? '');
+      isApplyingHostContent = true;
+      editor.commands.setContent(msg.content ?? '', false);
+      lastPostedMarkdown = msg.content ?? '';
+      isApplyingHostContent = false;
       break;
     case 'paste':
       editor.commands.focus();

@@ -111,9 +111,16 @@ public sealed partial class MainWindow : Window
     {
         try
         {
+            var appWindow = AppWindow;
+            if (appWindow is null)
+            {
+                return;
+            }
+
+            var pos = appWindow.Position;
+            var size = appWindow.Size;
+
             var settings = await _settingsService.LoadAsync();
-            var pos = AppWindow.Position;
-            var size = AppWindow.Size;
 
             settings.WindowGeometry = new WindowGeometry
             {

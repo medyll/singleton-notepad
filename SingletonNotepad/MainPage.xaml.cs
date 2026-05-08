@@ -2,7 +2,6 @@ using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Web.WebView2.Core;
 using SingletonNotepad.ViewModels;
@@ -16,6 +15,8 @@ public sealed partial class MainPage : Page
 
     private readonly TaskCompletionSource<bool> _editorReady = new();
     private bool _updatingFromWebView;
+    private bool _editorInitialized;
+    private bool _pushingContentToWebView;
 
     public MainPage()
     {
@@ -43,16 +44,18 @@ public sealed partial class MainPage : Page
             }
             else if (args.PropertyName == nameof(ViewModel.EditorContent) && !_updatingFromWebView)
             {
-                _ = PushContentToEditorAsync(ViewModel.EditorContent);
+                PushContentToEditor(ViewModel.EditorContent);
             }
         };
     }
 
     private async void OnEditorWebViewLoaded(object sender, RoutedEventArgs e)
     {
+        if (_editorInitialized) return;
+        _editorInitialized = true;
+
         await EditorWebView.EnsureCoreWebView2Async();
 
-        // Serve local assets via virtual host
         var assetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Editor");
         EditorWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
             "editor.local", assetPath,
@@ -62,10 +65,21 @@ public sealed partial class MainPage : Page
 
         EditorWebView.CoreWebView2.Navigate("https://editor.local/editor.html");
 
-        // Wait for TipTap ready signal, then load file content
-        await _editorReady.Task;
+        // Wait for TipTap ready with timeout so a missed signal doesn't freeze load
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        try
+        {
+            await _editorReady.Task.WaitAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            System.Diagnostics.Debug.WriteLine("[WebView2] Timed out waiting for editor ready — loading content anyway");
+            _editorReady.TrySetResult(true);
+        }
+
         SyncTheme();
         await ViewModel.LoadContentAsync();
+        PushContentToEditor(ViewModel.EditorContent);
     }
 
     private void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)
@@ -79,14 +93,18 @@ public sealed partial class MainPage : Page
 
         if (msg is null) return;
 
+        if (msg.Type == "ready")
+        {
+            // TCS.TrySetResult is thread-safe — no need to dispatch
+            _editorReady.TrySetResult(true);
+            return;
+        }
+
         App.DispatcherQueue.TryEnqueue(() =>
         {
-            if (msg.Type == "ready")
+            if (msg.Type == "change")
             {
-                _editorReady.TrySetResult(true);
-            }
-            else if (msg.Type == "change")
-            {
+                if (_pushingContentToWebView) return;
                 _updatingFromWebView = true;
                 ViewModel.EditorContent = msg.Content ?? string.Empty;
                 _updatingFromWebView = false;
@@ -94,13 +112,16 @@ public sealed partial class MainPage : Page
         });
     }
 
-    private async Task PushContentToEditorAsync(string content)
+    private void PushContentToEditor(string content)
     {
         if (!_editorReady.Task.IsCompleted) return;
-        var payload = JsonSerializer.Serialize(new { type = "setContent", content });
-        await Task.Run(() =>
-            App.DispatcherQueue.TryEnqueue(() =>
-                EditorWebView.CoreWebView2?.PostWebMessageAsString(payload)));
+        _pushingContentToWebView = true;
+        var escaped = JsonSerializer.Serialize(content);
+        var op = EditorWebView.CoreWebView2?.ExecuteScriptAsync($"window.__setContent({escaped})");
+        if (op is not null)
+            _ = op.AsTask().ContinueWith(_ => { _pushingContentToWebView = false; });
+        else
+            _pushingContentToWebView = false;
     }
 
     private void SyncTheme()
@@ -126,13 +147,6 @@ public sealed partial class MainPage : Page
         DiffOverlay.Visibility = Visibility.Collapsed;
         EditorWebView.CoreWebView2?.PostWebMessageAsString(
             JsonSerializer.Serialize(new { type = "focus" }));
-    }
-
-    private void OnSelectAllAccelerator(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        EditorWebView.CoreWebView2?.PostWebMessageAsString(
-            JsonSerializer.Serialize(new { type = "selectAll" }));
-        args.Handled = true;
     }
 
     private void OnSelectAllClicked(object sender, RoutedEventArgs e)

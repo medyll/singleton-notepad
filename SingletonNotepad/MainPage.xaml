@@ -9,10 +9,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Page.KeyboardAccelerators>
-        <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="OnSelectAllAccelerator" />
-    </Page.KeyboardAccelerators>
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
