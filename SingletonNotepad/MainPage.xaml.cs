@@ -4,6 +4,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Web.WebView2.Core;
+using SingletonNotepad.Core.Services;
 using SingletonNotepad.ViewModels;
 using Windows.ApplicationModel.DataTransfer;
 
@@ -90,6 +91,34 @@ public sealed partial class MainPage : Page
 
         SyncTheme();
         PushContentToEditor(ViewModel.EditorContent);
+        _ = ApplySpellCheckSettingsAsync();
+    }
+
+    private async Task ApplySpellCheckSettingsAsync()
+    {
+        var settings = await App.Services.GetRequiredService<ISettingsService>().LoadAsync();
+        if (!settings.SpellCheckEnabled)
+        {
+            SendSpellCheckMessage(false, null);
+            return;
+        }
+
+        var lang = settings.SpellCheckLanguage?.Trim().ToLowerInvariant();
+        if (lang == "auto")
+        {
+            var content = ViewModel.EditorContent ?? string.Empty;
+            var detected = LanguageDetector.Detect(content);
+            lang = detected == "auto" ? "fr-FR" : detected;
+        }
+
+        SendSpellCheckMessage(true, lang);
+    }
+
+    private void SendSpellCheckMessage(bool enabled, string? lang)
+    {
+        var payload = JsonSerializer.Serialize(new { type = "setSpellCheck", enabled, lang });
+        EditorWebView.CoreWebView2?.PostWebMessageAsString(payload);
+        ViewModel.SpellCheckLang = enabled && !string.IsNullOrEmpty(lang) ? lang : "";
     }
 
     private void OnWebMessageReceived(CoreWebView2 sender, CoreWebView2WebMessageReceivedEventArgs args)

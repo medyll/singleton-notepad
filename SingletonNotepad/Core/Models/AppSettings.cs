@@ -82,6 +82,16 @@ public class AppSettings
     /// Model overrides for env-detected providers (key = provider name, value = model string).
     /// </summary>
     public Dictionary<string, string> ProviderModels { get; set; } = new();
+
+    /// <summary>
+    /// Spell check enabled.
+    /// </summary>
+    public bool SpellCheckEnabled { get; set; } = true;
+
+    /// <summary>
+    /// Spell check language: "auto", "fr-FR", "en-US", etc.
+    /// </summary>
+    public string SpellCheckLanguage { get; set; } = "auto";
 }
 
 /// <summary>

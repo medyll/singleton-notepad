@@ -156,6 +156,13 @@ window.chrome.webview.addEventListener('message', e => {
     case 'focus':
       editor.commands.focus();
       break;
+    case 'setSpellCheck':
+      document.getElementById('editor').setAttribute('spellcheck', !!msg.enabled ? 'true' : 'false');
+      if (msg.lang) {
+        document.getElementById('editor').setAttribute('lang', msg.lang);
+        document.body.setAttribute('lang', msg.lang);
+      }
+      break;
   }
 });
 

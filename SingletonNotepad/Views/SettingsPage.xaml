@@ -469,6 +469,61 @@
                 </StackPanel>
             </Border>
 
+            <!-- ══ ÉDITEUR ══ -->
+            <TextBlock Text="Éditeur" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+
+                    <!-- Correcteur orthographique -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE8D1;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Correcteur orthographique" />
+                            <TextBlock Text="Souligne les erreurs en temps réel"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
+                                      IsOn="{x:Bind ViewModel.SpellCheckEnabled, Mode=TwoWay}"
+                                      OnContent="" OffContent="" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- Langue du correcteur -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xF2B7;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Langue du correcteur" />
+                            <TextBlock Text="Auto-détection, Français ou Anglais"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ComboBox Grid.Column="2" VerticalAlignment="Center" MinWidth="160"
+                                  SelectedValue="{x:Bind ViewModel.SpellCheckLanguage, Mode=TwoWay}">
+                            <x:String>auto</x:String>
+                            <x:String>fr-FR</x:String>
+                            <x:String>en-US</x:String>
+                        </ComboBox>
+                    </Grid>
+
+                </StackPanel>
+            </Border>
+
             <!-- ══ RÈGLES ══ -->
             <TextBlock Text="Règles de normalisation" Style="{StaticResource GroupHeaderStyle}" />
             <Border Style="{StaticResource SettingCard}">

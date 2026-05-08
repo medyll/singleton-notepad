@@ -47,6 +47,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     public partial bool HasExternalChange { get; set; }
 
+    [ObservableProperty]
+    public partial string SpellCheckLang { get; set; } = "";
+
     public MainViewModel(
         IFileService fileService,
         INormalizationService normalizationService,

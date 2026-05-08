@@ -6,8 +6,13 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:SingletonNotepad"
     xmlns:controls="using:SingletonNotepad.Views.Controls"
+    xmlns:converters="using:SingletonNotepad.Views.Converters"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
+
+    <Page.Resources>
+        <converters:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter" />
+    </Page.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -80,6 +85,7 @@
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
@@ -87,12 +93,18 @@
                 <TextBlock Grid.Column="0" Text="UTF-8"
                            Style="{ThemeResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Grid.Column="2"
+                <TextBlock Grid.Column="1"
+                           Text="{x:Bind ViewModel.SpellCheckLang, Mode=OneWay}"
+                           Style="{ThemeResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           Visibility="{x:Bind ViewModel.SpellCheckLang, Mode=OneWay, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"
+                           Margin="12,0" />
+                <TextBlock Grid.Column="3"
                            Text="{x:Bind ViewModel.SyncState, Mode=OneWay}"
                            Style="{ThemeResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                            Margin="16,0" />
-                <TextBlock Grid.Column="3"
+                <TextBlock Grid.Column="4"
                            Text="{x:Bind ViewModel.NormalizeStatus, Mode=OneWay}"
                            Style="{ThemeResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />

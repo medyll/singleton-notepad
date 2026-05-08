@@ -1,8 +1,8 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 25
-next_action: "Implement S5-02 (model management — dynamic provider/model selector in Settings)"
+progress: 50
+next_action: "Implement S5-03 (spell check — configurable, auto-detect language)"
 next_command: "bmad-continue"
 next_role: "Developer"
 active_role: "Developer"
@@ -140,7 +140,7 @@ sprints:
         status: todo
       - id: S5-02
         title: "Model management — dynamic provider/model selector in Settings"
-        status: todo
+        status: done
       - id: S5-03
         title: "Spell check — configurable, auto-detect language"
         status: todo

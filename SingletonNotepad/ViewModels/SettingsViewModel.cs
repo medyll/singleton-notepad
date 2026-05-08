@@ -66,6 +66,15 @@ public partial class SettingsViewModel : ObservableObject
     public partial bool AlwaysOnTop { get; set; } = false;
 
     [ObservableProperty]
+    public partial bool SpellCheckEnabled { get; set; } = true;
+
+    [ObservableProperty]
+    public partial string SpellCheckLanguage { get; set; } = "auto";
+
+    [ObservableProperty]
+    public partial string DetectedSpellCheckLanguage { get; set; } = "auto";
+
+    [ObservableProperty]
     public partial ObservableCollection<BackupDisplayItem> Backups { get; set; } = new();
 
     [ObservableProperty]
@@ -119,6 +128,8 @@ public partial class SettingsViewModel : ObservableObject
         AnthropicModel = settings.AnthropicModel;
         AlwaysStartAtBottom = settings.AlwaysStartAtBottom;
         AlwaysOnTop = settings.AlwaysOnTop;
+        SpellCheckEnabled = settings.SpellCheckEnabled;
+        SpellCheckLanguage = settings.SpellCheckLanguage;
 
         if (!string.IsNullOrEmpty(settings.OpenAiApiKey))
         {
@@ -155,6 +166,8 @@ public partial class SettingsViewModel : ObservableObject
         settings.AnthropicModel = AnthropicModel;
         settings.AlwaysStartAtBottom = AlwaysStartAtBottom;
         settings.AlwaysOnTop = AlwaysOnTop;
+        settings.SpellCheckEnabled = SpellCheckEnabled;
+        settings.SpellCheckLanguage = SpellCheckLanguage;
 
         if (!string.IsNullOrEmpty(OpenAiApiKey))
         {
@@ -290,6 +303,8 @@ public partial class SettingsViewModel : ObservableObject
             p.IsAlwaysOnTop = value;
         _ = SaveSettingsAsync();
     }
+    partial void OnSpellCheckEnabledChanged(bool value) => _ = SaveSettingsAsync();
+    partial void OnSpellCheckLanguageChanged(string value) => _ = SaveSettingsAsync();
 }
 
 public class BackupDisplayItem

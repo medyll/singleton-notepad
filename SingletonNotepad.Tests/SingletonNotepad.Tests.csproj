@@ -39,6 +39,7 @@
     <Compile Include="..\SingletonNotepad\Core\Services\ModelService.cs" Link="Core\Services\ModelService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Providers\OpenAiCompatibleProvider.cs" Link="Core\Providers\OpenAiCompatibleProvider.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\ProviderDetectionService.cs" Link="Core\Services\ProviderDetectionService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\LanguageDetector.cs" Link="Core\Services\LanguageDetector.cs" />
   </ItemGroup>
 
   <ItemGroup>
