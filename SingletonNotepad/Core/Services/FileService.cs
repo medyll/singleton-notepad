@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Timers;
 using Timer = System.Timers.Timer;
 
@@ -7,14 +9,17 @@ namespace SingletonNotepad.Core.Services;
 /// Reads, writes, and watches a single Markdown file.
 /// Auto-creates the file if absent. Auto-saves with 2s debounce.
 /// </summary>
-public class FileService : IFileService
+public class FileService : IFileService, IDisposable
 {
     private readonly ISettingsService _settingsService;
     private readonly Timer _autoSaveTimer;
+    private readonly Timer _externalChangeDebounce;
     private FileSystemWatcher? _watcher;
+    private Action<string>? _externalChangeSubscriber;
     private string _pendingContent = string.Empty;
     private string? _currentFilePath;
-    private bool _isSaving;
+    private string _lastWrittenHash = string.Empty;
+    private volatile bool _isSaving;
 
     public event Action? FileSaved;
     public event Action<string>? ExternalChangeDetected;
@@ -23,9 +28,11 @@ public class FileService : IFileService
     {
         _settingsService = settingsService;
 
-        _autoSaveTimer = new Timer(2000);
-        _autoSaveTimer.AutoReset = false;
+        _autoSaveTimer = new Timer(2000) { AutoReset = false };
         _autoSaveTimer.Elapsed += OnAutoSaveElapsed;
+
+        _externalChangeDebounce = new Timer(300) { AutoReset = false };
+        _externalChangeDebounce.Elapsed += OnExternalChangeDebounceElapsed;
     }
 
     public async Task<string> LoadAsync(CancellationToken ct = default)
@@ -35,7 +42,6 @@ public class FileService : IFileService
 
         if (string.IsNullOrWhiteSpace(path))
         {
-            // Default path: Documents\MY_SINGLETON_NOTEPAD.md
             var docsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
             path = Path.Combine(docsFolder, "MY_SINGLETON_NOTEPAD.md");
             settings.NotesFilePath = path;
@@ -44,7 +50,6 @@ public class FileService : IFileService
 
         _currentFilePath = path;
 
-        // Auto-create if absent
         if (!File.Exists(path))
         {
             var directory = Path.GetDirectoryName(path);
@@ -53,10 +58,12 @@ public class FileService : IFileService
                 Directory.CreateDirectory(directory);
             }
             await File.WriteAllTextAsync(path, string.Empty, ct);
+            _lastWrittenHash = Hash(string.Empty);
             return string.Empty;
         }
 
         var content = await ReadWithRetryAsync(path, ct);
+        _lastWrittenHash = Hash(content);
         return content;
     }
 
@@ -68,6 +75,7 @@ public class FileService : IFileService
         }
 
         await WriteWithRetryAsync(_currentFilePath!, content, ct);
+        _lastWrittenHash = Hash(content);
         FileSaved?.Invoke();
     }
 
@@ -78,6 +86,9 @@ public class FileService : IFileService
             return;
         }
 
+        StopWatching();
+
+        _externalChangeSubscriber = onExternalChange;
         ExternalChangeDetected += onExternalChange;
 
         _watcher = new FileSystemWatcher
@@ -96,9 +107,18 @@ public class FileService : IFileService
         if (_watcher != null)
         {
             _watcher.EnableRaisingEvents = false;
+            _watcher.Changed -= OnFileChanged;
             _watcher.Dispose();
             _watcher = null;
         }
+
+        if (_externalChangeSubscriber != null)
+        {
+            ExternalChangeDetected -= _externalChangeSubscriber;
+            _externalChangeSubscriber = null;
+        }
+
+        _externalChangeDebounce.Stop();
     }
 
     public void QueueAutoSave(string content)
@@ -116,24 +136,15 @@ public class FileService : IFileService
 
     private async void OnAutoSaveElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (_isSaving || _pendingContent is null)
-        {
-            return;
-        }
+        if (_isSaving) return;
 
         _isSaving = true;
         try
         {
             await SaveAsync(_pendingContent);
         }
-        catch (IOException)
-        {
-            // Best-effort auto-save; disk busy or file locked
-        }
-        catch (UnauthorizedAccessException)
-        {
-            // Cannot write to file — permissions issue
-        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
         finally
         {
             _isSaving = false;
@@ -142,26 +153,32 @@ public class FileService : IFileService
 
     private void OnFileChanged(object sender, FileSystemEventArgs e)
     {
-        Task.Run(async () =>
+        // Coalesce burst of Changed events Windows fires per save
+        _externalChangeDebounce.Stop();
+        _externalChangeDebounce.Start();
+    }
+
+    private async void OnExternalChangeDebounceElapsed(object? sender, ElapsedEventArgs e)
+    {
+        try
         {
-            try
-            {
-                await Task.Delay(500);
-                if (!string.IsNullOrEmpty(_currentFilePath) && File.Exists(_currentFilePath))
-                {
-                    var content = await File.ReadAllTextAsync(_currentFilePath, CancellationToken.None);
-                    ExternalChangeDetected?.Invoke(content);
-                }
-            }
-            catch (IOException)
-            {
-                // File locked by another process — skip this change event
-            }
-            catch (UnauthorizedAccessException)
-            {
-                // Cannot read file — permissions issue
-            }
-        });
+            if (string.IsNullOrEmpty(_currentFilePath) || !File.Exists(_currentFilePath))
+                return;
+
+            // Brief delay to let writer release lock
+            await Task.Delay(150);
+
+            var content = await ReadWithRetryAsync(_currentFilePath, CancellationToken.None);
+            var contentHash = Hash(content);
+
+            // If content matches what we just wrote, suppress (it's our own save echo)
+            if (contentHash == _lastWrittenHash) return;
+
+            _lastWrittenHash = contentHash;
+            ExternalChangeDetected?.Invoke(content);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     private static async Task<string> ReadWithRetryAsync(string path, CancellationToken ct)
@@ -203,5 +220,20 @@ public class FileService : IFileService
         }
 
         await File.WriteAllTextAsync(path, content, ct);
+    }
+
+    private static string Hash(string input)
+    {
+        var bytes = Encoding.UTF8.GetBytes(input);
+        return Convert.ToHexString(SHA256.HashData(bytes));
+    }
+
+    public void Dispose()
+    {
+        StopWatching();
+        _autoSaveTimer.Stop();
+        _autoSaveTimer.Dispose();
+        _externalChangeDebounce.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

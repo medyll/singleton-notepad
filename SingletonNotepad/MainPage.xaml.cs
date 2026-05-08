@@ -11,17 +11,26 @@ namespace SingletonNotepad;
 
 public sealed partial class MainPage : Page
 {
+    private static readonly JsonSerializerOptions MessageJsonOptions = new() { PropertyNameCaseInsensitive = true };
+
     public MainViewModel ViewModel { get; }
 
     private readonly TaskCompletionSource<bool> _editorReady = new();
+    private readonly Task _webView2InitTask;
+    private readonly Task _loadContentTask;
     private bool _updatingFromWebView;
     private bool _editorInitialized;
     private bool _pushingContentToWebView;
+    private bool _themeHandlerWired;
 
     public MainPage()
     {
         ViewModel = App.Services.GetRequiredService<MainViewModel>();
         InitializeComponent();
+
+        // Kick off both heavy tasks immediately — before Loaded fires
+        _webView2InitTask = EditorWebView.EnsureCoreWebView2Async().AsTask();
+        _loadContentTask = ViewModel.LoadContentAsync();
 
         DiffViewer.ApplyClicked += async (_, _) =>
         {
@@ -54,7 +63,8 @@ public sealed partial class MainPage : Page
         if (_editorInitialized) return;
         _editorInitialized = true;
 
-        await EditorWebView.EnsureCoreWebView2Async();
+        // Already started in constructor — just await completion
+        await _webView2InitTask;
 
         var assetPath = System.IO.Path.Combine(AppContext.BaseDirectory, "Assets", "Editor");
         EditorWebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
@@ -65,20 +75,20 @@ public sealed partial class MainPage : Page
 
         EditorWebView.CoreWebView2.Navigate("https://editor.local/editor.html");
 
-        // Wait for TipTap ready with timeout so a missed signal doesn't freeze load
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        // Wait for TipTap ready and file load — both already running since constructor
+        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
-            await _editorReady.Task.WaitAsync(cts.Token);
+            await Task.WhenAll(_loadContentTask, _editorReady.Task.WaitAsync(cts.Token));
         }
         catch (OperationCanceledException)
         {
             System.Diagnostics.Debug.WriteLine("[WebView2] Timed out waiting for editor ready — loading content anyway");
             _editorReady.TrySetResult(true);
+            await _loadContentTask;
         }
 
         SyncTheme();
-        await ViewModel.LoadContentAsync();
         PushContentToEditor(ViewModel.EditorContent);
     }
 
@@ -88,7 +98,7 @@ public sealed partial class MainPage : Page
         if (json is null) return;
 
         EditorMessage? msg;
-        try { msg = JsonSerializer.Deserialize<EditorMessage>(json); }
+        try { msg = JsonSerializer.Deserialize<EditorMessage>(json, MessageJsonOptions); }
         catch { return; }
 
         if (msg is null) return;
@@ -134,8 +144,12 @@ public sealed partial class MainPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        ActualThemeChanged += (_, _) => SyncTheme();
+        if (_themeHandlerWired) return;
+        _themeHandlerWired = true;
+        ActualThemeChanged += OnActualThemeChanged;
     }
+
+    private void OnActualThemeChanged(FrameworkElement sender, object args) => SyncTheme();
 
     private void ShowDiff()
     {

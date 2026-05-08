@@ -43,7 +43,7 @@ public class NormalizationService : INormalizationService
         _agentsFilePath = agentsFilePath ?? Path.Combine(docsPath, AgentsFileName);
         _backupDir = backupDir ?? Path.Combine(docsPath, "SingletonNotepad", "backups");
 
-        _ = EnsureAgentsFileExistsAsync();
+        EnsureAgentsFileExists();
     }
 
     public async Task<NormalizationRule> LoadRulesAsync(CancellationToken ct = default)
@@ -177,23 +177,15 @@ public class NormalizationService : INormalizationService
                 return text[(openIdx + openTag.Length)..closeIdx].Trim();
         }
 
-        // Supprimer les lignes séparatrices que certains modèles ajoutent (--- XYZ ---)
+        // Strip delimiter blocks like "--- NORMALIZED CONTENT ---" ... "--- END CONTENT ---"
+        // (preserve genuine markdown <hr> by requiring the CONTENT marker)
         var lines = text.Split('\n');
-        var cleaned = lines
-            .Where(l =>
-            {
-                var t = l.Trim();
-                return !(t.StartsWith("---") && t.EndsWith("---") && t.Length > 6);
-            })
-            .ToList();
-
-        // Supprimer les blocs "--- NORMALIZED CONTENT ---" ... "--- END ... ---"
-        var result = new System.Collections.Generic.List<string>();
+        var result = new List<string>(lines.Length);
         bool inDelimiterBlock = false;
         foreach (var line in lines)
         {
             var t = line.Trim();
-            if (t.StartsWith("---") && t.EndsWith("---") && t.Contains("CONTENT"))
+            if (t.StartsWith("---") && t.EndsWith("---") && t.Contains("CONTENT", StringComparison.OrdinalIgnoreCase))
             {
                 inDelimiterBlock = !inDelimiterBlock;
                 continue;
@@ -273,7 +265,7 @@ public class NormalizationService : INormalizationService
         return Convert.ToHexString(hash);
     }
 
-    private async Task EnsureAgentsFileExistsAsync()
+    private void EnsureAgentsFileExists()
     {
         if (File.Exists(_agentsFilePath)) return;
         var source = _defaultRulesPath;

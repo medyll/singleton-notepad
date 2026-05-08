@@ -18,7 +18,6 @@ public partial class MainViewModel : ObservableObject
     private readonly Timer _idleTimer;
     private DateTime _lastUserActivity;
     private string _lastSavedContent = string.Empty;
-    private bool _skipNextExternalChange;
     private bool _isReloading;
 
     [ObservableProperty]
@@ -64,7 +63,7 @@ public partial class MainViewModel : ObservableObject
         _idleTimer = new Timer();
         _idleTimer.AutoReset = false;
         _idleTimer.Elapsed += OnIdleElapsed;
-        _lastUserActivity = DateTime.Now;
+        _lastUserActivity = DateTime.UtcNow;
     }
 
     public async Task LoadContentAsync(CancellationToken ct = default)
@@ -92,31 +91,23 @@ public partial class MainViewModel : ObservableObject
 
     private void OnFileSaved()
     {
-        _skipNextExternalChange = true;
         _lastSavedContent = EditorContent;
         _dispatcherQueue.TryEnqueue(() => SyncState = "Sync ✓");
     }
 
     private void OnExternalChange(string newContent)
     {
-        if (_skipNextExternalChange)
-        {
-            _skipNextExternalChange = false;
-            return;
-        }
-
+        // FileService already suppresses our own saves via content-hash compare.
+        // Anything reaching here is a genuine external edit.
         _dispatcherQueue.TryEnqueue(() =>
         {
             if (EditorContent == _lastSavedContent)
             {
-                // Pas de changements locaux — recharger silencieusement
                 EditorContent = newContent;
                 _lastSavedContent = newContent;
             }
             else
             {
-                // Changements locaux non sauvegardés — afficher la bannière InfoBar
-                // L'utilisateur clique "Recharger" sur l'InfoBar quand prêt
                 HasExternalChange = true;
             }
         });
@@ -311,15 +302,20 @@ public partial class MainViewModel : ObservableObject
             var idleDuration = DateTime.UtcNow - _lastUserActivity;
             if (idleDuration >= TimeSpan.FromMinutes(settings.IdleMinutesBeforeNormalize) && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
             {
+                var tcs = new TaskCompletionSource();
                 _dispatcherQueue.TryEnqueue(async () =>
                 {
-                    await NormalizeInternalAsync(autoApply: true);
+                    try { await NormalizeInternalAsync(autoApply: true); }
+                    catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Idle] Normalize failed: {ex.Message}"); }
+                    finally { tcs.TrySetResult(); }
                 });
+                await tcs.Task;
             }
         }
-        catch (IOException)
+        catch (IOException) { }
+        catch (Exception ex)
         {
-            // Settings file unavailable — skip idle normalization
+            System.Diagnostics.Debug.WriteLine($"[Idle] {ex.Message}");
         }
         finally
         {

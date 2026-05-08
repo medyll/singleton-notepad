@@ -14,6 +14,7 @@ public class SettingsService : ISettingsService
     };
 
     private readonly string _settingsPath;
+    private AppSettings? _cache;
 
     public SettingsService(string? customPath = null)
     {
@@ -38,19 +39,25 @@ public class SettingsService : ISettingsService
 
     public async Task<AppSettings> LoadAsync(CancellationToken ct = default)
     {
+        if (_cache is not null)
+            return _cache;
+
         if (!File.Exists(_settingsPath))
         {
-            return new AppSettings();
+            _cache = new AppSettings();
+            return _cache;
         }
 
         try
         {
             var json = await File.ReadAllTextAsync(_settingsPath, ct);
-            return JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            _cache = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            return _cache;
         }
         catch (JsonException)
         {
-            return new AppSettings();
+            _cache = new AppSettings();
+            return _cache;
         }
         catch (IOException)
         {
@@ -60,6 +67,7 @@ public class SettingsService : ISettingsService
 
     public async Task SaveAsync(AppSettings settings, CancellationToken ct = default)
     {
+        _cache = settings;
         var directory = Path.GetDirectoryName(_settingsPath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {
