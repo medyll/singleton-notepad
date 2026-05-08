@@ -51,6 +51,24 @@ public static class MonitorHelper
     }
 
     /// <summary>
+    /// Returns (x, y) centered horizontally and flush to the bottom of the primary work area.
+    /// </summary>
+    public static (int x, int y) BottomCenterOnPrimaryMonitor(int width, int height)
+    {
+        try
+        {
+            var workArea = DisplayArea.Primary.WorkArea;
+            var x = workArea.X + (workArea.Width - width) / 2;
+            var y = workArea.Y + workArea.Height - height - 12;
+            return (x, y);
+        }
+        catch
+        {
+            return (0, 0);
+        }
+    }
+
+    /// <summary>
     /// Ensures a window position is valid on the primary monitor, returning a safe position.
     /// </summary>
     public static (int x, int y) EnsureValidWindowPosition(int x, int y, int width, int height)

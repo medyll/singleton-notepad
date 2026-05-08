@@ -19,17 +19,21 @@ public class OpenAiProvider : ILlmProvider
         _settingsService = settingsService;
     }
 
-    public async Task<string> CompleteAsync(string prompt, CancellationToken ct = default)
+    public async Task<string> CompleteAsync(string systemPrompt, string userMessage, CancellationToken ct = default)
     {
         var settings = await _settingsService.LoadAsync(ct);
         var apiKey = await _settingsService.UnprotectApiKeyAsync(settings.OpenAiApiKey ?? string.Empty, ct);
 
         var request = new OpenAiChatRequest
         {
-            Model = DefaultModel,
-            Messages = [new OpenAiMessage { Role = "user", Content = prompt }],
+            Model = settings.OpenAiModel,
+            Messages =
+            [
+                new OpenAiMessage { Role = "system", Content = systemPrompt },
+                new OpenAiMessage { Role = "user",   Content = userMessage  },
+            ],
             MaxTokens = 2048,
-            Temperature = 0.7f,
+            Temperature = 0.3f,
         };
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);

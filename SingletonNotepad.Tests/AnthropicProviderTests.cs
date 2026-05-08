@@ -41,7 +41,7 @@ public class AnthropicProviderTests
             };
         });
 
-        var result = await Make(new HttpClient(handler)).CompleteAsync("Hello");
+        var result = await Make(new HttpClient(handler)).CompleteAsync("system", "Hello");
         Assert.AreEqual("Hi there!", result);
     }
 
@@ -53,7 +53,7 @@ public class AnthropicProviderTests
             Content = new StringContent("""{"content":[]}"""),
         }));
 
-        Assert.AreEqual(string.Empty, await Make(new HttpClient(handler)).CompleteAsync("Hello"));
+        Assert.AreEqual(string.Empty, await Make(new HttpClient(handler)).CompleteAsync("system", "Hello"));
     }
 
     [TestMethod]
@@ -62,7 +62,7 @@ public class AnthropicProviderTests
         var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
         try
         {
-            await Make(new HttpClient(handler)).CompleteAsync("Hello");
+            await Make(new HttpClient(handler)).CompleteAsync("system", "Hello");
             Assert.Fail("Expected HttpRequestException");
         }
         catch (HttpRequestException) { }
@@ -81,7 +81,7 @@ public class AnthropicProviderTests
             });
         });
 
-        await Make(new HttpClient(handler)).CompleteAsync("Hello");
+        await Make(new HttpClient(handler)).CompleteAsync("system", "Hello");
     }
 
     [TestMethod]
@@ -96,7 +96,7 @@ public class AnthropicProviderTests
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
         try
         {
-            await Make(new HttpClient(handler)).CompleteAsync("Hello", cts.Token);
+            await Make(new HttpClient(handler)).CompleteAsync("system", "Hello", cts.Token);
             Assert.Fail("Expected OperationCanceledException");
         }
         catch (OperationCanceledException) { }

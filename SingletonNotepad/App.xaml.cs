@@ -9,6 +9,7 @@ using Microsoft.UI.Xaml.Navigation;
 using SingletonNotepad.Core.Providers;
 using SingletonNotepad.Core.Services;
 using SingletonNotepad.ViewModels;
+#pragma warning disable CS0168
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -115,23 +116,32 @@ public partial class App : Application
     {
         var services = new ServiceCollection();
 
-        // HTTP client
-        services.AddSingleton(new HttpClient { Timeout = TimeSpan.FromSeconds(35) });
-
-        // Services (Sprint 1)
+        // Core singletons needed before DI build (for manual provider instantiation)
+        var httpClient = new HttpClient { Timeout = TimeSpan.FromSeconds(300) };
         var settingsService = new SettingsService();
+        services.AddSingleton(httpClient);
         services.AddSingleton<ISettingsService>(settingsService);
         services.AddSingleton<IFileService, FileService>();
 
-        // Services (Sprint 2)
+        // Services
         services.AddSingleton<INormalizationService, NormalizationService>();
         services.AddSingleton<IMemoryTrackerService, MemoryTrackerService>();
 
-        // Providers — ISettingsService injected; keys read lazily at call time (no .Result blocking)
+        // Built-in providers (registered both as concrete + ILlmProvider via factory to share instance)
         services.AddSingleton<OllamaProvider>();
         services.AddSingleton<OpenAiProvider>();
         services.AddSingleton<AnthropicProvider>();
-        services.AddSingleton<ILlmProvider, OllamaProvider>();
+        services.AddSingleton<ILlmProvider>(sp => sp.GetRequiredService<OllamaProvider>());
+        services.AddSingleton<ILlmProvider>(sp => sp.GetRequiredService<OpenAiProvider>());
+        services.AddSingleton<ILlmProvider>(sp => sp.GetRequiredService<AnthropicProvider>());
+
+        // Env-detected compatible providers (Mistral, Groq, etc.)
+        foreach (var dp in ProviderDetectionService.Detect())
+        {
+            var provider = new OpenAiCompatibleProvider(dp.Name, dp.BaseUrl, dp.ApiKey, dp.DefaultModel, httpClient, settingsService);
+            services.AddSingleton<ILlmProvider>(provider);
+        }
+
         services.AddSingleton<ILlmProviderSelector, LlmProviderSelector>();
 
         // ViewModels

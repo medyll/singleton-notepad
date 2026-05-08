@@ -9,56 +9,36 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="A" Modifiers="Control" Invoked="OnSelectAllAccelerator" />
+    </Page.KeyboardAccelerators>
+
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- MenuBar -->
-        <MenuBar Grid.Row="0">
-            <MenuBarItem Title="Fichier">
-                <MenuFlyoutItem Text="Ouvrir" Command="{x:Bind ViewModel.OpenCommand}">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Key="O" Modifiers="Control" />
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
-                <MenuFlyoutItem Text="Enregistrer" Command="{x:Bind ViewModel.SaveCommand}">
-                    <MenuFlyoutItem.KeyboardAccelerators>
-                        <KeyboardAccelerator Key="S" Modifiers="Control" />
-                    </MenuFlyoutItem.KeyboardAccelerators>
-                </MenuFlyoutItem>
-                <MenuFlyoutSeparator />
-                <MenuFlyoutItem Text="Copier tout" Command="{x:Bind ViewModel.CopyContentCommand}" />
-            </MenuBarItem>
-            <MenuBarItem Title="Affichage">
-                <MenuFlyoutItem Text="Recharger" Command="{x:Bind ViewModel.ReloadCommand}" />
-            </MenuBarItem>
-            <MenuBarItem Title="Paramètres">
-                <MenuFlyoutItem Text="Paramètres" Command="{x:Bind ViewModel.OpenSettingsCommand}" />
-            </MenuBarItem>
-        </MenuBar>
+        <!-- Toolbar -->
+        <Grid Grid.Row="0">
+            <CommandBar DefaultLabelPosition="Right" HorizontalAlignment="Left">
+                <AppBarButton Icon="Page2" Label="Normaliser" Command="{x:Bind ViewModel.NormalizeCommand}" />
+                <AppBarButton Icon="SelectAll" Label="Tout sélect." Click="OnSelectAllClicked" />
+                <AppBarButton Icon="Copy" Label="Copier" Command="{x:Bind ViewModel.CopyContentCommand}" />
+                <AppBarButton Icon="Paste" Label="Coller" Click="OnPasteClicked" />
+            </CommandBar>
+            <Button HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Margin="0,0,8,0"
+                    Background="Transparent" BorderThickness="0"
+                    Command="{x:Bind ViewModel.OpenSettingsCommand}"
+                    ToolTipService.ToolTip="Paramètres">
+                <FontIcon Glyph="&#xE713;" FontSize="18" />
+            </Button>
+        </Grid>
 
-        <!-- CommandBar -->
-        <CommandBar Grid.Row="1" DefaultLabelPosition="Right">
-            <AppBarButton Icon="OpenFile" Label="Ouvrir" Command="{x:Bind ViewModel.OpenCommand}" />
-            <AppBarButton Icon="Save" Label="Enregistrer" Command="{x:Bind ViewModel.SaveCommand}" />
-            <AppBarSeparator />
-            <AppBarButton Icon="Page2" Label="Normaliser" Command="{x:Bind ViewModel.NormalizeCommand}" />
-            <AppBarButton Icon="Copy" Label="Copier" Command="{x:Bind ViewModel.CopyContentCommand}" />
-            <AppBarSeparator />
-            <AppBarToggleButton
-                x:Name="SyntaxToggle"
-                Icon="Font"
-                Label="Couleur"
-                IsChecked="{x:Bind ViewModel.IsSyntaxHighlightEnabled, Mode=TwoWay}"
-                ToolTipService.ToolTip="Coloration syntaxique Markdown" />
-        </CommandBar>
-
-        <!-- Editor -->
-        <Grid Grid.Row="2">
+        <!-- Editor area -->
+        <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
@@ -78,31 +58,17 @@
                 </InfoBar.ActionButton>
             </InfoBar>
 
-            <TextBox
-                x:Name="EditorTextBox"
+            <!-- WYSIWYG markdown editor (TipTap via WebView2) -->
+            <WebView2
+                x:Name="EditorWebView"
                 Grid.Row="1"
-                Text="{x:Bind ViewModel.EditorContent, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
-                AcceptsReturn="True"
-                TextWrapping="Wrap"
-                FontFamily="Cascadia Mono, Consolas, monospace"
-                FontSize="14"
-                Padding="16"
-                BorderThickness="0"
-                ScrollViewer.VerticalScrollBarVisibility="Auto"
-                ScrollViewer.HorizontalScrollBarVisibility="Disabled" />
-
-            <!-- Markdown preview (visible when syntax highlight is on) -->
-            <controls:MarkdownPreview
-                x:Name="MarkdownPreviewControl"
-                Grid.Row="1"
-                Text="{x:Bind ViewModel.EditorContent, Mode=OneWay}"
-                Visibility="Collapsed" />
+                Loaded="OnEditorWebViewLoaded" />
         </Grid>
 
         <!-- Diff Preview Overlay (hidden until normalize runs) -->
         <Border
             x:Name="DiffOverlay"
-            Grid.Row="2"
+            Grid.Row="1"
             Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
             Visibility="Collapsed">
             <controls:InlineDiffEditor x:Name="DiffViewer" />
@@ -110,7 +76,7 @@
 
         <!-- StatusBar -->
         <Border
-            Grid.Row="3"
+            Grid.Row="2"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="0,1,0,0"

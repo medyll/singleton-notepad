@@ -98,13 +98,19 @@ public class NormalizationService : INormalizationService
         };
 
         result.BackupPath = await BackupContentAsync(content, ct);
+
+        // Sélectionner le provider actif depuis les settings
+        var activeSettings = await _settingsService.LoadAsync(ct);
+        _providerSelector.SelectProvider(activeSettings.LlmProvider);
+
         var rules = await LoadRulesAsync(ct);
-        var prompt = BuildPrompt(rules.Content, content);
+        var (systemPrompt, userMessage) = BuildPrompt(rules.Content, content);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
-        var normalizedContent = await _providerSelector.Current.CompleteAsync(prompt, ct);
+        var rawResponse = await _providerSelector.Current.CompleteAsync(systemPrompt, userMessage, ct);
         sw.Stop();
 
+        var normalizedContent = CleanLlmResponse(rawResponse);
         result.NormalizedContent = normalizedContent;
         result.Duration = sw.Elapsed;
 
@@ -126,29 +132,76 @@ public class NormalizationService : INormalizationService
         return result;
     }
 
-    private static string BuildPrompt(string rules, string content)
+    private static (string system, string user) BuildPrompt(string rules, string content)
     {
-        var sb = new StringBuilder();
-        sb.AppendLine("You are a Markdown normalization assistant.");
-        sb.AppendLine("Restructure and reorganize the following content according to these rules:");
-        sb.AppendLine();
+        var system = new StringBuilder();
+        system.AppendLine("Tu es un assistant de normalisation de notes Markdown.");
+        system.AppendLine("Normalise le contenu qui te sera envoyé. Retourne UNIQUEMENT le contenu normalisé, sans explication ni commentaire.");
+        system.AppendLine();
+
         if (!string.IsNullOrWhiteSpace(rules))
-            sb.AppendLine(rules);
+        {
+            system.AppendLine("RÈGLES À APPLIQUER :");
+            system.AppendLine(rules.Trim());
+        }
         else
         {
-            sb.AppendLine("- Maintain clear heading hierarchy (H1 -> H2 -> H3)");
-            sb.AppendLine("- Group related content under appropriate headings");
-            sb.AppendLine("- Remove redundant whitespace and empty lines");
-            sb.AppendLine("- Preserve all meaningful content");
-            sb.AppendLine("- Use consistent list formatting");
+            system.AppendLine("RÈGLES À APPLIQUER :");
+            system.AppendLine("- Maintenir la hiérarchie des titres (H1 → H2 → H3)");
+            system.AppendLine("- Regrouper les notes connexes sous les bons titres");
+            system.AppendLine("- Corriger l'orthographe et la grammaire");
+            system.AppendLine("- Supprimer les lignes vides multiples (max 1)");
+            system.AppendLine("- Préserver tout le contenu existant");
+            system.AppendLine("- Ne jamais inventer de contenu");
         }
-        sb.AppendLine();
-        sb.AppendLine("Return ONLY the normalized Markdown content, no explanations.");
-        sb.AppendLine();
-        sb.AppendLine("--- CONTENT TO NORMALIZE ---");
-        sb.AppendLine(content);
-        sb.AppendLine("--- END CONTENT ---");
-        return sb.ToString();
+
+        var user = $"<contenu_a_normaliser>\n{content}\n</contenu_a_normaliser>";
+
+        return (system.ToString(), user);
+    }
+
+    private static string CleanLlmResponse(string response)
+    {
+        if (string.IsNullOrWhiteSpace(response)) return response;
+
+        var text = response.Trim();
+
+        // Si le modèle a renvoyé la balise XML, extraire uniquement ce qu'il y a dedans
+        var openTag  = "<contenu_a_normaliser>";
+        var closeTag = "</contenu_a_normaliser>";
+        var openIdx  = text.IndexOf(openTag, StringComparison.OrdinalIgnoreCase);
+        if (openIdx >= 0)
+        {
+            var closeIdx = text.IndexOf(closeTag, openIdx, StringComparison.OrdinalIgnoreCase);
+            if (closeIdx > openIdx)
+                return text[(openIdx + openTag.Length)..closeIdx].Trim();
+        }
+
+        // Supprimer les lignes séparatrices que certains modèles ajoutent (--- XYZ ---)
+        var lines = text.Split('\n');
+        var cleaned = lines
+            .Where(l =>
+            {
+                var t = l.Trim();
+                return !(t.StartsWith("---") && t.EndsWith("---") && t.Length > 6);
+            })
+            .ToList();
+
+        // Supprimer les blocs "--- NORMALIZED CONTENT ---" ... "--- END ... ---"
+        var result = new System.Collections.Generic.List<string>();
+        bool inDelimiterBlock = false;
+        foreach (var line in lines)
+        {
+            var t = line.Trim();
+            if (t.StartsWith("---") && t.EndsWith("---") && t.Contains("CONTENT"))
+            {
+                inDelimiterBlock = !inDelimiterBlock;
+                continue;
+            }
+            if (!inDelimiterBlock) result.Add(line);
+        }
+
+        return string.Join('\n', result).Trim();
     }
 
     private async Task<string> BackupContentAsync(string content, CancellationToken ct)

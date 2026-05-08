@@ -1,7 +1,9 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.UI.Xaml;
 using SingletonNotepad.Core.Models;
+using SingletonNotepad.Core.Providers;
 using SingletonNotepad.Core.Services;
 
 namespace SingletonNotepad.ViewModels;
@@ -10,6 +12,9 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly ISettingsService _settingsService;
     private readonly INormalizationService _normalizationService;
+    private readonly ILlmProviderSelector _providerSelector;
+
+    private static readonly HashSet<string> BuiltInProviders = ["Ollama", "OpenAI", "Anthropic"];
 
     [ObservableProperty]
     public partial string Theme { get; set; } = "System";
@@ -30,6 +35,21 @@ public partial class SettingsViewModel : ObservableObject
     public partial int IdleMinutesBeforeNormalize { get; set; } = 15;
 
     [ObservableProperty]
+    public partial string LlmProvider { get; set; } = "Ollama";
+
+    [ObservableProperty]
+    public partial string OllamaEndpoint { get; set; } = "http://localhost:11434";
+
+    [ObservableProperty]
+    public partial string OllamaModel { get; set; } = "qwen3.5:latest";
+
+    [ObservableProperty]
+    public partial string OpenAiModel { get; set; } = "gpt-4o-mini";
+
+    [ObservableProperty]
+    public partial string AnthropicModel { get; set; } = "claude-haiku-4-5-20251001";
+
+    [ObservableProperty]
     public partial string OpenAiApiKey { get; set; } = string.Empty;
 
     [ObservableProperty]
@@ -39,15 +59,36 @@ public partial class SettingsViewModel : ObservableObject
     public partial int MaxBackupCount { get; set; } = 10;
 
     [ObservableProperty]
+    public partial bool AlwaysStartAtBottom { get; set; } = true;
+
+    [ObservableProperty]
+    public partial bool AlwaysOnTop { get; set; } = false;
+
+    [ObservableProperty]
     public partial ObservableCollection<BackupDisplayItem> Backups { get; set; } = new();
 
     [ObservableProperty]
     public partial string RulesContent { get; set; } = string.Empty;
 
-    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService)
+    [ObservableProperty]
+    public partial ObservableCollection<string> AvailableProviders { get; set; } = new();
+
+    [ObservableProperty]
+    public partial string CustomProviderModel { get; set; } = string.Empty;
+
+    public Visibility OllamaSectionVisibility    => LlmProvider == "Ollama"    ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility OpenAiSectionVisibility    => LlmProvider == "OpenAI"    ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AnthropicSectionVisibility => LlmProvider == "Anthropic" ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility CustomProviderSectionVisibility => !BuiltInProviders.Contains(LlmProvider) ? Visibility.Visible : Visibility.Collapsed;
+
+    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService, ILlmProviderSelector providerSelector)
     {
         _settingsService = settingsService;
         _normalizationService = normalizationService;
+        _providerSelector = providerSelector;
+
+        foreach (var name in _providerSelector.AvailableProviders)
+            AvailableProviders.Add(name);
     }
 
     public async Task LoadSettingsAsync(CancellationToken ct = default)
@@ -60,6 +101,13 @@ public partial class SettingsViewModel : ObservableObject
         AutoNormalizeOnClose = settings.AutoNormalizeOnClose;
         IdleMinutesBeforeNormalize = settings.IdleMinutesBeforeNormalize;
         MaxBackupCount = settings.MaxBackupCount ?? 10;
+        LlmProvider = settings.LlmProvider;
+        OllamaEndpoint = settings.OllamaEndpoint;
+        OllamaModel = settings.OllamaModel;
+        OpenAiModel = settings.OpenAiModel;
+        AnthropicModel = settings.AnthropicModel;
+        AlwaysStartAtBottom = settings.AlwaysStartAtBottom;
+        AlwaysOnTop = settings.AlwaysOnTop;
 
         if (!string.IsNullOrEmpty(settings.OpenAiApiKey))
         {
@@ -68,6 +116,12 @@ public partial class SettingsViewModel : ObservableObject
         if (!string.IsNullOrEmpty(settings.AnthropicApiKey))
         {
             AnthropicApiKey = await _settingsService.UnprotectApiKeyAsync(settings.AnthropicApiKey, ct);
+        }
+
+        if (!BuiltInProviders.Contains(LlmProvider))
+        {
+            settings.ProviderModels.TryGetValue(LlmProvider, out var customModel);
+            CustomProviderModel = customModel ?? string.Empty;
         }
     }
 
@@ -81,6 +135,13 @@ public partial class SettingsViewModel : ObservableObject
         settings.AutoNormalizeOnClose = AutoNormalizeOnClose;
         settings.IdleMinutesBeforeNormalize = IdleMinutesBeforeNormalize;
         settings.MaxBackupCount = MaxBackupCount;
+        settings.LlmProvider = LlmProvider;
+        settings.OllamaEndpoint = OllamaEndpoint;
+        settings.OllamaModel = OllamaModel;
+        settings.OpenAiModel = OpenAiModel;
+        settings.AnthropicModel = AnthropicModel;
+        settings.AlwaysStartAtBottom = AlwaysStartAtBottom;
+        settings.AlwaysOnTop = AlwaysOnTop;
 
         if (!string.IsNullOrEmpty(OpenAiApiKey))
         {
@@ -98,6 +159,11 @@ public partial class SettingsViewModel : ObservableObject
         else
         {
             settings.AnthropicApiKey = null;
+        }
+
+        if (!BuiltInProviders.Contains(LlmProvider) && !string.IsNullOrEmpty(CustomProviderModel))
+        {
+            settings.ProviderModels[LlmProvider] = CustomProviderModel;
         }
 
         await _settingsService.SaveAsync(settings, ct);
@@ -152,9 +218,38 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnAutoSaveDelayMsChanged(int value) => _ = SaveSettingsAsync();
     partial void OnAutoNormalizeOnCloseChanged(bool value) => _ = SaveSettingsAsync();
     partial void OnIdleMinutesBeforeNormalizeChanged(int value) => _ = SaveSettingsAsync();
+    partial void OnLlmProviderChanged(string value)
+    {
+        OnPropertyChanged(nameof(OllamaSectionVisibility));
+        OnPropertyChanged(nameof(OpenAiSectionVisibility));
+        OnPropertyChanged(nameof(AnthropicSectionVisibility));
+        OnPropertyChanged(nameof(CustomProviderSectionVisibility));
+        _ = LoadCustomProviderModelAsync();
+        _ = SaveSettingsAsync();
+    }
+
+    private async Task LoadCustomProviderModelAsync()
+    {
+        if (BuiltInProviders.Contains(LlmProvider)) return;
+        var settings = await _settingsService.LoadAsync();
+        settings.ProviderModels.TryGetValue(LlmProvider, out var m);
+        CustomProviderModel = m ?? ProviderDetectionService.GetDefaultModel(LlmProvider);
+    }
+    partial void OnOllamaEndpointChanged(string value) => _ = SaveSettingsAsync();
+    partial void OnOllamaModelChanged(string value) => _ = SaveSettingsAsync();
+    partial void OnOpenAiModelChanged(string value) => _ = SaveSettingsAsync();
+    partial void OnAnthropicModelChanged(string value) => _ = SaveSettingsAsync();
     partial void OnOpenAiApiKeyChanged(string value) => _ = SaveSettingsAsync();
     partial void OnAnthropicApiKeyChanged(string value) => _ = SaveSettingsAsync();
+    partial void OnCustomProviderModelChanged(string value) => _ = SaveSettingsAsync();
     partial void OnMaxBackupCountChanged(int value) => _ = SaveSettingsAsync();
+    partial void OnAlwaysStartAtBottomChanged(bool value) => _ = SaveSettingsAsync();
+    partial void OnAlwaysOnTopChanged(bool value)
+    {
+        if (App.Window?.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+            p.IsAlwaysOnTop = value;
+        _ = SaveSettingsAsync();
+    }
 }
 
 public class BackupDisplayItem

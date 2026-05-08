@@ -43,16 +43,14 @@ public class AppSettings
     /// <summary>
     /// Ollama model name.
     /// </summary>
-    public string OllamaModel { get; set; } = "llama3";
+    public string OllamaModel { get; set; } = "qwen3.5:latest";
 
-    /// <summary>
-    /// OpenAI API key (plain JSON in Sprint 1, DPAPI in Sprint 3).
-    /// </summary>
+    public string OpenAiModel { get; set; } = "gpt-4o-mini";
+
+    public string AnthropicModel { get; set; } = "claude-haiku-4-5-20251001";
+
     public string? OpenAiApiKey { get; set; }
 
-    /// <summary>
-    /// Anthropic API key (plain JSON in Sprint 1, DPAPI in Sprint 3).
-    /// </summary>
     public string? AnthropicApiKey { get; set; }
 
     /// <summary>
@@ -69,6 +67,21 @@ public class AppSettings
     /// Maximum number of versioned backups to keep.
     /// </summary>
     public int? MaxBackupCount { get; set; } = 10;
+
+    /// <summary>
+    /// Always position window at bottom-center on startup.
+    /// </summary>
+    public bool AlwaysStartAtBottom { get; set; } = true;
+
+    /// <summary>
+    /// Keep window above all other windows.
+    /// </summary>
+    public bool AlwaysOnTop { get; set; } = false;
+
+    /// <summary>
+    /// Model overrides for env-detected providers (key = provider name, value = model string).
+    /// </summary>
+    public Dictionary<string, string> ProviderModels { get; set; } = new();
 }
 
 /// <summary>

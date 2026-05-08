@@ -27,17 +27,19 @@ public class OllamaProviderTests
             var json = JsonDocument.Parse(body);
 
             Assert.AreEqual("llama3", json.RootElement.GetProperty("model").GetString());
-            Assert.AreEqual("Hello", json.RootElement.GetProperty("prompt").GetString());
             Assert.IsFalse(json.RootElement.GetProperty("stream").GetBoolean());
-            Assert.AreEqual("http://localhost:11434/api/generate", request.RequestUri!.AbsoluteUri);
+            Assert.AreEqual("http://localhost:11434/api/chat", request.RequestUri!.AbsoluteUri);
+            var messages = json.RootElement.GetProperty("messages");
+            Assert.AreEqual("system", messages[0].GetProperty("role").GetString());
+            Assert.AreEqual("Hello", messages[1].GetProperty("content").GetString());
 
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("""{"response":"Hi there!"}"""),
+                Content = new StringContent("""{"message":{"role":"assistant","content":"Hi there!"}}"""),
             };
         });
 
-        var result = await Make(new HttpClient(handler)).CompleteAsync("Hello");
+        var result = await Make(new HttpClient(handler)).CompleteAsync("system", "Hello");
         Assert.AreEqual("Hi there!", result);
     }
 
@@ -46,10 +48,10 @@ public class OllamaProviderTests
     {
         var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
         {
-            Content = new StringContent("""{"response":""}"""),
+            Content = new StringContent("""{"message":{"role":"assistant","content":""}}"""),
         }));
 
-        Assert.AreEqual(string.Empty, await Make(new HttpClient(handler)).CompleteAsync("Hello"));
+        Assert.AreEqual(string.Empty, await Make(new HttpClient(handler)).CompleteAsync("system", "Hello"));
     }
 
     [TestMethod]
@@ -58,7 +60,7 @@ public class OllamaProviderTests
         var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
         try
         {
-            await Make(new HttpClient(handler)).CompleteAsync("Hello");
+            await Make(new HttpClient(handler)).CompleteAsync("system", "Hello");
             Assert.Fail("Expected HttpRequestException");
         }
         catch (HttpRequestException) { }
@@ -76,7 +78,7 @@ public class OllamaProviderTests
         var http = new HttpClient(handler) { Timeout = TimeSpan.FromMilliseconds(100) };
         try
         {
-            await Make(http).CompleteAsync("Hello");
+            await Make(http).CompleteAsync("system", "Hello");
             Assert.Fail("Expected TaskCanceledException");
         }
         catch (TaskCanceledException) { }
@@ -87,14 +89,14 @@ public class OllamaProviderTests
     {
         var handler = new MockHttpHandler(request =>
         {
-            Assert.AreEqual("http://192.168.1.42:11434/api/generate", request.RequestUri!.AbsoluteUri);
+            Assert.AreEqual("http://192.168.1.42:11434/api/chat", request.RequestUri!.AbsoluteUri);
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("""{"response":"ok"}"""),
+                Content = new StringContent("""{"message":{"role":"assistant","content":"ok"}}"""),
             });
         });
 
-        await Make(new HttpClient(handler), "http://192.168.1.42:11434", "mistral").CompleteAsync("Hello");
+        await Make(new HttpClient(handler), "http://192.168.1.42:11434", "mistral").CompleteAsync("system", "Hello");
     }
 
     [TestMethod]
@@ -107,11 +109,11 @@ public class OllamaProviderTests
             Assert.AreEqual("mistral", json.RootElement.GetProperty("model").GetString());
             return new HttpResponseMessage(HttpStatusCode.OK)
             {
-                Content = new StringContent("""{"response":"ok"}"""),
+                Content = new StringContent("""{"message":{"role":"assistant","content":"ok"}}"""),
             };
         });
 
-        await Make(new HttpClient(handler), model: "mistral").CompleteAsync("Hello");
+        await Make(new HttpClient(handler), model: "mistral").CompleteAsync("system", "Hello");
     }
 
     [TestMethod]
@@ -126,7 +128,7 @@ public class OllamaProviderTests
         using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
         try
         {
-            await Make(new HttpClient(handler)).CompleteAsync("Hello", cts.Token);
+            await Make(new HttpClient(handler)).CompleteAsync("system", "Hello", cts.Token);
             Assert.Fail("Expected OperationCanceledException");
         }
         catch (OperationCanceledException) { }

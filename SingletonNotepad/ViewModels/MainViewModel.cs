@@ -19,6 +19,7 @@ public partial class MainViewModel : ObservableObject
     private DateTime _lastUserActivity;
     private string _lastSavedContent = string.Empty;
     private bool _skipNextExternalChange;
+    private bool _isReloading;
 
     [ObservableProperty]
     public partial string EditorContent { get; set; } = string.Empty;
@@ -83,6 +84,7 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnEditorContentChanged(string value)
     {
+        if (_isReloading) return;
         _lastUserActivity = DateTime.UtcNow;
         SyncState = "Saving...";
         _fileService.QueueAutoSave(value);
@@ -123,7 +125,28 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task OpenAsync()
     {
+        var picker = new Windows.Storage.Pickers.FileOpenPicker();
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
+        picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+        picker.FileTypeFilter.Add(".md");
+        picker.FileTypeFilter.Add(".txt");
+
+        var file = await picker.PickSingleFileAsync();
+        if (file is null) return;
+
+        var settings = await _settingsService.LoadAsync();
+        settings.NotesFilePath = file.Path;
+        await _settingsService.SaveAsync(settings);
+
+        _fileService.StopWatching();
+        _fileService.CancelAutoSave();
+        _isReloading = true;
         EditorContent = await _fileService.LoadAsync();
+        _lastSavedContent = EditorContent;
+        _isReloading = false;
+        _fileService.Watch(OnExternalChange);
+        HasExternalChange = false;
+        SyncState = "Sync ✓";
     }
 
     [RelayCommand]
@@ -136,12 +159,19 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task ReloadAsync()
     {
+        _fileService.CancelAutoSave();
+        _isReloading = true;
         EditorContent = await _fileService.LoadAsync();
-        SyncState = "Reloaded";
+        _lastSavedContent = EditorContent;
+        HasExternalChange = false;
+        _isReloading = false;
+        SyncState = "Rechargé";
     }
 
     [RelayCommand]
-    private async Task NormalizeAsync()
+    private async Task NormalizeAsync() => await NormalizeInternalAsync(autoApply: false);
+
+    private async Task NormalizeInternalAsync(bool autoApply)
     {
         if (string.IsNullOrWhiteSpace(EditorContent))
         {
@@ -171,9 +201,16 @@ public partial class MainViewModel : ObservableObject
             if (result.HasChanges)
             {
                 PendingNormalization = result;
-                IsShowingDiff = true;
-                NormalizeStatus = $"Aperçu: +{result.LinesAdded} -{result.LinesDeleted} ~{result.LinesModified}";
-                LastNormalizeTime = DateTime.UtcNow.ToString("HH:mm");
+                if (autoApply)
+                {
+                    await ApplyNormalizationAsync();
+                }
+                else
+                {
+                    IsShowingDiff = true;
+                    NormalizeStatus = $"Aperçu: +{result.LinesAdded} -{result.LinesDeleted} ~{result.LinesModified}";
+                    LastNormalizeTime = DateTime.UtcNow.ToString("HH:mm");
+                }
             }
             else
             {
@@ -251,7 +288,7 @@ public partial class MainViewModel : ObservableObject
         var settings = await _settingsService.LoadAsync(ct);
         if (settings.AutoNormalizeOnClose && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
         {
-            await NormalizeAsync();
+            await NormalizeInternalAsync(autoApply: true);
         }
 
         if (_fileService is IDisposable fs)
@@ -276,7 +313,7 @@ public partial class MainViewModel : ObservableObject
             {
                 _dispatcherQueue.TryEnqueue(async () =>
                 {
-                    await NormalizeAsync();
+                    await NormalizeInternalAsync(autoApply: true);
                 });
             }
         }

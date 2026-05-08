@@ -135,7 +135,7 @@ public class NormalizationServiceTests
 
         await _service.NormalizeAsync("test content");
 
-        Assert.IsTrue(_llmProvider.LastPrompt.Contains("active voice"));
+        Assert.IsTrue(_llmProvider.LastSystem.Contains("active voice"));
     }
 
     [TestMethod]
@@ -162,9 +162,12 @@ internal class MockLlmProvider : ILlmProvider
     public string Response { get; set; } = "mock response";
     public string LastPrompt { get; set; } = string.Empty;
 
-    public Task<string> CompleteAsync(string prompt, CancellationToken ct = default)
+    public string LastSystem { get; set; } = string.Empty;
+
+    public Task<string> CompleteAsync(string systemPrompt, string userMessage, CancellationToken ct = default)
     {
-        LastPrompt = prompt;
+        LastSystem = systemPrompt;
+        LastPrompt = userMessage;
         return Task.FromResult(Response);
     }
 }

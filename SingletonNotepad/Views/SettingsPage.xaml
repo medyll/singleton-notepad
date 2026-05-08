@@ -54,6 +54,52 @@
                             <x:String>Dark</x:String>
                         </ComboBox>
                     </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- Toujours en bas -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE74B;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Démarrer en bas de l'écran" />
+                            <TextBlock Text="Positionne la fenêtre en bas au démarrage"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
+                                      IsOn="{x:Bind ViewModel.AlwaysStartAtBottom, Mode=TwoWay}"
+                                      OnContent="" OffContent="" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- Toujours visible -->
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE8CB;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Toujours au premier plan" />
+                            <TextBlock Text="Fenêtre toujours visible par-dessus les autres"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ToggleSwitch Grid.Column="2" VerticalAlignment="Center"
+                                      IsOn="{x:Bind ViewModel.AlwaysOnTop, Mode=TwoWay}"
+                                      OnContent="" OffContent="" />
+                    </Grid>
                 </StackPanel>
             </Border>
 
@@ -188,61 +234,164 @@
                 </StackPanel>
             </Border>
 
-            <!-- ══ CLÉS API ══ -->
-            <TextBlock Text="Clés API" Style="{StaticResource GroupHeaderStyle}" />
+            <!-- ══ FOURNISSEUR LLM ══ -->
+            <TextBlock Text="Fournisseur LLM" Style="{StaticResource GroupHeaderStyle}" />
             <Border Style="{StaticResource SettingCard}">
-                <StackPanel Padding="16,12" Spacing="0">
+                <StackPanel>
 
-                    <InfoBar
-                        Margin="0,0,0,12"
-                        IsOpen="True" IsClosable="False"
-                        Severity="Informational"
-                        Title="Chiffrées avec DPAPI"
-                        Message="Seul votre compte Windows peut déchiffrer ces clés." />
-
-                    <!-- OpenAI -->
-                    <Grid MinHeight="54">
+                    <!-- Sélection provider actif -->
+                    <Grid Padding="16,14" MinHeight="64">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="200" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <FontIcon Grid.Column="0" Glyph="&#xE785;" FontSize="18"
+                        <FontIcon Grid.Column="0" Glyph="&#xE9CE;" FontSize="18"
                                   VerticalAlignment="Center" Margin="0,0,16,0"
                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
                         <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Clé OpenAI" />
-                            <TextBlock Text="GPT-4o-mini"
+                            <TextBlock Text="Fournisseur actif" FontWeight="SemiBold" />
+                            <TextBlock Text="LLM utilisé pour la normalisation"
                                        Style="{ThemeResource CaptionTextBlockStyle}"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                         </StackPanel>
-                        <PasswordBox Grid.Column="2" VerticalAlignment="Center"
+                        <ComboBox Grid.Column="2" VerticalAlignment="Center" MinWidth="160"
+                                  ItemsSource="{x:Bind ViewModel.AvailableProviders, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.LlmProvider, Mode=TwoWay}" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0" />
+
+                    <!-- ── Ollama ── -->
+                    <TextBlock Text="Ollama (local)" Margin="16,12,16,4"
+                               Visibility="{x:Bind ViewModel.OllamaSectionVisibility, Mode=OneWay}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               FontWeight="SemiBold" />
+
+                    <Grid Padding="16,8,16,8" MinHeight="52"
+                          Visibility="{x:Bind ViewModel.OllamaSectionVisibility, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Endpoint" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.OllamaEndpoint, Mode=TwoWay}"
+                                 PlaceholderText="http://localhost:11434" />
+                    </Grid>
+
+                    <Grid Padding="16,4,16,12" MinHeight="52"
+                          Visibility="{x:Bind ViewModel.OllamaSectionVisibility, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.OllamaModel, Mode=TwoWay}"
+                                 PlaceholderText="qwen3.5:latest" />
+                    </Grid>
+
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0"
+                               Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}" />
+
+                    <!-- ── OpenAI ── -->
+                    <TextBlock Text="OpenAI" Margin="16,12,16,4"
+                               Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               FontWeight="SemiBold" />
+
+                    <Grid Padding="16,4,16,4" MinHeight="52"
+                          Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.OpenAiModel, Mode=TwoWay}"
+                                 PlaceholderText="gpt-4o-mini" />
+                    </Grid>
+
+                    <Grid Padding="16,4,16,12" MinHeight="52"
+                          Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Clé API" VerticalAlignment="Center" />
+                        <PasswordBox Grid.Column="1"
                                      Password="{x:Bind ViewModel.OpenAiApiKey, Mode=TwoWay}"
                                      PlaceholderText="sk-..." />
                     </Grid>
 
-                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,8" />
+                    <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0"
+                               Visibility="{x:Bind ViewModel.AnthropicSectionVisibility, Mode=OneWay}" />
 
-                    <!-- Anthropic -->
-                    <Grid MinHeight="54">
+                    <!-- ── Anthropic ── -->
+                    <TextBlock Text="Anthropic" Margin="16,12,16,4"
+                               Visibility="{x:Bind ViewModel.AnthropicSectionVisibility, Mode=OneWay}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               FontWeight="SemiBold" />
+
+                    <Grid Padding="16,4,16,4" MinHeight="52"
+                          Visibility="{x:Bind ViewModel.AnthropicSectionVisibility, Mode=OneWay}">
                         <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="120" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="200" />
                         </Grid.ColumnDefinitions>
-                        <FontIcon Grid.Column="0" Glyph="&#xE785;" FontSize="18"
-                                  VerticalAlignment="Center" Margin="0,0,16,0"
-                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                            <TextBlock Text="Clé Anthropic" />
-                            <TextBlock Text="Claude"
-                                       Style="{ThemeResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                        <PasswordBox Grid.Column="2" VerticalAlignment="Center"
+                        <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.AnthropicModel, Mode=TwoWay}"
+                                 PlaceholderText="claude-haiku-4-5-20251001" />
+                    </Grid>
+
+                    <Grid Padding="16,4,16,12" MinHeight="52"
+                          Visibility="{x:Bind ViewModel.AnthropicSectionVisibility, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Clé API" VerticalAlignment="Center" />
+                        <PasswordBox Grid.Column="1"
                                      Password="{x:Bind ViewModel.AnthropicApiKey, Mode=TwoWay}"
                                      PlaceholderText="sk-ant-..." />
                     </Grid>
+
+                    <!-- ── Fournisseur détecté (Mistral, Groq, etc.) ── -->
+                    <TextBlock Margin="16,12,16,4"
+                               Visibility="{x:Bind ViewModel.CustomProviderSectionVisibility, Mode=OneWay}"
+                               Style="{ThemeResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               FontWeight="SemiBold"
+                               Text="{x:Bind ViewModel.LlmProvider, Mode=OneWay}" />
+
+                    <Grid Padding="16,4,16,4" MinHeight="52"
+                          Visibility="{x:Bind ViewModel.CustomProviderSectionVisibility, Mode=OneWay}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
+                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.CustomProviderModel, Mode=TwoWay}"
+                                 PlaceholderText="nom-du-modele" />
+                    </Grid>
+
+                    <InfoBar Margin="16,0,16,12"
+                             Visibility="{x:Bind ViewModel.CustomProviderSectionVisibility, Mode=OneWay}"
+                             IsOpen="True" IsClosable="False" Severity="Success"
+                             Title="Clé détectée depuis les variables d'environnement"
+                             Message="Aucune saisie de clé requise." />
+
+                    <InfoBar Margin="16,0,16,12"
+                             IsOpen="True" IsClosable="False" Severity="Informational"
+                             Title="Clés chiffrées avec DPAPI"
+                             Message="Seul votre compte Windows peut déchiffrer ces clés."
+                             Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}" />
+                    <InfoBar Margin="16,0,16,12"
+                             IsOpen="True" IsClosable="False" Severity="Informational"
+                             Title="Clés chiffrées avec DPAPI"
+                             Message="Seul votre compte Windows peut déchiffrer ces clés."
+                             Visibility="{x:Bind ViewModel.AnthropicSectionVisibility, Mode=OneWay}" />
 
                 </StackPanel>
             </Border>

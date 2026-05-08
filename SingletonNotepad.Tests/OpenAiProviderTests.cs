@@ -25,7 +25,7 @@ public class OpenAiProviderTests
             "https://api.openai.com/v1/chat/completions",
             new { choices = new[] { new { message = new { role = "assistant", content = "Normalized markdown content" } } } });
 
-        var result = await Make(new HttpClient(mockHandler)).CompleteAsync("Fix my markdown");
+        var result = await Make(new HttpClient(mockHandler)).CompleteAsync("system", "Fix my markdown");
 
         Assert.AreEqual("Normalized markdown content", result);
         var sentRequest = mockHandler.SentRequests.First();
@@ -41,7 +41,7 @@ public class OpenAiProviderTests
             "https://api.openai.com/v1/chat/completions",
             new { choices = Array.Empty<object>() });
 
-        var result = await Make(new HttpClient(mockHandler)).CompleteAsync("test");
+        var result = await Make(new HttpClient(mockHandler)).CompleteAsync("system", "test");
         Assert.AreEqual(string.Empty, result);
     }
 
@@ -53,7 +53,7 @@ public class OpenAiProviderTests
 
         try
         {
-            await Make(new HttpClient(mockHandler)).CompleteAsync("test");
+            await Make(new HttpClient(mockHandler)).CompleteAsync("system", "test");
             Assert.Fail("Expected HttpRequestException");
         }
         catch (HttpRequestException) { }

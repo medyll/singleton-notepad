@@ -26,16 +26,17 @@ public class AnthropicProvider : ILlmProvider
         _settingsService = settingsService;
     }
 
-    public async Task<string> CompleteAsync(string prompt, CancellationToken ct = default)
+    public async Task<string> CompleteAsync(string systemPrompt, string userMessage, CancellationToken ct = default)
     {
         var settings = await _settingsService.LoadAsync(ct);
         var apiKey = await _settingsService.UnprotectApiKeyAsync(settings.AnthropicApiKey ?? string.Empty, ct);
 
         var request = new AnthropicMessageRequest
         {
-            Model     = DefaultModel,
+            Model     = settings.AnthropicModel,
             MaxTokens = 2048,
-            Messages  = [new AnthropicMessage { Role = "user", Content = prompt }],
+            System    = systemPrompt,
+            Messages  = [new AnthropicMessage { Role = "user", Content = userMessage }],
         };
 
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
@@ -59,8 +60,9 @@ public class AnthropicProvider : ILlmProvider
 
 internal class AnthropicMessageRequest
 {
-    [JsonPropertyName("model")]      public string            Model     { get; set; } = string.Empty;
-    [JsonPropertyName("max_tokens")] public int               MaxTokens { get; set; }
+    [JsonPropertyName("model")]      public string             Model     { get; set; } = string.Empty;
+    [JsonPropertyName("max_tokens")] public int                MaxTokens { get; set; }
+    [JsonPropertyName("system")]     public string             System    { get; set; } = string.Empty;
     [JsonPropertyName("messages")]   public AnthropicMessage[] Messages  { get; set; } = [];
 }
 

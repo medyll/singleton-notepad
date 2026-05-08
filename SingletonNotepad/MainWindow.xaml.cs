@@ -77,31 +77,29 @@ public sealed partial class MainWindow : Window
             var settings = await _settingsService.LoadAsync();
             var geo = settings.WindowGeometry;
 
-            if (geo.Width > 0 && geo.Height > 0)
+            var w = geo.Width > 0 ? geo.Width : 1200;
+            var h = geo.Height > 0 ? geo.Height : 800;
+
+            int x, y;
+            if (settings.AlwaysStartAtBottom)
             {
-                // Validate position is on primary monitor
-                if (MonitorHelper.IsWindowValidOnPrimaryMonitor(geo.X, geo.Y, geo.Width, geo.Height))
-                {
-                    AppWindow.Move(new PointInt32(geo.X, geo.Y));
-                    AppWindow.Resize(new SizeInt32(geo.Width, geo.Height));
-                }
-                else
-                {
-                    // Fallback: center on primary monitor
-                    var (x, y) = MonitorHelper.CenterOnPrimaryMonitor(geo.Width, geo.Height);
-                    AppWindow.Move(new PointInt32(x, y));
-                    AppWindow.Resize(new SizeInt32(geo.Width, geo.Height));
-                }
+                (x, y) = MonitorHelper.BottomCenterOnPrimaryMonitor(w, h);
+            }
+            else if (geo.Width > 0 && MonitorHelper.IsWindowValidOnPrimaryMonitor(geo.X, geo.Y, w, h))
+            {
+                x = geo.X;
+                y = geo.Y;
             }
             else
             {
-                // First run: default size, centered
-                const int defaultW = 1200;
-                const int defaultH = 800;
-                var (x, y) = MonitorHelper.CenterOnPrimaryMonitor(defaultW, defaultH);
-                AppWindow.Move(new PointInt32(x, y));
-                AppWindow.Resize(new SizeInt32(defaultW, defaultH));
+                (x, y) = MonitorHelper.CenterOnPrimaryMonitor(w, h);
             }
+
+            AppWindow.Move(new PointInt32(x, y));
+            AppWindow.Resize(new SizeInt32(w, h));
+
+            if (settings.AlwaysOnTop && AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
+                p.IsAlwaysOnTop = true;
         }
         catch
         {
