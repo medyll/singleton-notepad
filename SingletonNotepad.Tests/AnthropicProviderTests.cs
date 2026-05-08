@@ -101,4 +101,11 @@ public class AnthropicProviderTests
         }
         catch (OperationCanceledException) { }
     }
+
+    [TestMethod]
+    public void GetAvailableModelsAsync_ReturnsStaticList()
+    {
+        var models = Make(new HttpClient()).GetAvailableModelsAsync().Result;
+        Assert.IsTrue(models.Count > 0);
+    }
 }

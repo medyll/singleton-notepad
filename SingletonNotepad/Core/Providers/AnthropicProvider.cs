@@ -13,6 +13,17 @@ public class AnthropicProvider : ILlmProvider
     private const string DefaultModel  = "claude-haiku-4-5-20251001";
     private const string ApiVersion    = "2023-06-01";
 
+    private static readonly string[] KnownModels =
+    [
+        "claude-opus-4-20250514",
+        "claude-sonnet-4-20250514",
+        "claude-3-5-sonnet-20241022",
+        "claude-3-5-haiku-20241022",
+        "claude-3-opus-20240229",
+        "claude-3-sonnet-20240229",
+        "claude-3-haiku-20240307",
+    ];
+
     private static readonly JsonSerializerOptions JsonOpts = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
@@ -55,6 +66,11 @@ public class AnthropicProvider : ILlmProvider
 
         var result = await response.Content.ReadFromJsonAsync<AnthropicMessageResponse>(JsonOpts, cts.Token);
         return result?.Content.FirstOrDefault()?.Text ?? string.Empty;
+    }
+
+    public Task<IReadOnlyList<string>> GetAvailableModelsAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult<IReadOnlyList<string>>(KnownModels);
     }
 }
 

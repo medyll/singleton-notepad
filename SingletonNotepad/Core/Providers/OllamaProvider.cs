@@ -43,6 +43,21 @@ public class OllamaProvider : ILlmProvider
         var result = await response.Content.ReadFromJsonAsync<OllamaChatResponse>(cancellationToken: cts.Token);
         return result?.Message?.Content ?? string.Empty;
     }
+
+    public async Task<IReadOnlyList<string>> GetAvailableModelsAsync(CancellationToken ct = default)
+    {
+        var settings = await _settingsService.LoadAsync(ct);
+        var endpoint = (settings.OllamaEndpoint ?? "http://localhost:11434").TrimEnd('/');
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(10));
+
+        var response = await _httpClient.GetAsync($"{endpoint}/api/tags", cts.Token);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<OllamaTagsResponse>(cancellationToken: cts.Token);
+        return result?.Models.Select(m => m.Name).ToList() ?? [];
+    }
 }
 
 internal class OllamaChatRequest
@@ -61,4 +76,14 @@ internal class OllamaChatMessage
 internal class OllamaChatResponse
 {
     [JsonPropertyName("message")] public OllamaChatMessage? Message { get; set; }
+}
+
+internal class OllamaTagsResponse
+{
+    [JsonPropertyName("models")] public OllamaModelEntry[] Models { get; set; } = [];
+}
+
+internal class OllamaModelEntry
+{
+    [JsonPropertyName("name")] public string Name { get; set; } = string.Empty;
 }

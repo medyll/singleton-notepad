@@ -61,4 +61,20 @@ public class OpenAiCompatibleProvider : ILlmProvider
         var result = await response.Content.ReadFromJsonAsync<OpenAiChatResponse>(cancellationToken: cts.Token);
         return result?.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
     }
+
+    public async Task<IReadOnlyList<string>> GetAvailableModelsAsync(CancellationToken ct = default)
+    {
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(10));
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{_baseUrl}/models");
+        httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _apiKey);
+
+        var response = await _httpClient.SendAsync(httpRequest, cts.Token);
+        if (!response.IsSuccessStatusCode)
+            return [];
+
+        var result = await response.Content.ReadFromJsonAsync<OpenAiModelsResponse>(cancellationToken: cts.Token);
+        return result?.Data.Select(m => m.Id).OrderBy(id => id).ToList() ?? [];
+    }
 }

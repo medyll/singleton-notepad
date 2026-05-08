@@ -35,6 +35,10 @@
     <Compile Include="..\SingletonNotepad\Core\Services\NormalizationService.cs" Link="Core\Services\NormalizationService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\IMemoryTrackerService.cs" Link="Core\Services\IMemoryTrackerService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\MemoryTrackerService.cs" Link="Core\Services\MemoryTrackerService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\IModelService.cs" Link="Core\Services\IModelService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\ModelService.cs" Link="Core\Services\ModelService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Providers\OpenAiCompatibleProvider.cs" Link="Core\Providers\OpenAiCompatibleProvider.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\ProviderDetectionService.cs" Link="Core\Services\ProviderDetectionService.cs" />
   </ItemGroup>
 
   <ItemGroup>

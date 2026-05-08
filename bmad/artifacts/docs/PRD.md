@@ -151,6 +151,24 @@ Markdown syntax highlighting, full keyboard map, toast notifications, OpenAI + A
 ### Sprint 4 — Advanced
 FileSystemWatcher external-edit detection, versioned backups, custom rules plugins, optional cloud sync.
 
+## Sprint 5 — Chat & Model UX (post-v1.0)
+
+**Goal:** Interactive LLM chat panel, dynamic model discovery, configurable spell check, and a scrollbar polish fix.
+
+| ID | Story | Priority |
+|----|-------|----------|
+| S5-01 | Chat bubble — floating LLM chat panel (minimizable, context-aware) | High |
+| S5-02 | Model management — dynamic provider/model selector in Settings | High |
+| S5-03 | Spell check — configurable, auto-detect language | Medium |
+| S5-04 | UI fix — scrollbar hidden when editor is empty | Low |
+
+**New FRs:**
+- FR-24 Floating chat panel: expandable/minimizable, scope = selection or full note.
+- FR-25 "Apply" action: replaces selection or full content with LLM response.
+- FR-26 Model selector: Ollama fetched live, OpenAI fetched via API, Anthropic static curated list.
+- FR-27 Spell check toggle + language picker in Settings; auto-detect via stop-word heuristic.
+- FR-28 Editor scrollbar visible only when content overflows.
+
 ## 10. Risks
 
 | Risk | Mitigation |

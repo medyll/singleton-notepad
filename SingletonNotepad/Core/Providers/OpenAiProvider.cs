@@ -49,6 +49,28 @@ public class OpenAiProvider : ILlmProvider
         var result = await response.Content.ReadFromJsonAsync<OpenAiChatResponse>(cancellationToken: cts.Token);
         return result?.Choices.FirstOrDefault()?.Message.Content ?? string.Empty;
     }
+
+    public async Task<IReadOnlyList<string>> GetAvailableModelsAsync(CancellationToken ct = default)
+    {
+        var settings = await _settingsService.LoadAsync(ct);
+        var apiKey = await _settingsService.UnprotectApiKeyAsync(settings.OpenAiApiKey ?? string.Empty, ct);
+
+        using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        cts.CancelAfter(TimeSpan.FromSeconds(15));
+
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Get, $"{DefaultEndpoint}/models");
+        httpRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", apiKey);
+
+        var response = await _httpClient.SendAsync(httpRequest, cts.Token);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content.ReadFromJsonAsync<OpenAiModelsResponse>(cancellationToken: cts.Token);
+        return result?.Data
+            .Select(m => m.Id)
+            .Where(id => id.StartsWith("gpt-") || id.StartsWith("o"))
+            .OrderBy(id => id)
+            .ToList() ?? [];
+    }
 }
 
 internal class OpenAiChatRequest
@@ -73,4 +95,14 @@ internal class OpenAiChatResponse
 internal class OpenAiChoice
 {
     [JsonPropertyName("message")] public OpenAiMessage Message { get; set; } = new();
+}
+
+internal class OpenAiModelsResponse
+{
+    [JsonPropertyName("data")] public OpenAiModelEntry[] Data { get; set; } = [];
+}
+
+internal class OpenAiModelEntry
+{
+    [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;
 }

@@ -143,6 +143,7 @@ public partial class App : Application
         }
 
         services.AddSingleton<ILlmProviderSelector, LlmProviderSelector>();
+        services.AddSingleton<IModelService, ModelService>();
 
         // ViewModels
         services.AddTransient<MainViewModel>();

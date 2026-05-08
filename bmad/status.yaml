@@ -1,16 +1,16 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
-phase: complete
-progress: 100
-next_action: "v1.0 shipped. All 4 sprints done. 44 tests green."
-next_command: ""
-next_role: ""
-active_role: ""
+phase: development
+progress: 25
+next_action: "Implement S5-02 (model management — dynamic provider/model selector in Settings)"
+next_command: "bmad-continue"
+next_role: "Developer"
+active_role: "Developer"
 last_updated: "2026-05-08"
 
-marketing: "Single-file Markdown notepad with LLM normalization. S4 complete. Versioned backups, backup management UI, rules editor, OpenAI/Anthropic providers, DPAPI key storage, FileSystemWatcher detection."
-product: "S4 complete. All 4 sprints done. v1.0 release candidate."
-far_vision: "v1.0 release candidate. Cloud sync deferred to post-v1."
+marketing: "Post-v1.0: adding interactive LLM chat panel, dynamic model discovery, spell check with language detection. v1.0 shipped — 4 sprints, 44 tests green."
+product: "Sprint 5 planned: S5-01 chat bubble, S5-02 model management, S5-03 spell check, S5-04 scrollbar fix. S5-04 first (fast win)."
+far_vision: "v1.0 shipped. Sprint 5 = UX depth. Chat-on-content is core differentiator. Cloud sync still deferred."
 
 stack_migration:
   from: "Avalonia 11"
@@ -130,4 +130,20 @@ sprints:
         status: done
       - id: S4-04
         title: "Release candidate: polish, smoke test, packaging"
+        status: done
+  - id: S5
+    name: "Chat & Model UX"
+    status: in_progress
+    stories:
+      - id: S5-01
+        title: "Chat bubble — floating LLM chat panel (minimizable, context-aware)"
+        status: todo
+      - id: S5-02
+        title: "Model management — dynamic provider/model selector in Settings"
+        status: todo
+      - id: S5-03
+        title: "Spell check — configurable, auto-detect language"
+        status: todo
+      - id: S5-04
+        title: "UI fix — scrollbar hidden when editor is empty"
         status: done

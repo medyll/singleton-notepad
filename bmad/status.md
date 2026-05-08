@@ -1,19 +1,34 @@
 # BMAD Status — singleton-notepad
 
 **Last updated:** 2026-05-08
-**Phase:** complete
-**Progress:** 100% — all 4 sprints done, v1.0 shipped
+**Phase:** development (Sprint 5)
+**Active Role:** Developer
 
-## Sprints
+---
 
-| Sprint | Name | Status |
-|--------|------|--------|
-| S1 | MVP Foundation | ✅ done |
-| S2 | LLM Normalization | ✅ done |
-| S3 | Polish & Production Readiness | ✅ done |
-| S4 | Advanced & Release Candidate | ✅ done |
+## Current Sprint: S5 — Chat & Model UX
 
-## Features shipped
+| ID | Story | Status |
+|----|-------|--------|
+| S5-01 | Chat bubble — floating LLM chat panel (minimizable, context-aware) | 🔲 todo |
+| S5-02 | Model management — dynamic provider/model selector in Settings | 🔲 todo |
+| S5-03 | Spell check — configurable, auto-detect language | 🔲 todo |
+| S5-04 | UI fix — scrollbar hidden when editor is empty | ✅ done |
+
+**Next:** `bmad-continue` → S5-02 (model management).
+
+---
+
+## Completed Sprints ✅
+
+| Sprint | Name | Stories |
+|--------|------|---------|
+| S1 | MVP Foundation | 7 done |
+| S2 | LLM Normalization | 7 done |
+| S3 | Polish & Production Readiness | 4 done |
+| S4 | Advanced & Release Candidate | 4 done |
+
+## Features Shipped (v1.0)
 
 - Single-instance WinUI 3 notepad (Fluent / Win11)
 - Auto-save (2s debounce) + versioned backups

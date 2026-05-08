@@ -5,11 +5,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:SingletonNotepad.Views"
+    xmlns:converters="using:SingletonNotepad.Views.Converters"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <Page.Resources>
+        <converters:StringNotEmptyToBoolConverter x:Key="StringNotEmptyToBoolConverter" />
         <Style x:Key="GroupHeaderStyle" TargetType="TextBlock" BasedOn="{StaticResource BodyStrongTextBlockStyle}">
             <Setter Property="Margin" Value="4,20,0,6" />
         </Style>
@@ -285,11 +287,32 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="120" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.OllamaModel, Mode=TwoWay}"
-                                 PlaceholderText="qwen3.5:latest" />
+                        <ComboBox Grid.Column="1" VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.AvailableModels, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.OllamaModel, Mode=TwoWay}"
+                                  IsEditable="True"
+                                  PlaceholderText="Sélectionner ou saisir un modèle" />
+                        <Button Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.RefreshModelsCommand}"
+                                ToolTipService.ToolTip="Actualiser les modèles">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        </Button>
                     </Grid>
+
+                    <InfoBar Margin="16,0,16,8"
+                             Visibility="{x:Bind ViewModel.OllamaSectionVisibility, Mode=OneWay}"
+                             IsOpen="{x:Bind ViewModel.IsLoadingModels, Mode=OneWay}"
+                             IsClosable="False" Severity="Informational"
+                             Title="Chargement des modèles..." />
+
+                    <InfoBar Margin="16,0,16,8"
+                             Visibility="{x:Bind ViewModel.OllamaSectionVisibility, Mode=OneWay}"
+                             IsOpen="{x:Bind ViewModel.ModelFetchError, Mode=OneWay, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                             IsClosable="True" Severity="Warning"
+                             Title="{x:Bind ViewModel.ModelFetchError, Mode=OneWay}" />
 
                     <Rectangle Height="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="16,0"
                                Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}" />
@@ -306,11 +329,32 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="120" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.OpenAiModel, Mode=TwoWay}"
-                                 PlaceholderText="gpt-4o-mini" />
+                        <ComboBox Grid.Column="1" VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.AvailableModels, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.OpenAiModel, Mode=TwoWay}"
+                                  IsEditable="True"
+                                  PlaceholderText="Sélectionner ou saisir un modèle" />
+                        <Button Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.RefreshModelsCommand}"
+                                ToolTipService.ToolTip="Actualiser les modèles">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        </Button>
                     </Grid>
+
+                    <InfoBar Margin="16,0,16,8"
+                             Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}"
+                             IsOpen="{x:Bind ViewModel.IsLoadingModels, Mode=OneWay}"
+                             IsClosable="False" Severity="Informational"
+                             Title="Chargement des modèles..." />
+
+                    <InfoBar Margin="16,0,16,8"
+                             Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}"
+                             IsOpen="{x:Bind ViewModel.ModelFetchError, Mode=OneWay, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                             IsClosable="True" Severity="Warning"
+                             Title="{x:Bind ViewModel.ModelFetchError, Mode=OneWay}" />
 
                     <Grid Padding="16,4,16,12" MinHeight="52"
                           Visibility="{x:Bind ViewModel.OpenAiSectionVisibility, Mode=OneWay}">
@@ -339,10 +383,18 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="120" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.AnthropicModel, Mode=TwoWay}"
-                                 PlaceholderText="claude-haiku-4-5-20251001" />
+                        <ComboBox Grid.Column="1" VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.AvailableModels, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.AnthropicModel, Mode=TwoWay}"
+                                  PlaceholderText="Sélectionner un modèle" />
+                        <Button Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.RefreshModelsCommand}"
+                                ToolTipService.ToolTip="Actualiser les modèles">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        </Button>
                     </Grid>
 
                     <Grid Padding="16,4,16,12" MinHeight="52"
@@ -370,11 +422,32 @@
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="120" />
                             <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Modèle" VerticalAlignment="Center" />
-                        <TextBox Grid.Column="1" Text="{x:Bind ViewModel.CustomProviderModel, Mode=TwoWay}"
-                                 PlaceholderText="nom-du-modele" />
+                        <ComboBox Grid.Column="1" VerticalAlignment="Center"
+                                  ItemsSource="{x:Bind ViewModel.AvailableModels, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.CustomProviderModel, Mode=TwoWay}"
+                                  IsEditable="True"
+                                  PlaceholderText="Sélectionner ou saisir un modèle" />
+                        <Button Grid.Column="2" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.RefreshModelsCommand}"
+                                ToolTipService.ToolTip="Actualiser les modèles">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        </Button>
                     </Grid>
+
+                    <InfoBar Margin="16,0,16,8"
+                             Visibility="{x:Bind ViewModel.CustomProviderSectionVisibility, Mode=OneWay}"
+                             IsOpen="{x:Bind ViewModel.IsLoadingModels, Mode=OneWay}"
+                             IsClosable="False" Severity="Informational"
+                             Title="Chargement des modèles..." />
+
+                    <InfoBar Margin="16,0,16,8"
+                             Visibility="{x:Bind ViewModel.CustomProviderSectionVisibility, Mode=OneWay}"
+                             IsOpen="{x:Bind ViewModel.ModelFetchError, Mode=OneWay, Converter={StaticResource StringNotEmptyToBoolConverter}}"
+                             IsClosable="True" Severity="Warning"
+                             Title="{x:Bind ViewModel.ModelFetchError, Mode=OneWay}" />
 
                     <InfoBar Margin="16,0,16,12"
                              Visibility="{x:Bind ViewModel.CustomProviderSectionVisibility, Mode=OneWay}"

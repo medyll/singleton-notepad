@@ -133,6 +133,51 @@ public class OllamaProviderTests
         }
         catch (OperationCanceledException) { }
     }
+
+    [TestMethod]
+    public async Task GetAvailableModelsAsync_ParsesTagsResponse()
+    {
+        var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("""{"models":[{"name":"llama3:latest"},{"name":"qwen3.5:latest"},{"name":"mistral:7b"}]}"""),
+        }));
+
+        var models = await Make(new HttpClient(handler)).GetAvailableModelsAsync();
+
+        Assert.AreEqual(3, models.Count);
+        Assert.IsTrue(models.Contains("llama3:latest"));
+        Assert.IsTrue(models.Contains("qwen3.5:latest"));
+        Assert.IsTrue(models.Contains("mistral:7b"));
+    }
+
+    [TestMethod]
+    public async Task GetAvailableModelsAsync_ReturnsEmptyOnHttpError()
+    {
+        var handler = new MockHttpHandler(_ => Task.FromResult(new HttpResponseMessage(HttpStatusCode.InternalServerError)));
+        try
+        {
+            await Make(new HttpClient(handler)).GetAvailableModelsAsync();
+            Assert.Fail("Expected HttpRequestException");
+        }
+        catch (HttpRequestException) { }
+    }
+
+    [TestMethod]
+    public async Task GetAvailableModelsAsync_UsesCustomEndpoint()
+    {
+        var capturedUri = string.Empty;
+        var handler = new MockHttpHandler(request =>
+        {
+            capturedUri = request.RequestUri!.AbsoluteUri;
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            {
+                Content = new StringContent("""{"models":[]}"""),
+            });
+        });
+
+        await Make(new HttpClient(handler), "http://192.168.1.42:11434").GetAvailableModelsAsync();
+        Assert.AreEqual("http://192.168.1.42:11434/api/tags", capturedUri);
+    }
 }
 
 // Shared across provider test files

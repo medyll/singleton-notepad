@@ -170,6 +170,11 @@ internal class MockLlmProvider : ILlmProvider
         LastPrompt = userMessage;
         return Task.FromResult(Response);
     }
+
+    public Task<IReadOnlyList<string>> GetAvailableModelsAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult<IReadOnlyList<string>>(["mock-model:latest"]);
+    }
 }
 
 internal class MockLlmProviderSelector : ILlmProviderSelector

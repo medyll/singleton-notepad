@@ -58,6 +58,48 @@ public class OpenAiProviderTests
         }
         catch (HttpRequestException) { }
     }
+
+    [TestMethod]
+    public async Task GetAvailableModelsAsync_FiltersToGptAndOModels()
+    {
+        var mockHandler = new MockHttpMessageHandler();
+        mockHandler.SetupResponse(
+            "https://api.openai.com/v1/models",
+            new { data = new[]
+            {
+                new { id = "gpt-4o-mini" },
+                new { id = "gpt-4o" },
+                new { id = "o1-mini" },
+                new { id = "o3" },
+                new { id = "dall-e-3" },
+                new { id = "whisper-1" },
+                new { id = "text-embedding-3-small" },
+            }});
+
+        var models = await Make(new HttpClient(mockHandler)).GetAvailableModelsAsync();
+
+        Assert.AreEqual(4, models.Count);
+        Assert.IsTrue(models.Contains("gpt-4o-mini"));
+        Assert.IsTrue(models.Contains("gpt-4o"));
+        Assert.IsTrue(models.Contains("o1-mini"));
+        Assert.IsTrue(models.Contains("o3"));
+        Assert.IsFalse(models.Contains("dall-e-3"));
+        Assert.IsFalse(models.Contains("whisper-1"));
+    }
+
+    [TestMethod]
+    public async Task GetAvailableModelsAsync_ReturnsEmptyOnHttpError()
+    {
+        var mockHandler = new MockHttpMessageHandler();
+        mockHandler.SetupError("https://api.openai.com/v1/models", HttpStatusCode.Unauthorized);
+
+        try
+        {
+            await Make(new HttpClient(mockHandler)).GetAvailableModelsAsync();
+            Assert.Fail("Expected HttpRequestException");
+        }
+        catch (HttpRequestException) { }
+    }
 }
 
 internal class MockHttpMessageHandler : HttpMessageHandler

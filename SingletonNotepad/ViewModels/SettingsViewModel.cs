@@ -13,6 +13,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ISettingsService _settingsService;
     private readonly INormalizationService _normalizationService;
     private readonly ILlmProviderSelector _providerSelector;
+    private readonly IModelService _modelService;
 
     private static readonly HashSet<string> BuiltInProviders = ["Ollama", "OpenAI", "Anthropic"];
 
@@ -74,6 +75,15 @@ public partial class SettingsViewModel : ObservableObject
     public partial ObservableCollection<string> AvailableProviders { get; set; } = new();
 
     [ObservableProperty]
+    public partial ObservableCollection<string> AvailableModels { get; set; } = new();
+
+    [ObservableProperty]
+    public partial bool IsLoadingModels { get; set; }
+
+    [ObservableProperty]
+    public partial string ModelFetchError { get; set; } = string.Empty;
+
+    [ObservableProperty]
     public partial string CustomProviderModel { get; set; } = string.Empty;
 
     public Visibility OllamaSectionVisibility    => LlmProvider == "Ollama"    ? Visibility.Visible : Visibility.Collapsed;
@@ -81,11 +91,12 @@ public partial class SettingsViewModel : ObservableObject
     public Visibility AnthropicSectionVisibility => LlmProvider == "Anthropic" ? Visibility.Visible : Visibility.Collapsed;
     public Visibility CustomProviderSectionVisibility => !BuiltInProviders.Contains(LlmProvider) ? Visibility.Visible : Visibility.Collapsed;
 
-    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService, ILlmProviderSelector providerSelector)
+    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService, ILlmProviderSelector providerSelector, IModelService modelService)
     {
         _settingsService = settingsService;
         _normalizationService = normalizationService;
         _providerSelector = providerSelector;
+        _modelService = modelService;
 
         foreach (var name in _providerSelector.AvailableProviders)
             AvailableProviders.Add(name);
@@ -123,6 +134,8 @@ public partial class SettingsViewModel : ObservableObject
             settings.ProviderModels.TryGetValue(LlmProvider, out var customModel);
             CustomProviderModel = customModel ?? string.Empty;
         }
+
+        _ = RefreshModelsAsync();
     }
 
     public async Task SaveSettingsAsync(CancellationToken ct = default)
@@ -226,6 +239,33 @@ public partial class SettingsViewModel : ObservableObject
         OnPropertyChanged(nameof(CustomProviderSectionVisibility));
         _ = LoadCustomProviderModelAsync();
         _ = SaveSettingsAsync();
+        _ = RefreshModelsAsync();
+    }
+
+    [RelayCommand]
+    public async Task RefreshModelsAsync()
+    {
+        IsLoadingModels = true;
+        ModelFetchError = string.Empty;
+        AvailableModels.Clear();
+
+        try
+        {
+            var models = await _modelService.GetModelsForProviderAsync(LlmProvider);
+            foreach (var m in models)
+                AvailableModels.Add(m);
+
+            if (models.Count == 0)
+                ModelFetchError = "Aucun modèle trouvé. Vérifiez la connexion ou la clé API.";
+        }
+        catch (Exception ex)
+        {
+            ModelFetchError = $"Erreur: {ex.Message}";
+        }
+        finally
+        {
+            IsLoadingModels = false;
+        }
     }
 
     private async Task LoadCustomProviderModelAsync()
