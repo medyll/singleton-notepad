@@ -92,6 +92,11 @@ public class AppSettings
     /// Spell check language: "auto", "fr-FR", "en-US", etc.
     /// </summary>
     public string SpellCheckLanguage { get; set; } = "auto";
+
+    /// <summary>
+    /// Chat panel visibility: "open", "minimized", or "hidden".
+    /// </summary>
+    public string ChatPanelState { get; set; } = "hidden";
 }
 
 /// <summary>

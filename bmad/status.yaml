@@ -1,8 +1,8 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 50
-next_action: "Implement S5-03 (spell check — configurable, auto-detect language)"
+progress: 75
+next_action: "Implement S5-01 (chat bubble — floating LLM chat panel)"
 next_command: "bmad-continue"
 next_role: "Developer"
 active_role: "Developer"
@@ -143,7 +143,7 @@ sprints:
         status: done
       - id: S5-03
         title: "Spell check — configurable, auto-detect language"
-        status: todo
+        status: done
       - id: S5-04
         title: "UI fix — scrollbar hidden when editor is empty"
         status: done

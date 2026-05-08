@@ -40,6 +40,8 @@
     <Compile Include="..\SingletonNotepad\Core\Providers\OpenAiCompatibleProvider.cs" Link="Core\Providers\OpenAiCompatibleProvider.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\ProviderDetectionService.cs" Link="Core\Services\ProviderDetectionService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\LanguageDetector.cs" Link="Core\Services\LanguageDetector.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Services\ChatService.cs" Link="Core\Services\ChatService.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Models\ChatMessage.cs" Link="Core\Models\ChatMessage.cs" />
   </ItemGroup>
 
   <ItemGroup>

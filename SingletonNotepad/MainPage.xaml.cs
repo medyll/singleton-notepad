@@ -15,6 +15,7 @@ public sealed partial class MainPage : Page
     private static readonly JsonSerializerOptions MessageJsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     public MainViewModel ViewModel { get; }
+    public ChatViewModel ChatViewModel { get; }
 
     private readonly TaskCompletionSource<bool> _editorReady = new();
     private readonly Task _webView2InitTask;
@@ -23,11 +24,24 @@ public sealed partial class MainPage : Page
     private bool _editorInitialized;
     private bool _pushingContentToWebView;
     private bool _themeHandlerWired;
+    private SingletonNotepad.Views.Controls.ChatBubble? _chatBubbleControl;
 
     public MainPage()
     {
         ViewModel = App.Services.GetRequiredService<MainViewModel>();
+        ChatViewModel = App.Services.GetRequiredService<ChatViewModel>();
         InitializeComponent();
+
+        _chatBubbleControl = new SingletonNotepad.Views.Controls.ChatBubble(ChatViewModel);
+        // Add to the Grid's children at the end so it overlays everything
+        var rootGrid = (Grid)Content;
+        rootGrid.Children.Add(_chatBubbleControl);
+
+        ChatViewModel.SetContentProviders(
+            () => null, // No selection detection from WebView2 yet
+            () => ViewModel.EditorContent);
+
+        _ = ChatViewModel.LoadStateAsync();
 
         // Kick off both heavy tasks immediately — before Loaded fires
         _webView2InitTask = EditorWebView.EnsureCoreWebView2Async().AsTask();
@@ -176,6 +190,21 @@ public sealed partial class MainPage : Page
         if (_themeHandlerWired) return;
         _themeHandlerWired = true;
         ActualThemeChanged += OnActualThemeChanged;
+        KeyDown += OnPageKeyDown;
+    }
+
+    private void OnPageKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        var shift = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Shift);
+        var ctrlDown = (ctrl & Windows.UI.Core.CoreVirtualKeyStates.Down) == Windows.UI.Core.CoreVirtualKeyStates.Down;
+        var shiftDown = (shift & Windows.UI.Core.CoreVirtualKeyStates.Down) == Windows.UI.Core.CoreVirtualKeyStates.Down;
+
+        if (e.Key == Windows.System.VirtualKey.C && ctrlDown && shiftDown)
+        {
+            ChatViewModel.TogglePanelCommand.Execute(null);
+            e.Handled = true;
+        }
     }
 
     private void OnActualThemeChanged(FrameworkElement sender, object args) => SyncTheme();

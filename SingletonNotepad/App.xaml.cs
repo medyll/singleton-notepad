@@ -144,10 +144,12 @@ public partial class App : Application
 
         services.AddSingleton<ILlmProviderSelector, LlmProviderSelector>();
         services.AddSingleton<IModelService, ModelService>();
+        services.AddSingleton<IChatService, ChatService>();
 
         // ViewModels
         services.AddTransient<MainViewModel>();
         services.AddTransient<SettingsViewModel>();
+        services.AddTransient<ChatViewModel>();
 
         return services.BuildServiceProvider();
     }

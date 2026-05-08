@@ -110,5 +110,7 @@
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
             </Grid>
         </Border>
+
+        <!-- Chat Bubble Overlay (added programmatically) -->
     </Grid>
 </Page>
