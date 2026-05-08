@@ -91,11 +91,9 @@
 </head>
 <body>
 <div id="editor"></div>
-<script type="module">
-import { Editor } from 'https://esm.sh/@tiptap/core@2.11.5';
-import StarterKit from 'https://esm.sh/@tiptap/starter-kit@2.11.5';
-import Placeholder from 'https://esm.sh/@tiptap/extension-placeholder@2.11.5';
-import { Markdown } from 'https://esm.sh/tiptap-markdown@0.8.11?deps=@tiptap/core@2.11.5';
+<script src="tiptap.bundle.js"></script>
+<script>
+const { Editor, StarterKit, Placeholder, Markdown } = window.__TipTap;
 
 const editor = new Editor({
   element: document.getElementById('editor'),

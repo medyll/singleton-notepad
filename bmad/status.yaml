@@ -1,12 +1,12 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
-phase: release
+phase: complete
 progress: 100
-next_action: "Sprint 4 complete. v1.0 release candidate ready."
+next_action: "v1.0 shipped. All 4 sprints done. 44 tests green."
 next_command: ""
 next_role: ""
 active_role: ""
-last_updated: "2026-05-06"
+last_updated: "2026-05-08"
 
 marketing: "Single-file Markdown notepad with LLM normalization. S4 complete. Versioned backups, backup management UI, rules editor, OpenAI/Anthropic providers, DPAPI key storage, FileSystemWatcher detection."
 product: "S4 complete. All 4 sprints done. v1.0 release candidate."
@@ -130,4 +130,4 @@ sprints:
         status: done
       - id: S4-04
         title: "Release candidate: polish, smoke test, packaging"
-        status: pending
+        status: done

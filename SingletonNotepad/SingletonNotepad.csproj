@@ -35,6 +35,16 @@
     <Content Include="Assets\AppIcon.ico" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <Content Include="Assets\Editor\editor.html" />
+    <Content Include="Assets\Editor\tiptap.bundle.js" />
+  </ItemGroup>
+
+  <Target Name="CopyEditorBundle" AfterTargets="Build">
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\Assets\Editor\tiptap.bundle.js"
+          DestinationFiles="$(BaseOutputPath)$(Platform)\$(Configuration)\$(TargetFramework)\AppX\Assets\Editor\tiptap.bundle.js"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
   </ItemGroup>
 
   <ItemGroup>
