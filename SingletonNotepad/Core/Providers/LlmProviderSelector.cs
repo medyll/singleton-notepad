@@ -4,8 +4,7 @@ public class LlmProviderSelector : ILlmProviderSelector
 {
     private readonly Dictionary<string, ILlmProvider> _providers;
     private readonly IReadOnlyList<string> _availableProviders;
-    private ILlmProvider _current;
-    private readonly object _lock = new();
+    private volatile ILlmProvider _current;
 
     public LlmProviderSelector(IEnumerable<ILlmProvider> providers)
     {
@@ -15,7 +14,7 @@ public class LlmProviderSelector : ILlmProviderSelector
         _availableProviders = _providers.Keys.ToList().AsReadOnly();
     }
 
-    public ILlmProvider Current { get => _current; }
+    public ILlmProvider Current => _current;
 
     public string CurrentName => _current.Name;
 
@@ -28,7 +27,7 @@ public class LlmProviderSelector : ILlmProviderSelector
     {
         if (_providers.TryGetValue(providerName, out var provider))
         {
-            lock (_lock) { _current = provider; }
+            _current = provider;
         }
     }
 }

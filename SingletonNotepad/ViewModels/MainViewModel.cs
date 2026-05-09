@@ -174,7 +174,9 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        if (_normalizationService.IsRateLimited(EditorContent, out var remaining))
+        var activeSettings = await _settingsService.LoadAsync();
+
+        if (_normalizationService.IsRateLimited(EditorContent, out var remaining, activeSettings.NormalizeRateLimitSeconds))
         {
             NormalizeStatus = $"Rate limit: attendre {remaining.Minutes:0}m {remaining.Seconds:0}s";
             return;
@@ -210,7 +212,6 @@ public partial class MainViewModel : ObservableObject
             else
             {
                 NormalizeStatus = "Aucune modification nécessaire";
-                PendingNormalization = result;
                 LastNormalizeTime = DateTime.UtcNow.ToString("HH:mm");
             }
         }

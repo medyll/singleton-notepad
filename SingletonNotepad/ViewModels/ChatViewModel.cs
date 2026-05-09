@@ -60,7 +60,9 @@ public partial class ChatViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsOpen));
         OnPropertyChanged(nameof(IsMinimized));
-        _ = SaveStateAsync();
+        _ = SaveStateAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"[Chat] SaveState error: {t.Exception?.Flatten().Message}"),
+            System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
     }
 
     [RelayCommand]

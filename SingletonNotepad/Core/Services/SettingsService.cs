@@ -15,6 +15,7 @@ public class SettingsService : ISettingsService
 
     private readonly string _settingsPath;
     private AppSettings? _cache;
+    private readonly object _cacheLock = new();
 
     public SettingsService(string? customPath = null)
     {
@@ -39,25 +40,31 @@ public class SettingsService : ISettingsService
 
     public async Task<AppSettings> LoadAsync(CancellationToken ct = default)
     {
-        if (_cache is not null)
-            return _cache;
+        lock (_cacheLock)
+        {
+            if (_cache is not null)
+                return _cache;
+        }
 
         if (!File.Exists(_settingsPath))
         {
-            _cache = new AppSettings();
-            return _cache;
+            var defaults = new AppSettings();
+            lock (_cacheLock) { _cache = defaults; }
+            return defaults;
         }
 
         try
         {
             var json = await File.ReadAllTextAsync(_settingsPath, ct);
-            _cache = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
-            return _cache;
+            var settings = JsonSerializer.Deserialize<AppSettings>(json, JsonOptions) ?? new AppSettings();
+            lock (_cacheLock) { _cache = settings; }
+            return settings;
         }
         catch (JsonException)
         {
-            _cache = new AppSettings();
-            return _cache;
+            var defaults = new AppSettings();
+            lock (_cacheLock) { _cache = defaults; }
+            return defaults;
         }
         catch (IOException)
         {
@@ -67,7 +74,7 @@ public class SettingsService : ISettingsService
 
     public async Task SaveAsync(AppSettings settings, CancellationToken ct = default)
     {
-        _cache = settings;
+        lock (_cacheLock) { _cache = settings; }
         var directory = Path.GetDirectoryName(_settingsPath);
         if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
         {

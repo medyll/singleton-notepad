@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.UI.Windowing;
 using Windows.Graphics;
 
@@ -26,8 +27,9 @@ public static class MonitorHelper
 
             return windowArea > 0 && overlapArea > windowArea / 2;
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[MonitorHelper] IsWindowValidOnPrimaryMonitor error: {ex.Message}");
             return false;
         }
     }
@@ -44,8 +46,9 @@ public static class MonitorHelper
             var y = workArea.Y + (workArea.Height - height) / 2;
             return (x, y);
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[MonitorHelper] CenterOnPrimaryMonitor error: {ex.Message}");
             return (0, 0);
         }
     }
@@ -62,8 +65,9 @@ public static class MonitorHelper
             var y = workArea.Y + workArea.Height - height - 12;
             return (x, y);
         }
-        catch
+        catch (Exception ex)
         {
+            Debug.WriteLine($"[MonitorHelper] BottomCenterOnPrimaryMonitor error: {ex.Message}");
             return (0, 0);
         }
     }

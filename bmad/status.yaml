@@ -1,10 +1,10 @@
 project: singleton-notepad
 phase: development
 progress: 30
-next_action: "S6-08 done. Check remaining S6 stories or plan next sprint."
+next_action: "Plan S6 stories S6-02 through S6-06. Discuss architecture before coding."
 next_command: "bmad-continue"
 next_role: "Scrum Master"
-active_role: "Developer"
+active_role: "Scrum Master"
 last_updated: "2026-05-09"
 
 marketing: "Skills system is live: the notepad auto-detects relevant expert modes from skill .md files and injects them silently into every chat/normalization request. Power users can invoke /skill-name manually."
@@ -153,12 +153,195 @@ sprints:
         title: "Spell check language live refresh on settings return"
         status: done
   - id: S6
-    name: "Editor Quality"
+    name: "Editor Quality & UX Refactor"
     status: in_progress
     stories:
       - id: S6-01
-        title: "Inline diff in WebView — git-style, replace DiffOverlay + InlineDiffEditor"
+        title: "Inline diff in WebView — overlay approach (superseded by S6-03)"
         status: done
+        note: "Implemented overlay div. Still replaces editor visually. S6-03 is the real fix."
+
+      - id: S6-02
+        title: "Dead code sweep — remove InlineDiffEditor, MarkdownPreview, diff-view overlay"
+        status: todo
+        goal: "Eliminate XAML/code vestiges of the old Avalonia/WPF diff approach that pollute the codebase."
+        scope:
+          - "Remove Views/Controls/InlineDiffEditor.xaml + .cs if referenced in .csproj"
+          - "Remove Views/Controls/MarkdownPreview.xaml + .cs if unreferenced"
+          - "Remove #diff-view div and all .diff-hidden CSS from editor.html (after S6-03 is done)"
+          - "Remove IsShowingDiff from MainViewModel if unused after S6-03"
+          - "Remove DiffPayload server-side serialization if JS takes over diff computation"
+          - "Verify dotnet build clean after each deletion"
+        acceptance: "dotnet build zero warnings about missing types. No orphan XAML pages."
+
+      - id: S6-03
+        title: "True inline diff — ProseMirror decorations within TipTap editor (S6-01 redo)"
+        status: todo
+        goal: >
+          Show normalization diff INSIDE the editor content, not as a replacement.
+          Editor text stays visible throughout. Changes appear as colored inline marks.
+          Like Google Docs Track Changes — not a separate diff view.
+        context: >
+          Current approach (S6-01): absolute-positioned #diff-view div with background color
+          covers the entire editor. Editor hidden. User correctly rejects this.
+          Real solution: ProseMirror Decorations applied to the live editor.
+        technical_approach:
+          step1_audit: >
+            Inspect tiptap.bundle.js (esbuild output). Check if build script exists.
+            Determine if Decoration, DecorationSet, Plugin, PluginKey from prosemirror-view
+            and prosemirror-state are already exported via window.__TipTap.
+          step2_bundle:
+            if_exports_present: "Add diff decoration plugin directly in editor.html JS"
+            if_exports_missing: >
+              Locate or recreate the esbuild entry point for tiptap.bundle.js.
+              Add explicit exports: Decoration, DecorationSet, Plugin, PluginKey.
+              Rebuild bundle (npx esbuild ...).
+          step3_decoration_plugin: >
+            In editor.html, create a ProseMirror Plugin (DiffPlugin) with a PluginKey.
+            Plugin holds state: DecorationSet.empty by default.
+            On showDiff message:
+              1. Walk editor.state.doc line by line to build line→charOffset map.
+              2. For each DiffHunk:
+                 - context_before/after lines: no decoration
+                 - kind=del: Decoration.inline(from, to, {class:'diff-del'})
+                 - kind=ins: Decoration.widget(pos, createInsertionWidget(text)) — inline widget
+                 - kind=mod: word-level Decoration.inline per changed word
+              3. Dispatch transaction with plugin state = new DecorationSet.
+              4. editor.setEditable(false).
+            On clearDiff: dispatch empty DecorationSet, editor.setEditable(true).
+          step4_action_bar: >
+            Position:sticky top bar inside #editor div (not a sibling).
+            Shown via CSS class on #editor-container when diff active.
+            Contains: Appliquer (green), Annuler (grey), stats (+N -N ~N).
+          step5_css: >
+            .diff-del: red background, text-decoration: line-through, opacity 0.8
+            .diff-ins widget: green background, display:inline, before existing text of next line
+            .diff-mod-del: word-level red strikethrough
+            .diff-mod-ins: word-level green highlight
+          step6_remove: "Remove #diff-view div and overlay CSS after this works."
+        acceptance:
+          - "Normalization → diff appears inline, editor text visible around changes"
+          - "No separate view, no editor hidden"
+          - "Appliquer → changes applied, editor editable again"
+          - "Annuler → editor restored to original, editable"
+          - "Dark + light theme both render correctly"
+
+      - id: S6-04
+        title: "ChatBubble — float/split layout redesign"
+        status: todo
+        goal: >
+          Chat bubble supports two modes: floating overlay (current default) and
+          vertical split (chat shares main window space with editor).
+          Both modes fully functional. Toggle accessible from UI.
+        current_problems:
+          - "Minimized button + expanded panel always rendered simultaneously (no Visibility toggle in XAML)"
+          - "Panel height fixed at 200px, not resizable"
+          - "Transparent/dark background makes messages illegible in dark mode"
+          - "No loading indicator during LLM call"
+          - "No mode: always floating overlay, no vertical integration option"
+        design:
+          float_mode:
+            description: "Chat panel overlays bottom of editor area. Does not resize editor."
+            minimized: "Small circular FAB (44px, accent color) bottom-right corner, 16px margin"
+            expanded: >
+              Panel slides up from bottom, 320px height default, stretches full width minus margins.
+              Background: LayerFillColorDefaultBrush (not transparent).
+              Proper elevation shadow (shadow resource or Border with drop shadow).
+            toggle: "FAB click OR Ctrl+Shift+C. Close button in panel header."
+          split_mode:
+            description: "Editor + chat share vertical space. GridSplitter between them."
+            layout: >
+              MainPage.xaml Grid: Row 1 = Editor (Height=*), Row 2 = GridSplitter (Height=4px),
+              Row 3 = Chat (Height=250 default, min 120, max 50%).
+              When mode=split: Row 3 visible. When mode=float: Row 3 Height=0, collapsed.
+            resize: "GridSplitter allows drag. Save ratio to settings (ChatSplitRatio)."
+          toggle_button: >
+            In CommandBar or chat header: icon button cycles float↔split.
+            Tooltip: "Mode: flottant / intégré".
+        settings_changes:
+          - "AppSettings.ChatBubbleMode: 'floating' | 'split' (default: 'floating')"
+          - "AppSettings.ChatSplitHeight: int (default: 250, min: 120)"
+          - "Persist on change, restore on startup"
+        xaml_changes:
+          - "MainPage.xaml: add Row 2 (splitter) + Row 3 (chat) to main Grid"
+          - "ChatBubble.xaml: fix Visibility bindings (MinimizedButton + ChatExpanded mutually exclusive)"
+          - "ChatBubble.xaml: replace Height=200 fixed with star/auto + splitter"
+          - "ChatBubble.cs: handle mode switch, notify MainPage"
+        acceptance:
+          - "Float mode: FAB visible, click opens panel over editor, editor not resized"
+          - "Split mode: editor shrinks, chat panel appears below with drag handle"
+          - "Toggle button cycles modes"
+          - "Mode persisted across sessions"
+          - "Panel background opaque and legible in both themes"
+
+      - id: S6-05
+        title: "ChatBubble — UX polish (loading, roles, styling)"
+        status: todo
+        goal: "Chat messages legible and differentiated. Loading state visible. Input ergonomic."
+        scope:
+          loading_state: >
+            IsLoading=true → ProgressRing (indeterminate, small) in message area.
+            Normalize button disabled during chat loading (to avoid concurrent LLM calls).
+          message_roles: >
+            User message: right-aligned, accent background (AccentFillColorDefaultBrush),
+            white text, rounded corners 8px top-left/bottom.
+            AI message: left-aligned, card background, normal text color.
+            System/error message: full-width InfoBar Severity=Error.
+          scroll: "Auto-scroll to bottom when new message added (code-behind ScrollViewer.ChangeView)."
+          input: >
+            TextBox MinHeight=48 (not 72). Send on Ctrl+Enter. Shift+Enter = newline.
+            Placeholder: 'Demander à l\'IA...'
+          clear_button: >
+            Confirmation flyout: 'Effacer tout le chat ?' with Oui/Non buttons.
+            Currently: immediate clear, no warning.
+          error_display: >
+            On LLM error: show InfoBar at top of message list with error details.
+            Do not show raw exception message to user.
+        acceptance:
+          - "User messages right-aligned accent, AI left-aligned card"
+          - "ProgressRing visible during LLM call"
+          - "Clear requires confirmation"
+          - "Ctrl+Enter sends, Shift+Enter newline"
+          - "Error shown as InfoBar, not raw exception"
+
+      - id: S6-06
+        title: "Settings UI — NormalizeRateLimitSeconds + misc settings cleanup"
+        status: todo
+        goal: "Expose the rate limit setting already coded in AppSettings in the Settings UI."
+        scope:
+          rate_limit_ui: >
+            In SettingsPage → Normalisation section.
+            Slider 0–300 + TextBlock showing current value + 's' unit.
+            Label: 'Délai minimum entre normalisations identiques'.
+            Default: 10. Value=0 disables rate limit entirely.
+          description_text: >
+            Helper text: 'Empêche l\'appel LLM répété sur le même contenu.'
+          existing_ui_check: >
+            Review SettingsPage.xaml for any dead settings controls referencing
+            removed features (old diff settings, syntax highlight toggle if unused, etc.).
+            Remove dead UI.
+        acceptance:
+          - "Slider saves to AppSettings.NormalizeRateLimitSeconds on change"
+          - "On normalize: new rate limit value used immediately"
+          - "Value=0: no rate limit applied"
+
+      - id: S6-07
+        title: "TipTap bundle audit — locate build script, document rebuild process"
+        status: todo
+        goal: >
+          Understand how tiptap.bundle.js is built. Document the process.
+          Prerequisite for S6-03 (if ProseMirror APIs need to be added).
+        scope:
+          - "Locate package.json or build script for Assets/Editor/"
+          - "Identify esbuild command / entry point / exports"
+          - "Check if Decoration, DecorationSet, Plugin, PluginKey already exported"
+          - "If not: add exports, rebuild, verify window.__TipTap.Decoration accessible"
+          - "Write BUILDING.md in Assets/Editor/ documenting the rebuild steps"
+        acceptance:
+          - "Build script documented"
+          - "window.__TipTap exposes all ProseMirror APIs needed for S6-03"
+          - "Bundle rebuilt without breaking existing editor functionality"
+
       - id: S6-08
         title: "Skills integration — auto-select + manual invoke + injection chat + normalisation"
         status: todo

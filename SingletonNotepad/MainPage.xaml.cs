@@ -185,7 +185,9 @@ public sealed partial class MainPage : Page
         var escaped = JsonSerializer.Serialize(content);
         var op = EditorWebView.CoreWebView2?.ExecuteScriptAsync($"window.__setContent({escaped})");
         if (op is not null)
-            _ = op.AsTask().ContinueWith(_ => { _pushingContentToWebView = false; });
+            _ = op.AsTask().ContinueWith(
+                _ => _pushingContentToWebView = false,
+                TaskScheduler.Default);
         else
             _pushingContentToWebView = false;
     }
@@ -214,6 +216,16 @@ public sealed partial class MainPage : Page
                 TaskContinuationOptions.OnlyOnFaulted);
     }
 
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        if (_chatBubbleControl != null && _chatBubbleControl.Parent is Panel parent)
+        {
+            parent.Children.Remove(_chatBubbleControl);
+            _chatBubbleControl = null;
+        }
+    }
+
     private void OnPageKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
     {
         var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
@@ -232,12 +244,13 @@ public sealed partial class MainPage : Page
 
     private void ShowDiffInWebView()
     {
-        if (ViewModel.PendingNormalization?.DiffJson is null) return;
+        if (ViewModel.PendingNormalization is not { HasChanges: true } pending) return;
+        if (pending.DiffJson is null) return;
         var payload = JsonSerializer.Serialize(new
         {
             type = "showDiff",
-            hunks = ViewModel.PendingNormalization.DiffJson.Hunks,
-            stats = ViewModel.PendingNormalization.DiffJson.Stats,
+            hunks = pending.DiffJson.Hunks,
+            stats = pending.DiffJson.Stats,
         });
         EditorWebView.CoreWebView2?.PostWebMessageAsString(payload);
     }

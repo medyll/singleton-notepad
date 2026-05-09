@@ -33,7 +33,7 @@
   }
 
   #editor {
-    min-height: 100vh;
+    height: 100%;
     padding: 20px 24px;
     overflow-y: auto;
     outline: none;
@@ -89,9 +89,16 @@
   ::selection { background: var(--selection-bg); }
 
   /* Diff view styles */
-  #diff-view { display: none; font-family: 'Cascadia Mono', 'Cascadia Code', Consolas, monospace; font-size: 13px; line-height: 1.6; }
+  #editor-container { position: relative; height: 100%; overflow: hidden; }
+  #diff-view {
+    display: none;
+    position: absolute; inset: 0; z-index: 5;
+    background: var(--bg);
+    overflow-y: auto;
+    font-family: 'Cascadia Mono', 'Cascadia Code', Consolas, monospace;
+    font-size: 13px; line-height: 1.6;
+  }
   #diff-view.active { display: block; }
-  #editor.diff-hidden { display: none; }
 
   .diff-action-bar {
     position: sticky; top: 0; z-index: 10;
@@ -145,8 +152,10 @@
 </style>
 </head>
 <body>
-<div id="editor"></div>
-<div id="diff-view"></div>
+<div id="editor-container">
+  <div id="editor"></div>
+  <div id="diff-view"></div>
+</div>
 <script src="tiptap.bundle.js"></script>
 <script>
 const { Editor, StarterKit, Placeholder, Markdown } = window.__TipTap;
@@ -234,8 +243,6 @@ function postToHost(obj) {
 
 function renderDiff(hunks, stats) {
   const view = document.getElementById('diff-view');
-  const editorEl = document.getElementById('editor');
-  editorEl.classList.add('diff-hidden');
   view.classList.add('active');
 
   let html = '<div class="diff-action-bar">';
@@ -280,8 +287,6 @@ function renderWords(words, cls) {
 
 function clearDiff() {
   const view = document.getElementById('diff-view');
-  const editorEl = document.getElementById('editor');
-  editorEl.classList.remove('diff-hidden');
   view.classList.remove('active');
   view.innerHTML = '';
 }

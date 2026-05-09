@@ -69,6 +69,11 @@ public class AppSettings
     public int? MaxBackupCount { get; set; } = 10;
 
     /// <summary>
+    /// Minimum seconds between two normalizations of identical content.
+    /// </summary>
+    public int NormalizeRateLimitSeconds { get; set; } = 10;
+
+    /// <summary>
     /// Always position window at bottom-center on startup.
     /// </summary>
     public bool AlwaysStartAtBottom { get; set; } = true;

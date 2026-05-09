@@ -13,7 +13,7 @@ public class NormalizationService : INormalizationService
     private const string AgentsFileName = "NOTEPAD_SINGLETON_AGENTS.md";
     private const int MaxFileSizeBytes = 500 * 1024;
     private const int MaxLineCount = 10_000;
-    private const int MinNormalizeIntervalMinutes = 5;
+    private const int DefaultRateLimitSeconds = 10;
     private const int DefaultMaxBackupCount = 10;
     private const string TagNormalisation = "normalisation";
     private const string TagWriting = "writing";
@@ -27,6 +27,7 @@ public class NormalizationService : INormalizationService
     private readonly string? _defaultRulesPath;
     private DateTime _lastNormalizeTime;
     private string _lastNormalizedHash = string.Empty;
+    private readonly object _rateLimitLock = new();
 
     public string RulesFilePath => _agentsFilePath;
 
@@ -61,20 +62,24 @@ public class NormalizationService : INormalizationService
         return new NormalizationRule { Content = content, FilePath = _agentsFilePath };
     }
 
-    public bool IsRateLimited(string content, out TimeSpan remaining)
+    public bool IsRateLimited(string content, out TimeSpan remaining, int rateLimitSeconds = DefaultRateLimitSeconds)
     {
-        var elapsed = DateTime.UtcNow - _lastNormalizeTime;
-        if (elapsed < TimeSpan.FromMinutes(MinNormalizeIntervalMinutes))
+        lock (_rateLimitLock)
         {
-            var contentHash = ComputeSha256(content);
-            if (contentHash == _lastNormalizedHash)
+            var limit = TimeSpan.FromSeconds(rateLimitSeconds);
+            var elapsed = DateTime.UtcNow - _lastNormalizeTime;
+            if (elapsed < limit)
             {
-                remaining = TimeSpan.FromMinutes(MinNormalizeIntervalMinutes) - elapsed;
-                return true;
+                var contentHash = ComputeSha256(content);
+                if (contentHash == _lastNormalizedHash)
+                {
+                    remaining = limit - elapsed;
+                    return true;
+                }
             }
+            remaining = TimeSpan.Zero;
+            return false;
         }
-        remaining = TimeSpan.Zero;
-        return false;
     }
 
     public bool ExceedsSizeLimit(string content, out string reason)
@@ -133,8 +138,11 @@ public class NormalizationService : INormalizationService
         result.LinesDeleted = deleted;
         result.LinesModified = modified;
 
-        _lastNormalizeTime = DateTime.UtcNow;
-        _lastNormalizedHash = ComputeSha256(content);
+        lock (_rateLimitLock)
+        {
+            _lastNormalizeTime = DateTime.UtcNow;
+            _lastNormalizedHash = ComputeSha256(content);
+        }
         return result;
     }
 
@@ -313,7 +321,9 @@ public class NormalizationService : INormalizationService
         if (!string.IsNullOrWhiteSpace(rules))
         {
             system.AppendLine("RÈGLES À APPLIQUER :");
+            system.AppendLine("<regles>");
             system.AppendLine(rules.Trim());
+            system.AppendLine("</regles>");
         }
         else
         {
@@ -398,7 +408,8 @@ public class NormalizationService : INormalizationService
             var toDelete = allBackups.Skip(maxBackups);
             foreach (var oldBackup in toDelete)
             {
-                try { oldBackup.Delete(); } catch { }
+                try { oldBackup.Delete(); }
+                catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[NormalizationService] Backup cleanup error: {ex.Message}"); }
             }
         }
 

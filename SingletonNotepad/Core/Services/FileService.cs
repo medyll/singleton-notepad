@@ -22,7 +22,7 @@ public class FileService : IFileService, IDisposable
     private string _pendingContent = string.Empty;
     private string? _currentFilePath;
     private string _lastWrittenHash = string.Empty;
-    private volatile bool _isSaving;
+    private int _isSaving;
 
     public event Action? FileSaved;
     public event Action<string>? ExternalChangeDetected;
@@ -139,9 +139,8 @@ public class FileService : IFileService, IDisposable
 
     private async void OnAutoSaveElapsed(object? sender, ElapsedEventArgs e)
     {
-        if (_isSaving) return;
+        if (Interlocked.CompareExchange(ref _isSaving, 1, 0) != 0) return;
 
-        _isSaving = true;
         try
         {
             await SaveAsync(_pendingContent);
@@ -156,7 +155,7 @@ public class FileService : IFileService, IDisposable
         }
         finally
         {
-            _isSaving = false;
+            _isSaving = 0;
         }
     }
 

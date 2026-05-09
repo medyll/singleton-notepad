@@ -10,7 +10,6 @@ using Microsoft.UI.Xaml.Navigation;
 using SingletonNotepad.Core.Providers;
 using SingletonNotepad.Core.Services;
 using SingletonNotepad.ViewModels;
-#pragma warning disable CS0168
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -200,9 +199,9 @@ public partial class App : Application
                 SetForegroundWindow(hwnd);
             }
         }
-        catch
+        catch (Exception ex)
         {
-            // Best-effort; don't crash if interop fails
+            Debug.WriteLine($"[App] BringExistingWindowToFront error: {ex.Message}");
         }
     }
 

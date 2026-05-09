@@ -6,7 +6,7 @@ public interface INormalizationService
 {
     Task<NormalizationResult> NormalizeAsync(string content, CancellationToken ct = default);
     Task<NormalizationRule> LoadRulesAsync(CancellationToken ct = default);
-    bool IsRateLimited(string content, out TimeSpan remaining);
+    bool IsRateLimited(string content, out TimeSpan remaining, int rateLimitSeconds = 10);
     bool ExceedsSizeLimit(string content, out string reason);
     Task<IReadOnlyList<BackupInfo>> GetBackupsAsync(CancellationToken ct = default);
     string RulesFilePath { get; }
