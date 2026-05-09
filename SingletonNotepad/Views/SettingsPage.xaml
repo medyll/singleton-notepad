@@ -557,6 +557,44 @@
                 </StackPanel>
             </Border>
 
+            <!-- ══ SKILLS ══ -->
+            <TextBlock Text="Skills" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xED41;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Dossier des skills" />
+                            <TextBlock Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                <Run Text="{x:Bind ViewModel.SkillsCount, Mode=OneWay}" />
+                                <Run Text=" skill(s) chargée(s)" />
+                            </TextBlock>
+                            <TextBlock Text="{x:Bind ViewModel.SkillsPath, Mode=OneWay}"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextTrimming="CharacterEllipsis"
+                                       ToolTipService.ToolTip="{x:Bind ViewModel.SkillsNames, Mode=OneWay}" />
+                        </StackPanel>
+                        <Button Grid.Column="2" Content="Parcourir" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.BrowseSkillsFolderCommand}" />
+                        <Button Grid.Column="3" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.RefreshSkillsCommand}"
+                                ToolTipService.ToolTip="Actualiser">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- ══ RÈGLES ══ -->
             <TextBlock Text="Règles de normalisation" Style="{StaticResource GroupHeaderStyle}" />
             <Border Style="{StaticResource SettingCard}">

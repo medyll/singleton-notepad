@@ -1,16 +1,15 @@
-# BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 25
-next_action: "Implement S6-08 — ISkillService, SkillDefinition, tag-match auto-select, injection chat + normalisation, Settings UI."
+progress: 30
+next_action: "S6-08 done. Check remaining S6 stories or plan next sprint."
 next_command: "bmad-continue"
-next_role: "Developer"
-active_role: "PM"
+next_role: "Scrum Master"
+active_role: "Developer"
 last_updated: "2026-05-09"
 
-marketing: "Diff preview moves from WinUI overlay to git-style inline WebView rendering. No more full-screen takeover — diffs render in place with word-level highlights and sticky action bar."
-product: "Sprint 6 planned: S6-01 inline diff in WebView (delete InlineDiffEditor, replace DiffOverlay with WebView-rendered git-style diff)."
-far_vision: "v1.0 shipped. S5 UX complete. S6 = editor quality — diff as first-class feature in WebView, not bolted-on overlay."
+marketing: "Skills system is live: the notepad auto-detects relevant expert modes from skill .md files and injects them silently into every chat/normalization request. Power users can invoke /skill-name manually."
+product: "S6-08 implemented: ISkillService, SkillService (frontmatter parser, tag-match selector, FileSystemWatcher), ChatService skill injection + /skill-name parsing, NormalizationService always+writing skill injection, Settings UI Skills section, 9 new unit tests passing."
+far_vision: "v1.0 shipped. S5 UX complete. S6 = editor quality + skills ecosystem."
 
 stack_migration:
   from: "Avalonia 11"

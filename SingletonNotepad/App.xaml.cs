@@ -95,6 +95,7 @@ public partial class App : Application
         Window = new MainWindow();
         DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
         _ = ApplyInitialThemeAsync();
+        _ = InitializeSkillServiceAsync();
         Window.Activate();
     }
 
@@ -109,6 +110,21 @@ public partial class App : Application
         catch
         {
             ApplyTheme("System");
+        }
+    }
+
+    private static async Task InitializeSkillServiceAsync()
+    {
+        try
+        {
+            var settingsService = Services.GetRequiredService<ISettingsService>();
+            var settings = await settingsService.LoadAsync();
+            var skillService = Services.GetRequiredService<ISkillService>();
+            await skillService.ScanAsync(settings.SkillsPath);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[SkillService] Init error: {ex.Message}");
         }
     }
 
@@ -144,6 +160,7 @@ public partial class App : Application
 
         services.AddSingleton<ILlmProviderSelector, LlmProviderSelector>();
         services.AddSingleton<IModelService, ModelService>();
+        services.AddSingleton<ISkillService, SkillService>();
         services.AddSingleton<IChatService, ChatService>();
 
         // ViewModels

@@ -79,9 +79,9 @@ public partial class ChatViewModel : ObservableObject
         try
         {
             var context = GetContextContent();
-            var response = await _chatService.SendAsync(input, context);
+            var (response, usedSkills) = await _chatService.SendAsync(input, context);
 
-            var assistantMsg = new ChatMessage { Role = "assistant", Content = response };
+            var assistantMsg = new ChatMessage { Role = "assistant", Content = response, UsedSkills = usedSkills };
             Messages.Add(assistantMsg);
             LastResponse = response;
         }

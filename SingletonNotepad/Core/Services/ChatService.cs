@@ -1,3 +1,4 @@
+using System.Text;
 using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Providers;
 using SingletonNotepad.Core.Services;
@@ -6,21 +7,23 @@ namespace SingletonNotepad.Core.Services;
 
 public interface IChatService
 {
-    Task<string> SendAsync(string userMessage, string? contextContent, CancellationToken ct = default);
+    Task<(string Response, List<string> UsedSkills)> SendAsync(string userMessage, string? contextContent, CancellationToken ct = default);
 }
 
 public class ChatService : IChatService
 {
     private readonly ILlmProviderSelector _providerSelector;
     private readonly ISettingsService _settingsService;
+    private readonly ISkillService _skillService;
 
-    public ChatService(ILlmProviderSelector providerSelector, ISettingsService settingsService)
+    public ChatService(ILlmProviderSelector providerSelector, ISettingsService settingsService, ISkillService skillService)
     {
         _providerSelector = providerSelector;
         _settingsService = settingsService;
+        _skillService = skillService;
     }
 
-    public async Task<string> SendAsync(string userMessage, string? contextContent, CancellationToken ct = default)
+    public async Task<(string Response, List<string> UsedSkills)> SendAsync(string userMessage, string? contextContent, CancellationToken ct = default)
     {
         var settings = await _settingsService.LoadAsync(ct);
         var providerName = !string.IsNullOrEmpty(settings.ChatLlmProvider)
@@ -28,24 +31,92 @@ public class ChatService : IChatService
             : settings.LlmProvider;
         var provider = _providerSelector.GetProvider(providerName) ?? _providerSelector.Current;
 
-        var systemPrompt = BuildSystemPrompt(contextContent);
+        // Parse manual /skill-name invocation
+        var (cleanedMessage, forcedSkill, skillNotFound) = ParseSkillInvocation(userMessage);
 
-        return await provider.CompleteAsync(systemPrompt, userMessage, ct);
-    }
-
-    private static string BuildSystemPrompt(string? contextContent)
-    {
-        if (string.IsNullOrWhiteSpace(contextContent))
+        if (skillNotFound != null)
         {
-            return "Tu es un assistant d'écriture. Aide l'utilisateur à améliorer, reformuler ou compléter son texte. Réponds en markdown.";
+            return ($"⚠ Skill \"{skillNotFound}\" introuvable", []);
         }
 
-        return $@"Tu es un assistant d'écriture. Voici le contexte actuel de la note de l'utilisateur :
+        // Auto-select skills based on context
+        var autoSkills = _skillService.SelectForContext(cleanedMessage, contextContent);
 
----
-{contextContent}
----
+        // Merge: forced skill first (if not already present), then auto-selected
+        var allSkills = new List<SkillDefinition>();
+        if (forcedSkill != null)
+            allSkills.Add(forcedSkill);
+        foreach (var s in autoSkills)
+        {
+            if (!allSkills.Any(x => x.Name == s.Name))
+                allSkills.Add(s);
+        }
 
-Aide l'utilisateur à améliorer, reformuler ou compléter ce texte. Réponds en markdown. Si l'utilisateur demande une modification, fournis le texte complet modifié.";
+        var systemPrompt = BuildSystemPrompt(contextContent, allSkills);
+        var response = await provider.CompleteAsync(systemPrompt, cleanedMessage, ct);
+        var usedSkillNames = allSkills.Select(s => s.Name).ToList();
+
+        return (response, usedSkillNames);
+    }
+
+    private (string cleanedMessage, SkillDefinition? forced, string? notFound) ParseSkillInvocation(string userMessage)
+    {
+        if (!userMessage.StartsWith('/'))
+            return (userMessage, null, null);
+
+        var spaceIdx = userMessage.IndexOf(' ');
+        string skillName;
+        string rest;
+
+        if (spaceIdx < 0)
+        {
+            skillName = userMessage[1..];
+            rest = string.Empty;
+        }
+        else
+        {
+            skillName = userMessage[1..spaceIdx];
+            rest = userMessage[(spaceIdx + 1)..];
+        }
+
+        if (string.IsNullOrWhiteSpace(skillName))
+            return (userMessage, null, null);
+
+        var skill = _skillService.GetByName(skillName);
+        if (skill == null)
+            return (rest, null, skillName);
+
+        return (rest, skill, null);
+    }
+
+    private static string BuildSystemPrompt(string? contextContent, IReadOnlyList<SkillDefinition> skills)
+    {
+        var sb = new StringBuilder();
+
+        if (skills.Count > 0)
+        {
+            sb.AppendLine("[SKILLS ACTIVES]");
+            foreach (var skill in skills)
+            {
+                sb.AppendLine($"--- skill: {skill.Name} ---");
+                sb.AppendLine(skill.Content.Trim());
+                sb.AppendLine($"--- fin skill ---");
+            }
+            sb.AppendLine();
+        }
+
+        if (!string.IsNullOrWhiteSpace(contextContent))
+        {
+            sb.AppendLine("[CONTEXTE DOCUMENT]");
+            sb.AppendLine("<contenu_note>");
+            sb.AppendLine(contextContent);
+            sb.AppendLine("</contenu_note>");
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("[INSTRUCTIONS]");
+        sb.AppendLine("Tu es un assistant d'écriture. Aide l'utilisateur à améliorer, reformuler ou compléter son texte. Réponds en markdown. Si l'utilisateur demande une modification, fournis le texte complet modifié.");
+
+        return sb.ToString();
     }
 }

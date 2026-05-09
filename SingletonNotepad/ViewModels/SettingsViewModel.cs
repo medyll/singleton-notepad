@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml;
 using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Providers;
 using SingletonNotepad.Core.Services;
+using Windows.Storage.Pickers;
 
 namespace SingletonNotepad.ViewModels;
 
@@ -14,6 +15,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly INormalizationService _normalizationService;
     private readonly ILlmProviderSelector _providerSelector;
     private readonly IModelService _modelService;
+    private readonly ISkillService _skillService;
 
     private static readonly HashSet<string> BuiltInProviders = ["Ollama", "OpenAI", "Anthropic"];
     private bool _isLoading;
@@ -80,6 +82,15 @@ public partial class SettingsViewModel : ObservableObject
     public partial string ChatLlmProvider { get; set; } = string.Empty;
 
     [ObservableProperty]
+    public partial string SkillsPath { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    public partial int SkillsCount { get; set; }
+
+    [ObservableProperty]
+    public partial string SkillsNames { get; set; } = string.Empty;
+
+    [ObservableProperty]
     public partial ObservableCollection<BackupDisplayItem> Backups { get; set; } = new();
 
     [ObservableProperty]
@@ -105,12 +116,13 @@ public partial class SettingsViewModel : ObservableObject
     public Visibility AnthropicSectionVisibility => LlmProvider == "Anthropic" ? Visibility.Visible : Visibility.Collapsed;
     public Visibility CustomProviderSectionVisibility => !BuiltInProviders.Contains(LlmProvider) ? Visibility.Visible : Visibility.Collapsed;
 
-    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService, ILlmProviderSelector providerSelector, IModelService modelService)
+    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService, ILlmProviderSelector providerSelector, IModelService modelService, ISkillService skillService)
     {
         _settingsService = settingsService;
         _normalizationService = normalizationService;
         _providerSelector = providerSelector;
         _modelService = modelService;
+        _skillService = skillService;
 
         foreach (var name in _providerSelector.AvailableProviders)
             AvailableProviders.Add(name);
@@ -139,6 +151,8 @@ public partial class SettingsViewModel : ObservableObject
         SpellCheckEnabled = settings.SpellCheckEnabled;
         SpellCheckLanguage = settings.SpellCheckLanguage;
         ChatLlmProvider = settings.ChatLlmProvider;
+        SkillsPath = settings.SkillsPath;
+        UpdateSkillsInfo();
 
         if (!string.IsNullOrEmpty(settings.OpenAiApiKey))
         {
@@ -184,6 +198,7 @@ public partial class SettingsViewModel : ObservableObject
         settings.SpellCheckEnabled = SpellCheckEnabled;
         settings.SpellCheckLanguage = SpellCheckLanguage;
         settings.ChatLlmProvider = ChatLlmProvider;
+        settings.SkillsPath = SkillsPath;
 
         if (!string.IsNullOrEmpty(OpenAiApiKey))
         {
@@ -325,6 +340,45 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnSpellCheckEnabledChanged(bool value) => SaveIfReady();
     partial void OnSpellCheckLanguageChanged(string value) => SaveIfReady();
     partial void OnChatLlmProviderChanged(string value) => SaveIfReady();
+
+    partial void OnSkillsPathChanged(string value)
+    {
+        SaveIfReady();
+        _ = RefreshSkillsAsync();
+    }
+
+    [RelayCommand]
+    public async Task RefreshSkillsAsync(CancellationToken ct = default)
+    {
+        await _skillService.ScanAsync(SkillsPath, ct);
+        UpdateSkillsInfo();
+    }
+
+    [RelayCommand]
+    public async Task BrowseSkillsFolderAsync()
+    {
+        var picker = new FolderPicker();
+        picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
+        picker.FileTypeFilter.Add("*");
+
+        // WinUI3: initialize with window handle
+        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.Window);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+
+        var folder = await picker.PickSingleFolderAsync();
+        if (folder != null)
+        {
+            SkillsPath = folder.Path;
+        }
+    }
+
+    private void UpdateSkillsInfo()
+    {
+        SkillsCount = _skillService.LoadedSkills.Count;
+        SkillsNames = SkillsCount > 0
+            ? string.Join(", ", _skillService.LoadedSkills.Select(s => s.Name))
+            : string.Empty;
+    }
 
     [RelayCommand]
     public void ResetChatProvider()

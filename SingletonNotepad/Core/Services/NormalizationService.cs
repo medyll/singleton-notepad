@@ -19,6 +19,7 @@ public class NormalizationService : INormalizationService
     private readonly IFileService _fileService;
     private readonly ISettingsService _settingsService;
     private readonly ILlmProviderSelector _providerSelector;
+    private readonly ISkillService? _skillService;
     private readonly string _agentsFilePath;
     private readonly string _backupDir;
     private readonly string? _defaultRulesPath;
@@ -31,6 +32,7 @@ public class NormalizationService : INormalizationService
         IFileService fileService,
         ISettingsService settingsService,
         ILlmProviderSelector providerSelector,
+        ISkillService? skillService = null,
         string? agentsFilePath = null,
         string? backupDir = null,
         string? defaultRulesPath = null)
@@ -38,6 +40,7 @@ public class NormalizationService : INormalizationService
         _fileService = fileService;
         _settingsService = settingsService;
         _providerSelector = providerSelector;
+        _skillService = skillService;
         _defaultRulesPath = defaultRulesPath;
 
         var docsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
@@ -104,7 +107,17 @@ public class NormalizationService : INormalizationService
         result.BackupPath = await BackupContentAsync(content, ct);
 
         var rules = await LoadRulesAsync(ct);
-        var (systemPrompt, userMessage) = BuildPrompt(rules.Content, content);
+
+        // Inject always-active and writing skills
+        var injectedSkills = _skillService != null
+            ? _skillService.LoadedSkills
+                .Where(s => s.Always || s.Tags.Any(t =>
+                    t.Equals("normalisation", StringComparison.OrdinalIgnoreCase) ||
+                    t.Equals("writing", StringComparison.OrdinalIgnoreCase)))
+                .ToList()
+            : [];
+
+        var (systemPrompt, userMessage) = BuildPrompt(rules.Content, content, injectedSkills);
 
         var sw = System.Diagnostics.Stopwatch.StartNew();
         var rawResponse = await provider.CompleteAsync(systemPrompt, userMessage, ct);
@@ -285,9 +298,22 @@ public class NormalizationService : INormalizationService
         return tokens.ToArray();
     }
 
-    private static (string system, string user) BuildPrompt(string rules, string content)
+    private static (string system, string user) BuildPrompt(string rules, string content, IReadOnlyList<SkillDefinition>? skills = null)
     {
         var system = new StringBuilder();
+
+        if (skills != null && skills.Count > 0)
+        {
+            system.AppendLine("[SKILLS ACTIVES]");
+            foreach (var skill in skills)
+            {
+                system.AppendLine($"--- skill: {skill.Name} ---");
+                system.AppendLine(skill.Content.Trim());
+                system.AppendLine($"--- fin skill ---");
+            }
+            system.AppendLine();
+        }
+
         system.AppendLine("Tu es un assistant de normalisation de notes Markdown.");
         system.AppendLine("Normalise le contenu qui te sera envoyé. Retourne UNIQUEMENT le contenu normalisé, sans explication ni commentaire.");
         system.AppendLine();

@@ -79,6 +79,11 @@ public class AppSettings
     public bool AlwaysOnTop { get; set; } = false;
 
     /// <summary>
+    /// Path to the folder containing skill .md files.
+    /// </summary>
+    public string SkillsPath { get; set; } = string.Empty;
+
+    /// <summary>
     /// Model overrides for env-detected providers (key = provider name, value = model string).
     /// </summary>
     public Dictionary<string, string> ProviderModels { get; set; } = new();

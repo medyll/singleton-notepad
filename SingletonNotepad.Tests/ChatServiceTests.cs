@@ -11,7 +11,8 @@ public class ChatServiceTests
     {
         var settings = new StubSettingsService(new AppSettings { LlmProvider = llmProviderName });
         var selector = new LlmProviderSelector([provider]);
-        return new ChatService(selector, settings);
+        var skillService = new SkillService();
+        return new ChatService(selector, settings, skillService);
     }
 
     [TestMethod]
@@ -20,7 +21,7 @@ public class ChatServiceTests
         var mockProvider = new MockChatProvider { Response = "Hello back!" };
         var service = MakeService(mockProvider);
 
-        var result = await service.SendAsync("Hello", null);
+        var (result, _) = await service.SendAsync("Hello", null);
 
         Assert.AreEqual("Hello back!", result);
         Assert.IsTrue(mockProvider.LastSystemPrompt.Contains("assistant"));
@@ -46,8 +47,7 @@ public class ChatServiceTests
 
         await service.SendAsync("Help me", null);
 
-        Assert.IsFalse(mockProvider.LastSystemPrompt.Contains("---"));
-        Assert.IsTrue(mockProvider.LastSystemPrompt.Length < 200);
+        Assert.IsFalse(mockProvider.LastSystemPrompt.Contains("<contenu_note>"));
     }
 }
 

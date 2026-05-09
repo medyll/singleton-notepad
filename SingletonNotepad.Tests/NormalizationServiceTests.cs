@@ -26,7 +26,7 @@ public class NormalizationServiceTests
         _settingsService = new MockSettingsService();
         _llmProvider = new MockLlmProvider();
         _providerSelector = new MockLlmProviderSelector(_llmProvider);
-        _service = new NormalizationService(null!, _settingsService, _providerSelector, _agentsPath, _backupDir);
+        _service = new NormalizationService(null!, _settingsService, _providerSelector, null, _agentsPath, _backupDir);
     }
 
     [TestCleanup]
