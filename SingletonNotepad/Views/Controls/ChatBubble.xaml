@@ -59,7 +59,8 @@
                 <ScrollViewer Grid.Row="1" x:Name="MessageScroll" VerticalScrollBarVisibility="Auto"
                               Padding="12,8" BorderThickness="0,0,0,1"
                               BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
-                    <ItemsControl x:Name="MessageList">
+                    <ItemsControl x:Name="MessageList"
+                                  ItemsSource="{x:Bind ViewModel.Messages, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Margin="0,4">
@@ -86,8 +87,9 @@
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0"
                              x:Name="InputBox"
-                             PlaceholderText="Demander à l'IA..."
-                             AcceptsReturn="False"
+                             Text="{x:Bind ViewModel.UserInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             PlaceholderText="Demander à l'IA... (Ctrl+Entrée pour envoyer)"
+                             AcceptsReturn="True"
                              TextWrapping="Wrap"
                              MinHeight="72"
                              MaxHeight="200"

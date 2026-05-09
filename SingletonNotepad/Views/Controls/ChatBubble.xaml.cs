@@ -41,11 +41,12 @@ public sealed partial class ChatBubble : UserControl
 
     private void OnInputKeyDown(object sender, KeyRoutedEventArgs e)
     {
-        if (e.Key == Windows.System.VirtualKey.Enter && !ViewModel.IsSending)
-        {
-            ViewModel.SendCommand.Execute(null);
-            e.Handled = true;
-        }
+        if (e.Key != Windows.System.VirtualKey.Enter || ViewModel.IsSending) return;
+        var ctrl = Microsoft.UI.Input.InputKeyboardSource.GetKeyStateForCurrentThread(Windows.System.VirtualKey.Control);
+        var ctrlDown = (ctrl & Windows.UI.Core.CoreVirtualKeyStates.Down) == Windows.UI.Core.CoreVirtualKeyStates.Down;
+        if (!ctrlDown) return;
+        ViewModel.SendCommand.Execute(null);
+        e.Handled = true;
     }
 
     private void OnSendClicked(object sender, RoutedEventArgs e)
