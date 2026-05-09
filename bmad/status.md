@@ -10,12 +10,12 @@
 
 | ID | Story | Status |
 |----|-------|--------|
-| S5-01 | Chat bubble — floating LLM chat panel (minimizable, context-aware) | 🔲 todo |
+| S5-01 | Chat bubble — floating LLM chat panel (minimizable, context-aware) | ✅ done |
 | S5-02 | Model management — dynamic provider/model selector in Settings | ✅ done |
 | S5-03 | Spell check — configurable, auto-detect language | ✅ done |
 | S5-04 | UI fix — scrollbar hidden when editor is empty | ✅ done |
 
-**Next:** `bmad-continue` → S5-01 (chat bubble).
+**Next:** Sprint 5 complete — all 4 stories done.
 
 ---
 
@@ -39,7 +39,10 @@
 - DPAPI-protected API key storage
 - FileSystemWatcher conflict detection
 - Custom rules editor + MEMORY.md tracker
-- 44 tests green → 63 tests green
+- Floating chat bubble with LLM integration (Ctrl+Shift+C)
+- Dynamic model selector with live fetching per provider
+- Spell check with auto language detection (FR/EN)
+- 66 tests green
 
 ## Build
 

@@ -11,6 +11,9 @@ namespace SingletonNotepad.Core.Services;
 /// </summary>
 public class FileService : IFileService, IDisposable
 {
+    private const string DefaultFileName = "MY_SINGLETON_NOTEPAD.md";
+    private const int ExternalChangeLockReleaseMs = 150;
+
     private readonly ISettingsService _settingsService;
     private readonly Timer _autoSaveTimer;
     private readonly Timer _externalChangeDebounce;
@@ -43,7 +46,7 @@ public class FileService : IFileService, IDisposable
         if (string.IsNullOrWhiteSpace(path))
         {
             var docsFolder = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-            path = Path.Combine(docsFolder, "MY_SINGLETON_NOTEPAD.md");
+            path = Path.Combine(docsFolder, DefaultFileName);
             settings.NotesFilePath = path;
             await _settingsService.SaveAsync(settings, ct);
         }
@@ -143,8 +146,7 @@ public class FileService : IFileService, IDisposable
         {
             await SaveAsync(_pendingContent);
         }
-        catch (IOException) { }
-        catch (UnauthorizedAccessException) { }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { }
         finally
         {
             _isSaving = false;
@@ -165,8 +167,7 @@ public class FileService : IFileService, IDisposable
             if (string.IsNullOrEmpty(_currentFilePath) || !File.Exists(_currentFilePath))
                 return;
 
-            // Brief delay to let writer release lock
-            await Task.Delay(150);
+            await Task.Delay(ExternalChangeLockReleaseMs);
 
             var content = await ReadWithRetryAsync(_currentFilePath, CancellationToken.None);
             var contentHash = Hash(content);
@@ -177,8 +178,7 @@ public class FileService : IFileService, IDisposable
             _lastWrittenHash = contentHash;
             ExternalChangeDetected?.Invoke(content);
         }
-        catch (IOException) { }
-        catch (UnauthorizedAccessException) { }
+        catch (Exception ex) when (ex is not OutOfMemoryException) { }
     }
 
     private static async Task<string> ReadWithRetryAsync(string path, CancellationToken ct)

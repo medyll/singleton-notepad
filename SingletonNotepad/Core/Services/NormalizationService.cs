@@ -91,6 +91,9 @@ public class NormalizationService : INormalizationService
 
     public async Task<NormalizationResult> NormalizeAsync(string content, CancellationToken ct = default)
     {
+        var activeSettings = await _settingsService.LoadAsync(ct);
+        _providerSelector.SelectProvider(activeSettings.LlmProvider);
+
         var result = new NormalizationResult
         {
             OriginalContent = content,
@@ -98,10 +101,6 @@ public class NormalizationService : INormalizationService
         };
 
         result.BackupPath = await BackupContentAsync(content, ct);
-
-        // Sélectionner le provider actif depuis les settings
-        var activeSettings = await _settingsService.LoadAsync(ct);
-        _providerSelector.SelectProvider(activeSettings.LlmProvider);
 
         var rules = await LoadRulesAsync(ct);
         var (systemPrompt, userMessage) = BuildPrompt(rules.Content, content);

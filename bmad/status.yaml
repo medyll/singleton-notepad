@@ -1,10 +1,10 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 75
-next_action: "Implement S5-01 (chat bubble — floating LLM chat panel)"
-next_command: "bmad-continue"
-next_role: "Developer"
+progress: 100
+next_action: "Sprint 5 complete. Ready for next sprint or review."
+next_command: "bmad-status"
+next_role: "Scrum Master"
 active_role: "Developer"
 last_updated: "2026-05-08"
 
@@ -137,7 +137,7 @@ sprints:
     stories:
       - id: S5-01
         title: "Chat bubble — floating LLM chat panel (minimizable, context-aware)"
-        status: todo
+        status: done
       - id: S5-02
         title: "Model management — dynamic provider/model selector in Settings"
         status: done
