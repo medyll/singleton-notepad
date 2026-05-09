@@ -1,15 +1,15 @@
 # BMAD Status — singleton-notepad
 _Last updated: 2026-05-09_
 
-## Phase: development (Sprint 6)  |  Progress: 30%
+## Phase: development (Sprint 6)  |  Progress: 60%
 
 ---
 
 ## 🎯 Next Action
-> Discuss S6 story priorities with dev before coding. S6-07 first (bundle audit), then S6-03 (true inline diff).
+> S6-07, S6-03, S6-02 complete. Next: S6-04 (ChatBubble float/split redesign).
 
 **Next command:** `bmad-continue`
-**Next role:** Scrum Master
+**Next role:** Developer
 
 ---
 
@@ -40,12 +40,12 @@ v1.0 = frictionless single-file notepad with trustworthy inline LLM normalizatio
 | Story | Title | Status | Notes |
 |-------|-------|--------|-------|
 | S6-01 | Inline diff — overlay approach | ✅ done | Superseded by S6-03 |
-| S6-02 | Dead code sweep (InlineDiffEditor, MarkdownPreview, #diff-view) | 📋 todo | Quick win |
-| S6-03 | True inline diff — ProseMirror decorations | 📋 todo | Core fix, depends on S6-07 |
+| S6-02 | Dead code sweep (InlineDiffEditor, MarkdownPreview, #diff-view) | ✅ done | MarkdownPreview + IsShowingDiff removed |
+| S6-03 | True inline diff — ProseMirror decorations | ✅ done | Inline decorations with action bar |
 | S6-04 | ChatBubble float/split layout redesign | 📋 todo | Major UX |
 | S6-05 | ChatBubble UX polish (loading, roles, styling) | 📋 todo | After S6-04 |
 | S6-06 | Settings — NormalizeRateLimitSeconds UI | 📋 todo | Quick |
-| S6-07 | TipTap bundle audit + ProseMirror API exposition | 📋 todo | Prereq for S6-03 |
+| S6-07 | TipTap bundle audit + ProseMirror API exposition | ✅ done | Exports added, BUILDING.md created |
 | S6-08 | Skills integration | 📋 todo | |
 
 ---

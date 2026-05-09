@@ -37,9 +37,6 @@ public partial class MainViewModel : ObservableObject
     public partial bool IsNormalizing { get; set; }
 
     [ObservableProperty]
-    public partial bool IsShowingDiff { get; set; }
-
-    [ObservableProperty]
     public partial bool IsSyntaxHighlightEnabled { get; set; }
 
     [ObservableProperty]
@@ -204,7 +201,6 @@ public partial class MainViewModel : ObservableObject
                 }
                 else
                 {
-                    IsShowingDiff = true;
                     NormalizeStatus = $"Aperçu: +{result.LinesAdded} -{result.LinesDeleted} ~{result.LinesModified}";
                     LastNormalizeTime = DateTime.UtcNow.ToString("HH:mm");
                 }
@@ -247,14 +243,12 @@ public partial class MainViewModel : ObservableObject
         await _memoryTrackerService.AppendAsync(record);
 
         NormalizeStatus = $"Normalisé ✓ ({PendingNormalization.Duration.TotalSeconds:F1}s)";
-        IsShowingDiff = false;
         PendingNormalization = null;
     }
 
     [RelayCommand]
     private void CancelNormalization()
     {
-        IsShowingDiff = false;
         PendingNormalization = null;
         NormalizeStatus = "Annulé";
     }

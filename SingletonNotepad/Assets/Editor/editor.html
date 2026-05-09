@@ -88,79 +88,78 @@
   /* Selection */
   ::selection { background: var(--selection-bg); }
 
-  /* Diff view styles */
-  #editor-container { position: relative; height: 100%; overflow: hidden; }
-  #diff-view {
+  /* Diff view styles - inline decorations */
+  #editor-container { position: relative; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+  
+  /* Inline diff decorations */
+  .diff-del { background: rgba(209,52,56,0.25); text-decoration: line-through; }
+  .diff-ins { background: rgba(16,124,16,0.25); }
+  .diff-mod { background: rgba(255,140,0,0.2); }
+  
+  body.dark .diff-del { background: rgba(209,52,56,0.4); }
+  body.dark .diff-ins { background: rgba(16,124,16,0.4); }
+  body.dark .diff-mod { background: rgba(255,140,0,0.3); }
+  
+  /* Action bar - fixed at top of editor */
+  #diff-action-bar {
     display: none;
-    position: absolute; inset: 0; z-index: 5;
-    background: var(--bg);
-    overflow-y: auto;
-    font-family: 'Cascadia Mono', 'Cascadia Code', Consolas, monospace;
-    font-size: 13px; line-height: 1.6;
-  }
-  #diff-view.active { display: block; }
-
-  .diff-action-bar {
-    position: sticky; top: 0; z-index: 10;
-    display: flex; align-items: center; gap: 8px;
+    flex-shrink: 0;
+    align-items: center; gap: 8px;
     padding: 10px 16px;
     background: var(--bg);
     border-bottom: 1px solid var(--border);
   }
-  .diff-action-bar .btn {
+  #diff-action-bar.active { display: flex; }
+  
+  #diff-action-bar .btn {
     padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px;
     cursor: pointer; font-size: 13px; font-family: inherit;
     background: var(--bg); color: var(--fg);
   }
-  .diff-action-bar .btn-apply { background: #107C10; color: #fff; border-color: #107C10; }
-  .diff-action-bar .btn-apply:hover { background: #0e6e0e; }
-  .diff-action-bar .btn-cancel:hover { background: var(--code-bg); }
-  .diff-action-bar .stats { margin-left: auto; font-size: 12px; color: var(--blockquote-fg); }
-  .diff-action-bar .stats .added { color: #107C10; }
-  .diff-action-bar .stats .deleted { color: #D13438; }
-  .diff-action-bar .stats .modified { color: #FF8C00; }
-
-  .diff-hunk { margin: 8px 0; }
-  .diff-line {
-    padding: 2px 8px; white-space: pre-wrap; word-break: break-word;
-    border-left: 3px solid transparent;
+  #diff-action-bar .btn-apply { background: #107C10; color: #fff; border-color: #107C10; }
+  #diff-action-bar .btn-apply:hover { background: #0e6e0e; }
+  #diff-action-bar .btn-cancel:hover { background: var(--code-bg); }
+  #diff-action-bar .stats { margin-left: auto; font-size: 12px; color: var(--blockquote-fg); }
+  #diff-action-bar .stats .added { color: #107C10; }
+  #diff-action-bar .stats .deleted { color: #D13438; }
+  #diff-action-bar .stats .modified { color: #FF8C00; }
+  
+  #editor {
+    flex: 1;
+    overflow-y: auto;
   }
-  .diff-line.context { color: var(--fg); }
-  .diff-line.del {
-    background: rgba(209,52,56,0.12); border-left-color: #D13438;
-    color: #D13438; text-decoration: line-through;
-  }
-  .diff-line.ins {
-    background: rgba(16,124,16,0.12); border-left-color: #107C10;
-    color: #107C10;
-  }
-  .diff-line.mod-old {
-    background: rgba(209,52,56,0.08); border-left-color: #D13438;
-  }
-  .diff-line.mod-new {
-    background: rgba(16,124,16,0.08); border-left-color: #107C10;
-  }
-  .diff-word-del { background: rgba(209,52,56,0.25); text-decoration: line-through; border-radius: 2px; padding: 0 2px; }
-  .diff-word-ins { background: rgba(16,124,16,0.25); border-radius: 2px; padding: 0 2px; }
-
-  body.dark .diff-line.del { background: rgba(209,52,56,0.2); }
-  body.dark .diff-line.ins { background: rgba(16,124,16,0.2); }
-  body.dark .diff-line.mod-old { background: rgba(209,52,56,0.15); }
-  body.dark .diff-line.mod-new { background: rgba(16,124,16,0.15); }
-  body.dark .diff-word-del { background: rgba(209,52,56,0.35); }
-  body.dark .diff-word-ins { background: rgba(16,124,16,0.35); }
 </style>
 </head>
 <body>
 <div id="editor-container">
+  <div id="diff-action-bar"></div>
   <div id="editor"></div>
-  <div id="diff-view"></div>
 </div>
 <script src="tiptap.bundle.js"></script>
 <script>
-const { Editor, StarterKit, Placeholder, Markdown } = window.__TipTap;
+const { Editor, StarterKit, Placeholder, Markdown, Plugin, PluginKey, Decoration, DecorationSet } = window.__TipTap;
 let isApplyingHostContent = false;
 let lastPostedMarkdown = '';
+let diffDecorations = DecorationSet.empty;
+let isShowingDiff = false;
+
+const diffPluginKey = new PluginKey('diffPlugin');
+
+const diffPlugin = new Plugin({
+  key: diffPluginKey,
+  state: {
+    init: () => DecorationSet.empty,
+    apply(tr, set) {
+      const newSet = tr.getMeta(diffPluginKey);
+      return newSet !== undefined ? newSet : set.map(tr.mapping, tr.doc);
+    }
+  },
+  props: {
+    decorations(state) {
+      return this.getState(state);
+    }
+  }
+});
 
 window.__editor = new Editor({
   element: document.getElementById('editor'),
@@ -176,6 +175,9 @@ window.__editor = new Editor({
   ],
   content: '',
   autofocus: false,
+  onBeforeCreate({ editor }) {
+    editor.registerPlugin(diffPlugin);
+  },
   onUpdate({ editor }) {
     if (isApplyingHostContent) return;
     const md = editor.storage.markdown.getMarkdown();
@@ -234,6 +236,12 @@ window.chrome.webview.addEventListener('message', e => {
     case 'clearDiff':
       clearDiff();
       break;
+    case 'applyDiff':
+      postToHost({ type: 'applyDiff' });
+      break;
+    case 'cancelDiff':
+      postToHost({ type: 'cancelDiff' });
+      break;
   }
 });
 
@@ -242,59 +250,120 @@ function postToHost(obj) {
 }
 
 function renderDiff(hunks, stats) {
-  const view = document.getElementById('diff-view');
-  view.classList.add('active');
+  isShowingDiff = true;
+  const editor = window.__editor;
+  const { state, view } = editor;
+  const { doc } = state;
+  
+  // Show action bar
+  const actionBar = document.getElementById('diff-action-bar');
+  actionBar.classList.add('active');
+  actionBar.innerHTML = createActionBarHtml(stats);
+  
+  // Build decorations from hunks
+  const decorations = [];
+  
+  // Get all text content with positions
+  const textNodes = [];
+  doc.descendants((node, pos) => {
+    if (node.isText) {
+      textNodes.push({ text: node.text, from: pos, to: pos + node.nodeSize });
+    }
+  });
+  
+  // Concatenate all text to search within
+  let fullText = '';
+  const nodeRanges = [];
+  textNodes.forEach(n => {
+    nodeRanges.push({ start: fullText.length, end: fullText.length + n.text.length, from: n.from, to: n.to - 1 });
+    fullText += n.text;
+  });
+  
+  // Process each hunk
+  for (const hunk of (hunks || [])) {
+    // Find starting position using context or first change
+    let searchStart = 0;
+    if (hunk.context_before && hunk.context_before.length > 0) {
+      const ctxText = hunk.context_before.join('\n');
+      const ctxIdx = fullText.indexOf(ctxText);
+      if (ctxIdx !== -1) searchStart = ctxIdx + ctxText.length + 1;
+    }
+    
+    // Process changes
+    for (const ch of (hunk.changes || [])) {
+      if (ch.kind === 'del') {
+        const idx = fullText.indexOf(ch.text, searchStart);
+        if (idx !== -1) {
+          const range = mapTextToDocPosition(idx, idx + ch.text.length, nodeRanges);
+          if (range) decorations.push(Decoration.inline(range.from, range.to, { class: 'diff-del' }));
+        }
+      } else if (ch.kind === 'ins') {
+        // For insertions, find position after the deleted/modified text
+        const idx = fullText.indexOf(ch.text, searchStart);
+        if (idx !== -1) {
+          const range = mapTextToDocPosition(idx, idx + ch.text.length, nodeRanges);
+          if (range) decorations.push(Decoration.inline(range.from, range.to, { class: 'diff-ins' }));
+        }
+      } else if (ch.kind === 'mod') {
+        // Modified: mark old text
+        if (ch.old) {
+          const idx = fullText.indexOf(ch.old, searchStart);
+          if (idx !== -1) {
+            const range = mapTextToDocPosition(idx, idx + ch.old.length, nodeRanges);
+            if (range) decorations.push(Decoration.inline(range.from, range.to, { class: 'diff-mod' }));
+          }
+        }
+        // For new text in mod, we'd need to insert a widget, but for now just mark the old
+      }
+    }
+  }
+  
+  const decorationSet = decorations.length > 0 ? DecorationSet.create(doc, decorations) : DecorationSet.empty;
+  view.dispatch(state.tr.setMeta(diffPluginKey, decorationSet));
+  editor.setEditable(false);
+}
 
-  let html = '<div class="diff-action-bar">';
-  html += '<button class="btn btn-apply" onclick="postToHost({type:\'applyDiff\'})">✓ Appliquer</button>';
+function mapTextToDocPosition(textFrom, textTo, nodeRanges) {
+  // Find which text node(s) contain this range
+  let docFrom = -1, docTo = -1;
+  
+  for (const r of nodeRanges) {
+    if (textFrom >= r.start && textFrom < r.end) {
+      docFrom = r.from + (textFrom - r.start);
+    }
+    if (textTo > r.start && textTo <= r.end) {
+      docTo = r.to - (r.end - textTo);
+      break;
+    }
+  }
+  
+  return docFrom !== -1 && docTo !== -1 ? { from: docFrom, to: docTo } : null;
+}
+
+function createActionBarHtml(stats) {
+  let html = '<button class="btn btn-apply" onclick="postToHost({type:\'applyDiff\'})">✓ Appliquer</button>';
   html += '<button class="btn btn-cancel" onclick="postToHost({type:\'cancelDiff\'})">✗ Annuler</button>';
   html += '<span class="stats">';
   if (stats.added) html += `<span class="added">+${stats.added}</span> `;
   if (stats.deleted) html += `<span class="deleted">-${stats.deleted}</span> `;
   if (stats.modified) html += `<span class="modified">~${stats.modified}</span>`;
-  html += '</span></div>';
-
-  for (const hunk of (hunks || [])) {
-    html += '<div class="diff-hunk">';
-    for (const ctx of (hunk.context_before || [])) {
-      html += `<div class="diff-line context">${esc(ctx)}</div>`;
-    }
-    for (const ch of (hunk.changes || [])) {
-      if (ch.kind === 'del') {
-        html += `<div class="diff-line del">− ${esc(ch.text)}</div>`;
-      } else if (ch.kind === 'ins') {
-        html += `<div class="diff-line ins">+ ${esc(ch.text)}</div>`;
-      } else if (ch.kind === 'mod') {
-        html += `<div class="diff-line mod-old">− ${renderWords(ch.old_words, 'del')}</div>`;
-        html += `<div class="diff-line mod-new">+ ${renderWords(ch.new_words, 'ins')}</div>`;
-      }
-    }
-    for (const ctx of (hunk.context_after || [])) {
-      html += `<div class="diff-line context">${esc(ctx)}</div>`;
-    }
-    html += '</div>';
-  }
-
-  view.innerHTML = html;
-}
-
-function renderWords(words, cls) {
-  if (!words || !words.length) return '';
-  return words.map(w => w.changed
-    ? `<span class="diff-word-${cls}">${esc(w.text)}</span>`
-    : esc(w.text)).join('');
+  html += '</span>';
+  return html;
 }
 
 function clearDiff() {
-  const view = document.getElementById('diff-view');
-  view.classList.remove('active');
-  view.innerHTML = '';
-}
-
-function esc(s) {
-  const d = document.createElement('div');
-  d.textContent = s || '';
-  return d.innerHTML;
+  isShowingDiff = false;
+  const editor = window.__editor;
+  const { state, view } = editor;
+  
+  // Hide action bar
+  const actionBar = document.getElementById('diff-action-bar');
+  actionBar.classList.remove('active');
+  actionBar.innerHTML = '';
+  
+  // Clear decorations
+  view.dispatch(state.tr.setMeta(diffPluginKey, DecorationSet.empty));
+  editor.setEditable(true);
 }
 
 // Signal ready

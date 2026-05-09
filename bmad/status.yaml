@@ -1,14 +1,14 @@
 project: singleton-notepad
 phase: development
-progress: 30
-next_action: "Plan S6 stories S6-02 through S6-06. Discuss architecture before coding."
+progress: 60
+next_action: "Continue S6: S6-04 (ChatBubble float/split redesign) next."
 next_command: "bmad-continue"
-next_role: "Scrum Master"
-active_role: "Scrum Master"
+next_role: "Developer"
+active_role: "Developer"
 last_updated: "2026-05-09"
 
 marketing: "Skills system is live: the notepad auto-detects relevant expert modes from skill .md files and injects them silently into every chat/normalization request. Power users can invoke /skill-name manually."
-product: "S6-08 implemented: ISkillService, SkillService (frontmatter parser, tag-match selector, FileSystemWatcher), ChatService skill injection + /skill-name parsing, NormalizationService always+writing skill injection, Settings UI Skills section, 9 new unit tests passing."
+product: "S6-07 done (TipTap bundle with ProseMirror exports), S6-03 done (inline diff via decorations), S6-02 done (dead code removed). Editor now shows normalization diff inline with colored marks, no overlay. Chat bubble redesign (S6-04) next."
 far_vision: "v1.0 shipped. S5 UX complete. S6 = editor quality + skills ecosystem."
 
 stack_migration:
@@ -163,7 +163,8 @@ sprints:
 
       - id: S6-02
         title: "Dead code sweep — remove InlineDiffEditor, MarkdownPreview, diff-view overlay"
-        status: todo
+        status: done
+        note: "Removed MarkdownPreview.xaml/.cs, removed IsShowingDiff from MainViewModel. No #diff-view or InlineDiffEditor references found."
         goal: "Eliminate XAML/code vestiges of the old Avalonia/WPF diff approach that pollute the codebase."
         scope:
           - "Remove Views/Controls/InlineDiffEditor.xaml + .cs if referenced in .csproj"
@@ -176,7 +177,8 @@ sprints:
 
       - id: S6-03
         title: "True inline diff — ProseMirror decorations within TipTap editor (S6-01 redo)"
-        status: todo
+        status: done
+        note: "Implemented: diff plugin with Decoration/DecorationSet, inline CSS classes (diff-del, diff-ins, diff-mod), action bar in editor.html. C# message handlers for applyDiff/cancelDiff already existed."
         goal: >
           Show normalization diff INSIDE the editor content, not as a replacement.
           Editor text stays visible throughout. Changes appear as colored inline marks.
@@ -326,8 +328,9 @@ sprints:
           - "Value=0: no rate limit applied"
 
       - id: S6-07
-        title: "TipTap bundle audit — locate build script, document rebuild process"
-        status: todo
+        title: "TipTap bundle audit + ProseMirror API exposition"
+        status: done
+        note: "entry.js updated with Plugin, PluginKey, Decoration, DecorationSet exports. Build script added to package.json. BUILDING.md created. Bundle rebuilt successfully."
         goal: >
           Understand how tiptap.bundle.js is built. Document the process.
           Prerequisite for S6-03 (if ProseMirror APIs need to be added).
