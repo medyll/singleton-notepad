@@ -51,7 +51,7 @@ public sealed partial class MainPage : Page
         {
             if (args.PropertyName == nameof(ViewModel.PendingNormalization) && ViewModel.PendingNormalization != null)
             {
-                ShowDiffInWebView();
+                App.DispatcherQueue.TryEnqueue(() => ShowDiffInWebView());
             }
             else if (args.PropertyName == nameof(ViewModel.EditorContent) && !_updatingFromWebView)
             {
@@ -142,21 +142,29 @@ public sealed partial class MainPage : Page
 
         App.DispatcherQueue.TryEnqueue(async () =>
         {
-            if (msg.Type == "change")
+            try
             {
-                if (_pushingContentToWebView) return;
-                _updatingFromWebView = true;
-                ViewModel.EditorContent = msg.Content ?? string.Empty;
-                _updatingFromWebView = false;
+                if (msg.Type == "change")
+                {
+                    if (_pushingContentToWebView) return;
+                    _updatingFromWebView = true;
+                    ViewModel.EditorContent = msg.Content ?? string.Empty;
+                    _updatingFromWebView = false;
+                }
+                else if (msg.Type == "applyDiff")
+                {
+                    await ViewModel.ApplyNormalizationCommand.ExecuteAsync(null);
+                    ClearDiffInWebView();
+                }
+                else if (msg.Type == "cancelDiff")
+                {
+                    ViewModel.CancelNormalizationCommand.Execute(null);
+                    ClearDiffInWebView();
+                }
             }
-            else if (msg.Type == "applyDiff")
+            catch (Exception ex)
             {
-                await ViewModel.ApplyNormalizationCommand.ExecuteAsync(null);
-                ClearDiffInWebView();
-            }
-            else if (msg.Type == "cancelDiff")
-            {
-                ViewModel.CancelNormalizationCommand.Execute(null);
+                System.Diagnostics.Debug.WriteLine($"[MainPage] Error handling WebView message: {ex.Message}");
                 ClearDiffInWebView();
             }
         });

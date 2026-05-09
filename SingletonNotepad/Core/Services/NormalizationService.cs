@@ -240,13 +240,16 @@ public class NormalizationService : INormalizationService
 
     private static (List<DiffWord> OldWords, List<DiffWord> NewWords) ComputeWordDiff(string oldText, string newText)
     {
+        var oldTokens = Tokenize(oldText);
+        var newTokens = Tokenize(newText);
+
         var differ = new InlineDiffBuilder(new Differ());
-        var wordDiff = differ.BuildDiffModel(oldText, newText);
+        var tokenDiff = differ.BuildDiffModel(string.Join("", oldTokens), string.Join("", newTokens));
 
         var oldResult = new List<DiffWord>();
         var newResult = new List<DiffWord>();
 
-        foreach (var line in wordDiff.Lines)
+        foreach (var line in tokenDiff.Lines)
         {
             if (line.Type == ChangeType.Deleted || line.Type == ChangeType.Modified)
                 oldResult.Add(new DiffWord { Text = line.Text, Changed = true });
@@ -260,6 +263,26 @@ public class NormalizationService : INormalizationService
         }
 
         return (oldResult, newResult);
+    }
+
+    private static string[] Tokenize(string text)
+    {
+        var tokens = new List<string>();
+        var current = new StringBuilder();
+        foreach (var c in text)
+        {
+            if (char.IsWhiteSpace(c))
+            {
+                if (current.Length > 0) { tokens.Add(current.ToString()); current.Clear(); }
+                tokens.Add(c.ToString());
+            }
+            else
+            {
+                current.Append(c);
+            }
+        }
+        if (current.Length > 0) tokens.Add(current.ToString());
+        return tokens.ToArray();
     }
 
     private static (string system, string user) BuildPrompt(string rules, string content)
