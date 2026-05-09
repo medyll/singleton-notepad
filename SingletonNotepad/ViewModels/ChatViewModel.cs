@@ -23,7 +23,7 @@ public partial class ChatViewModel : ObservableObject
     public partial bool IsSending { get; set; }
 
     [ObservableProperty]
-    public partial string PanelState { get; set; } = "hidden";
+    public partial string PanelState { get; set; } = "minimized";
 
     [ObservableProperty]
     public partial string LastResponse { get; set; } = string.Empty;
@@ -46,13 +46,13 @@ public partial class ChatViewModel : ObservableObject
     public async Task LoadStateAsync(CancellationToken ct = default)
     {
         var settings = await _settingsService.LoadAsync(ct);
-        PanelState = settings.ChatPanelState;
+        PanelState = settings.ChatBubbleState;
     }
 
     private async Task SaveStateAsync()
     {
         var settings = await _settingsService.LoadAsync();
-        settings.ChatPanelState = PanelState;
+        settings.ChatBubbleState = PanelState;
         await _settingsService.SaveAsync(settings);
     }
 
@@ -119,12 +119,7 @@ public partial class ChatViewModel : ObservableObject
     [RelayCommand]
     public void TogglePanel()
     {
-        PanelState = PanelState switch
-        {
-            "hidden" or "minimized" => "open",
-            "open" => "minimized",
-            _ => "open"
-        };
+        PanelState = PanelState == "open" ? "minimized" : "open";
     }
 
     [RelayCommand]

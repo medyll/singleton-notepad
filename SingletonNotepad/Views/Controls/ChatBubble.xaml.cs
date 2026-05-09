@@ -1,4 +1,3 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
@@ -25,7 +24,7 @@ public sealed partial class ChatBubble : UserControl
     private void UpdateVisibility()
     {
         MinimizedButton.Visibility = ViewModel.IsMinimized ? Visibility.Visible : Visibility.Collapsed;
-        ChatPanel.Visibility = ViewModel.IsOpen ? Visibility.Visible : Visibility.Collapsed;
+        ChatExpanded.Visibility = ViewModel.IsOpen ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void OnMinimizedClicked(object sender, RoutedEventArgs e)
@@ -34,22 +33,9 @@ public sealed partial class ChatBubble : UserControl
         UpdateVisibility();
     }
 
-    private void OnMinimizeClicked(object sender, RoutedEventArgs e)
+    private void OnToggleClicked(object sender, RoutedEventArgs e)
     {
-        ViewModel.MinimizePanelCommand.Execute(null);
-        UpdateVisibility();
-    }
-
-    private void OnCloseClicked(object sender, RoutedEventArgs e)
-    {
-        ViewModel.PanelState = "hidden";
-        _ = Task.Run(async () =>
-        {
-            var settingsSvc = App.Services.GetRequiredService<SingletonNotepad.Core.Services.ISettingsService>();
-            var settings = await settingsSvc.LoadAsync();
-            settings.ChatPanelState = "hidden";
-            await settingsSvc.SaveAsync(settings);
-        });
+        ViewModel.TogglePanelCommand.Execute(null);
         UpdateVisibility();
     }
 

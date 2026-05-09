@@ -94,9 +94,9 @@ public class AppSettings
     public string SpellCheckLanguage { get; set; } = "auto";
 
     /// <summary>
-    /// Chat panel visibility: "open", "minimized", or "hidden".
+    /// Chat bubble visibility: "open" or "minimized".
     /// </summary>
-    public string ChatPanelState { get; set; } = "minimized";
+    public string ChatBubbleState { get; set; } = "minimized";
 
     public string ChatLlmProvider { get; set; } = string.Empty;
 }

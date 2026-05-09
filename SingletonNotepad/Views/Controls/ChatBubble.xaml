@@ -19,12 +19,12 @@
     </UserControl.Resources>
 
     <Grid>
-        <!-- Minimized state: floating icon -->
+        <!-- Minimized state: floating pill at bottom center -->
         <Button
             x:Name="MinimizedButton"
             Width="44" Height="44" CornerRadius="22"
-            HorizontalAlignment="Right" VerticalAlignment="Bottom"
-            Margin="0,0,16,16"
+            HorizontalAlignment="Center" VerticalAlignment="Bottom"
+            Margin="0,0,0,44"
             Background="{ThemeResource AccentFillColorDefaultBrush}"
             Click="OnMinimizedClicked"
             ToolTipService.ToolTip="Chat IA">
@@ -33,10 +33,10 @@
 
         <!-- Expanded state: chat panel -->
         <Border
-            x:Name="ChatPanel"
-            Width="380" Height="480"
-            HorizontalAlignment="Right" VerticalAlignment="Bottom"
-            Margin="0,0,16,16"
+            x:Name="ChatExpanded"
+            Height="200"
+            HorizontalAlignment="Stretch" VerticalAlignment="Bottom"
+            Margin="16,0,16,44"
             Style="{StaticResource ChatCard}">
 
             <Grid>
@@ -46,21 +46,12 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- Header -->
-                <Grid Grid.Row="0" Padding="12,8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <TextBlock Grid.Column="0" Text="Assistant IA" FontWeight="SemiBold" VerticalAlignment="Center" />
-                    <Button Grid.Column="1" Width="32" Height="32" Padding="0" Click="OnMinimizeClicked"
-                            ToolTipService.ToolTip="Minimiser">
-                        <FontIcon Glyph="&#xE921;" FontSize="12" />
-                    </Button>
-                    <Button Grid.Column="2" Width="32" Height="32" Padding="0" Click="OnCloseClicked"
-                            ToolTipService.ToolTip="Fermer">
-                        <FontIcon Glyph="&#xE711;" FontSize="12" />
+                <!-- Header: only toggle button -->
+                <Grid Grid.Row="0" Padding="8,4" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                    <Button HorizontalAlignment="Right" Width="32" Height="32" Padding="0"
+                            Click="OnToggleClicked"
+                            ToolTipService.ToolTip="Réduire">
+                        <FontIcon x:Name="ToggleIcon" Glyph="&#xE921;" FontSize="12" />
                     </Button>
                 </Grid>
 
@@ -94,8 +85,12 @@
                         <ColumnDefinition Width="Auto" />
                     </Grid.ColumnDefinitions>
                     <TextBox Grid.Column="0"
+                             x:Name="InputBox"
                              PlaceholderText="Demander à l'IA..."
                              AcceptsReturn="False"
+                             TextWrapping="Wrap"
+                             MinHeight="72"
+                             MaxHeight="200"
                              KeyDown="OnInputKeyDown" />
                     <Button Grid.Column="1" Margin="4,0,0,0"
                             Click="OnClearClicked"
