@@ -28,6 +28,13 @@
                 <AppBarButton Icon="SelectAll" Label="Tout sélect." Click="OnSelectAllClicked" />
                 <AppBarButton Icon="Copy" Label="Copier" Command="{x:Bind ViewModel.CopyContentCommand}" />
                 <AppBarButton Icon="Paste" Label="Coller" Click="OnPasteClicked" />
+                <AppBarSeparator />
+                <AppBarButton Label="Chat" Command="{x:Bind ChatViewModel.TogglePanelCommand}"
+                              ToolTipService.ToolTip="Ouvrir le chat IA (Ctrl+Shift+C)">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE8BD;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
             </CommandBar>
             <Button HorizontalAlignment="Right" VerticalAlignment="Center"
                     Margin="0,0,8,0"

@@ -524,6 +524,39 @@
                 </StackPanel>
             </Border>
 
+            <!-- ══ CHAT IA ══ -->
+            <TextBlock Text="Chat IA" Style="{StaticResource GroupHeaderStyle}" />
+            <Border Style="{StaticResource SettingCard}">
+                <StackPanel>
+                    <Grid Padding="16,14" MinHeight="64">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <FontIcon Grid.Column="0" Glyph="&#xE8BD;" FontSize="18"
+                                  VerticalAlignment="Center" Margin="0,0,16,0"
+                                  Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                        <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                            <TextBlock Text="Fournisseur du chat" />
+                            <TextBlock Text="Indépendant du fournisseur de normalisation"
+                                       Style="{ThemeResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                        <ComboBox Grid.Column="2" VerticalAlignment="Center" MinWidth="160"
+                                  ItemsSource="{x:Bind ViewModel.AvailableProviders, Mode=OneWay}"
+                                  SelectedItem="{x:Bind ViewModel.ChatLlmProvider, Mode=TwoWay}"
+                                  PlaceholderText="Même que normalisation" />
+                        <Button Grid.Column="3" VerticalAlignment="Center" Margin="8,0,0,0"
+                                Command="{x:Bind ViewModel.ResetChatProviderCommand}"
+                                ToolTipService.ToolTip="Réinitialiser (utiliser le même fournisseur que la normalisation)">
+                            <FontIcon Glyph="&#xE72C;" FontSize="14" />
+                        </Button>
+                    </Grid>
+                </StackPanel>
+            </Border>
+
             <!-- ══ RÈGLES ══ -->
             <TextBlock Text="Règles de normalisation" Style="{StaticResource GroupHeaderStyle}" />
             <Border Style="{StaticResource SettingCard}">

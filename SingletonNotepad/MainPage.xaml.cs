@@ -33,8 +33,8 @@ public sealed partial class MainPage : Page
         InitializeComponent();
 
         _chatBubbleControl = new SingletonNotepad.Views.Controls.ChatBubble(ChatViewModel);
-        // Add to the Grid's children at the end so it overlays everything
         var rootGrid = (Grid)Content;
+        Grid.SetRowSpan(_chatBubbleControl, 3);
         rootGrid.Children.Add(_chatBubbleControl);
 
         ChatViewModel.SetContentProviders(

@@ -23,11 +23,14 @@ public class ChatService : IChatService
     public async Task<string> SendAsync(string userMessage, string? contextContent, CancellationToken ct = default)
     {
         var settings = await _settingsService.LoadAsync(ct);
-        _providerSelector.SelectProvider(settings.LlmProvider);
+        var providerName = !string.IsNullOrEmpty(settings.ChatLlmProvider)
+            ? settings.ChatLlmProvider
+            : settings.LlmProvider;
+        var provider = _providerSelector.GetProvider(providerName) ?? _providerSelector.Current;
 
         var systemPrompt = BuildSystemPrompt(contextContent);
 
-        return await _providerSelector.Current.CompleteAsync(systemPrompt, userMessage, ct);
+        return await provider.CompleteAsync(systemPrompt, userMessage, ct);
     }
 
     private static string BuildSystemPrompt(string? contextContent)

@@ -96,7 +96,9 @@ public class AppSettings
     /// <summary>
     /// Chat panel visibility: "open", "minimized", or "hidden".
     /// </summary>
-    public string ChatPanelState { get; set; } = "hidden";
+    public string ChatPanelState { get; set; } = "minimized";
+
+    public string ChatLlmProvider { get; set; } = string.Empty;
 }
 
 /// <summary>

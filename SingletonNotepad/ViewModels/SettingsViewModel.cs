@@ -16,6 +16,8 @@ public partial class SettingsViewModel : ObservableObject
     private readonly IModelService _modelService;
 
     private static readonly HashSet<string> BuiltInProviders = ["Ollama", "OpenAI", "Anthropic"];
+    private bool _isLoading;
+    private void SaveIfReady() { if (!_isLoading) _ = SaveSettingsAsync(); }
 
     [ObservableProperty]
     public partial string Theme { get; set; } = "System";
@@ -75,6 +77,9 @@ public partial class SettingsViewModel : ObservableObject
     public partial string DetectedSpellCheckLanguage { get; set; } = "auto";
 
     [ObservableProperty]
+    public partial string ChatLlmProvider { get; set; } = string.Empty;
+
+    [ObservableProperty]
     public partial ObservableCollection<BackupDisplayItem> Backups { get; set; } = new();
 
     [ObservableProperty]
@@ -113,6 +118,9 @@ public partial class SettingsViewModel : ObservableObject
 
     public async Task LoadSettingsAsync(CancellationToken ct = default)
     {
+        _isLoading = true;
+        try
+        {
         var settings = await _settingsService.LoadAsync(ct);
         Theme = settings.Theme;
         NotesFilePath = settings.NotesFilePath;
@@ -130,6 +138,7 @@ public partial class SettingsViewModel : ObservableObject
         AlwaysOnTop = settings.AlwaysOnTop;
         SpellCheckEnabled = settings.SpellCheckEnabled;
         SpellCheckLanguage = settings.SpellCheckLanguage;
+        ChatLlmProvider = settings.ChatLlmProvider;
 
         if (!string.IsNullOrEmpty(settings.OpenAiApiKey))
         {
@@ -144,6 +153,12 @@ public partial class SettingsViewModel : ObservableObject
         {
             settings.ProviderModels.TryGetValue(LlmProvider, out var customModel);
             CustomProviderModel = customModel ?? string.Empty;
+        }
+
+        }
+        finally
+        {
+            _isLoading = false;
         }
 
         _ = RefreshModelsAsync();
@@ -168,6 +183,7 @@ public partial class SettingsViewModel : ObservableObject
         settings.AlwaysOnTop = AlwaysOnTop;
         settings.SpellCheckEnabled = SpellCheckEnabled;
         settings.SpellCheckLanguage = SpellCheckLanguage;
+        settings.ChatLlmProvider = ChatLlmProvider;
 
         if (!string.IsNullOrEmpty(OpenAiApiKey))
         {
@@ -237,22 +253,25 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnThemeChanged(string value)
     {
         App.ApplyTheme(value);
-        _ = SaveSettingsAsync();
+        SaveIfReady();
     }
-    partial void OnNotesFilePathChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnAutoSaveChanged(bool value) => _ = SaveSettingsAsync();
-    partial void OnAutoSaveDelayMsChanged(int value) => _ = SaveSettingsAsync();
-    partial void OnAutoNormalizeOnCloseChanged(bool value) => _ = SaveSettingsAsync();
-    partial void OnIdleMinutesBeforeNormalizeChanged(int value) => _ = SaveSettingsAsync();
+    partial void OnNotesFilePathChanged(string value) => SaveIfReady();
+    partial void OnAutoSaveChanged(bool value) => SaveIfReady();
+    partial void OnAutoSaveDelayMsChanged(int value) => SaveIfReady();
+    partial void OnAutoNormalizeOnCloseChanged(bool value) => SaveIfReady();
+    partial void OnIdleMinutesBeforeNormalizeChanged(int value) => SaveIfReady();
     partial void OnLlmProviderChanged(string value)
     {
         OnPropertyChanged(nameof(OllamaSectionVisibility));
         OnPropertyChanged(nameof(OpenAiSectionVisibility));
         OnPropertyChanged(nameof(AnthropicSectionVisibility));
         OnPropertyChanged(nameof(CustomProviderSectionVisibility));
-        _ = LoadCustomProviderModelAsync();
-        _ = SaveSettingsAsync();
-        _ = RefreshModelsAsync();
+        if (!_isLoading)
+        {
+            _ = LoadCustomProviderModelAsync();
+            _ = RefreshModelsAsync();
+        }
+        SaveIfReady();
     }
 
     [RelayCommand]
@@ -288,23 +307,30 @@ public partial class SettingsViewModel : ObservableObject
         settings.ProviderModels.TryGetValue(LlmProvider, out var m);
         CustomProviderModel = m ?? ProviderDetectionService.GetDefaultModel(LlmProvider);
     }
-    partial void OnOllamaEndpointChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnOllamaModelChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnOpenAiModelChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnAnthropicModelChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnOpenAiApiKeyChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnAnthropicApiKeyChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnCustomProviderModelChanged(string value) => _ = SaveSettingsAsync();
-    partial void OnMaxBackupCountChanged(int value) => _ = SaveSettingsAsync();
-    partial void OnAlwaysStartAtBottomChanged(bool value) => _ = SaveSettingsAsync();
+    partial void OnOllamaEndpointChanged(string value) => SaveIfReady();
+    partial void OnOllamaModelChanged(string value) => SaveIfReady();
+    partial void OnOpenAiModelChanged(string value) => SaveIfReady();
+    partial void OnAnthropicModelChanged(string value) => SaveIfReady();
+    partial void OnOpenAiApiKeyChanged(string value) => SaveIfReady();
+    partial void OnAnthropicApiKeyChanged(string value) => SaveIfReady();
+    partial void OnCustomProviderModelChanged(string value) => SaveIfReady();
+    partial void OnMaxBackupCountChanged(int value) => SaveIfReady();
+    partial void OnAlwaysStartAtBottomChanged(bool value) => SaveIfReady();
     partial void OnAlwaysOnTopChanged(bool value)
     {
         if (App.Window?.AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
             p.IsAlwaysOnTop = value;
-        _ = SaveSettingsAsync();
+        SaveIfReady();
     }
-    partial void OnSpellCheckEnabledChanged(bool value) => _ = SaveSettingsAsync();
-    partial void OnSpellCheckLanguageChanged(string value) => _ = SaveSettingsAsync();
+    partial void OnSpellCheckEnabledChanged(bool value) => SaveIfReady();
+    partial void OnSpellCheckLanguageChanged(string value) => SaveIfReady();
+    partial void OnChatLlmProviderChanged(string value) => SaveIfReady();
+
+    [RelayCommand]
+    public void ResetChatProvider()
+    {
+        ChatLlmProvider = string.Empty;
+    }
 }
 
 public class BackupDisplayItem

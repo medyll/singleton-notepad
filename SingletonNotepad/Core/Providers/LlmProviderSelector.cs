@@ -20,6 +20,9 @@ public class LlmProviderSelector : ILlmProviderSelector
 
     public IReadOnlyList<string> AvailableProviders => _availableProviders;
 
+    public ILlmProvider? GetProvider(string providerName)
+        => _providers.TryGetValue(providerName, out var p) ? p : null;
+
     public void SelectProvider(string providerName)
     {
         if (_providers.TryGetValue(providerName, out var provider))
