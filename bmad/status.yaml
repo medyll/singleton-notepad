@@ -2,9 +2,9 @@
 project: singleton-notepad
 phase: development
 progress: 100
-next_action: "Sprint 5 complete. Ready for next sprint or review."
-next_command: "bmad-status"
-next_role: "Scrum Master"
+next_action: "Implementing S5-05 (ChatBubble redesign) + S5-06 (spell check live refresh)."
+next_command: "bmad-continue"
+next_role: "Developer"
 active_role: "Developer"
 last_updated: "2026-05-08"
 
@@ -147,3 +147,9 @@ sprints:
       - id: S5-04
         title: "UI fix — scrollbar hidden when editor is empty"
         status: done
+      - id: S5-05
+        title: "ChatBubble redesign — rename, layout, simplify, wide, textarea input"
+        status: in_progress
+      - id: S5-06
+        title: "Spell check language live refresh on settings return"
+        status: in_progress
