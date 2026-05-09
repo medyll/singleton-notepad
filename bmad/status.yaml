@@ -2,10 +2,10 @@
 project: singleton-notepad
 phase: development
 progress: 25
-next_action: "Sprint 6 in progress. S6-01 done. Plan remaining S6 stories."
-next_command: "bmad-status"
-next_role: "Scrum Master"
-active_role: "Developer"
+next_action: "Implement S6-08 — ISkillService, SkillDefinition, tag-match auto-select, injection chat + normalisation, Settings UI."
+next_command: "bmad-continue"
+next_role: "Developer"
+active_role: "PM"
 last_updated: "2026-05-09"
 
 marketing: "Diff preview moves from WinUI overlay to git-style inline WebView rendering. No more full-screen takeover — diffs render in place with word-level highlights and sticky action bar."
@@ -160,3 +160,6 @@ sprints:
       - id: S6-01
         title: "Inline diff in WebView — git-style, replace DiffOverlay + InlineDiffEditor"
         status: done
+      - id: S6-08
+        title: "Skills integration — auto-select + manual invoke + injection chat + normalisation"
+        status: todo
