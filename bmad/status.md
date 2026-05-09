@@ -1,26 +1,26 @@
 # BMAD Status — singleton-notepad
 _Last updated: 2026-05-09_
 
-## Phase: development → release  |  Progress: 100%
+## Phase: development (Sprint 6)  |  Progress: 25%
 
 ---
 
 ## 🎯 Next Action
-> Run sprint S5 tests — all stories complete.
+> Plan remaining S6 stories after S6-01 completion.
 
-**Next command:** `bmad-test`
-**Next role:** Tester
+**Next command:** `bmad-status`
+**Next role:** Scrum Master
 
 ---
 
-## 📣 Marketing
-Post-v1.0: ChatBubble redesigned (stretch, 200px, multi-line input, no close btn), spell check refreshes live on settings return. v1.0 shipped — 4 sprints + Sprint 5 complete.
+## 🎯 Marketing
+Inline diff preview now renders inside WebView with git-style colors — no more full-screen overlay. Word-level highlights on modified lines. v1.0 + S5 UX complete.
 
 ## 📦 Product
-Sprint 5 done: S5-01 chat bubble, S5-02 model management, S5-03 spell check, S5-04 scrollbar fix, S5-05 ChatBubble redesign, S5-06 spell check live refresh.
+S6-01 done: Inline diff in WebView replaces WinUI DiffOverlay + InlineDiffEditor. Git-style rendering with context lines, word-level highlights, sticky action bar.
 
 ## 🔭 Far Vision
-v1.0 shipped. Sprint 5 = UX depth complete. Chat-on-content is core differentiator. Cloud sync still deferred.
+v1.0 shipped. S5 UX complete. S6 = editor quality — diff as first-class WebView feature.
 
 ---
 
@@ -33,14 +33,10 @@ v1.0 shipped. Sprint 5 = UX depth complete. Chat-on-content is core differentiat
 | S3 | Polish & Production Readiness | ✅ complete |
 | S4 | Advanced & Release Candidate | ✅ complete |
 | S5 | Chat & Model UX | ✅ complete |
+| S6 | Editor Quality | 🔄 in_progress |
 
-### Sprint 5 stories
+### Sprint 6 stories
 
 | Story | Title | Status |
 |-------|-------|--------|
-| S5-01 | Chat bubble — floating LLM chat panel | ✅ done |
-| S5-02 | Model management — dynamic provider/model selector | ✅ done |
-| S5-03 | Spell check — configurable, auto-detect language | ✅ done |
-| S5-04 | UI fix — scrollbar hidden when editor is empty | ✅ done |
-| S5-05 | ChatBubble redesign — rename, layout, simplify, wide, textarea | ✅ done |
-| S5-06 | Spell check language live refresh on settings return | ✅ done |
+| S6-01 | Inline diff in WebView — git-style, replace overlay | ✅ done |

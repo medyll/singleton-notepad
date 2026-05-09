@@ -1,11 +1,11 @@
 # BMAD Status — singleton-notepad
 project: singleton-notepad
 phase: development
-progress: 100
-next_action: "Audit S6-01 story with user before implementing diff-in-WebView refactor."
-next_command: "bmad-continue"
-next_role: "Architect"
-active_role: "PM"
+progress: 25
+next_action: "Sprint 6 in progress. S6-01 done. Plan remaining S6 stories."
+next_command: "bmad-status"
+next_role: "Scrum Master"
+active_role: "Developer"
 last_updated: "2026-05-09"
 
 marketing: "Diff preview moves from WinUI overlay to git-style inline WebView rendering. No more full-screen takeover — diffs render in place with word-level highlights and sticky action bar."
@@ -155,8 +155,8 @@ sprints:
         status: done
   - id: S6
     name: "Editor Quality"
-    status: planned
+    status: in_progress
     stories:
       - id: S6-01
         title: "Inline diff in WebView — git-style, replace DiffOverlay + InlineDiffEditor"
-        status: todo
+        status: done
