@@ -103,5 +103,9 @@ public class SettingsService : ISettingsService
         {
             return Task.FromResult(string.Empty);
         }
+        catch (FormatException)
+        {
+            return Task.FromResult(string.Empty);
+        }
     }
 }

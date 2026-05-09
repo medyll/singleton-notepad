@@ -146,7 +146,14 @@ public class FileService : IFileService, IDisposable
         {
             await SaveAsync(_pendingContent);
         }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { }
+        catch (IOException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FileService] Auto-save IO error: {ex.Message}");
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FileService] Auto-save error: {ex.Message}");
+        }
         finally
         {
             _isSaving = false;
@@ -178,7 +185,14 @@ public class FileService : IFileService, IDisposable
             _lastWrittenHash = contentHash;
             ExternalChangeDetected?.Invoke(content);
         }
-        catch (Exception ex) when (ex is not OutOfMemoryException) { }
+        catch (IOException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FileService] External change read error: {ex.Message}");
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            System.Diagnostics.Debug.WriteLine($"[FileService] External change error: {ex.Message}");
+        }
     }
 
     private static async Task<string> ReadWithRetryAsync(string path, CancellationToken ct)

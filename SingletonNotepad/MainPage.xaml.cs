@@ -18,11 +18,11 @@ public sealed partial class MainPage : Page
     public ChatViewModel ChatViewModel { get; }
 
     private readonly TaskCompletionSource<bool> _editorReady = new();
-    private readonly Task _webView2InitTask;
-    private readonly Task _loadContentTask;
-    private bool _updatingFromWebView;
+    private Task _webView2InitTask = null!;
+    private Task _loadContentTask = null!;
+    private volatile bool _updatingFromWebView;
     private bool _editorInitialized;
-    private bool _pushingContentToWebView;
+    private volatile bool _pushingContentToWebView;
     private bool _themeHandlerWired;
     private SingletonNotepad.Views.Controls.ChatBubble? _chatBubbleControl;
 
@@ -33,7 +33,7 @@ public sealed partial class MainPage : Page
         InitializeComponent();
 
         _chatBubbleControl = new SingletonNotepad.Views.Controls.ChatBubble(ChatViewModel);
-        var rootGrid = (Grid)Content;
+        if (Content is not Grid rootGrid) return;
         Grid.SetRowSpan(_chatBubbleControl, 3);
         rootGrid.Children.Add(_chatBubbleControl);
 
@@ -41,7 +41,9 @@ public sealed partial class MainPage : Page
             () => null,
             () => ViewModel.EditorContent);
 
-        _ = ChatViewModel.LoadStateAsync();
+        _ = ChatViewModel.LoadStateAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"[Chat] LoadState error: {t.Exception?.Flatten().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
 
         // Kick off both heavy tasks immediately — before Loaded fires
         _webView2InitTask = EditorWebView.EnsureCoreWebView2Async().AsTask();
@@ -78,7 +80,7 @@ public sealed partial class MainPage : Page
         EditorWebView.CoreWebView2.Navigate("https://editor.local/editor.html");
 
         // Wait for TipTap ready and file load — both already running since constructor
-        var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
             await Task.WhenAll(_loadContentTask, _editorReady.Task.WaitAsync(cts.Token));
@@ -92,7 +94,9 @@ public sealed partial class MainPage : Page
 
         SyncTheme();
         PushContentToEditor(ViewModel.EditorContent);
-        _ = ApplySpellCheckSettingsAsync();
+        _ = ApplySpellCheckSettingsAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"[SpellCheck] Apply error: {t.Exception?.Flatten().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 
     private async Task ApplySpellCheckSettingsAsync()
@@ -129,7 +133,11 @@ public sealed partial class MainPage : Page
 
         EditorMessage? msg;
         try { msg = JsonSerializer.Deserialize<EditorMessage>(json, MessageJsonOptions); }
-        catch { return; }
+        catch (JsonException ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[MainPage] Invalid web message JSON: {ex.Message}");
+            return;
+        }
 
         if (msg is null) return;
 
@@ -201,7 +209,9 @@ public sealed partial class MainPage : Page
         }
 
         if (_editorInitialized)
-            _ = ApplySpellCheckSettingsAsync();
+            _ = ApplySpellCheckSettingsAsync().ContinueWith(
+                t => System.Diagnostics.Debug.WriteLine($"[SpellCheck] Apply error: {t.Exception?.Flatten().Message}"),
+                TaskContinuationOptions.OnlyOnFaulted);
     }
 
     private void OnPageKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)

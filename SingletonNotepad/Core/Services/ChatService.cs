@@ -48,7 +48,7 @@ public class ChatService : IChatService
             allSkills.Add(forcedSkill);
         foreach (var s in autoSkills)
         {
-            if (!allSkills.Any(x => x.Name == s.Name))
+            if (!allSkills.Any(x => string.Equals(x.Name, s.Name, StringComparison.OrdinalIgnoreCase)))
                 allSkills.Add(s);
         }
 
@@ -93,23 +93,13 @@ public class ChatService : IChatService
     {
         var sb = new StringBuilder();
 
-        if (skills.Count > 0)
-        {
-            sb.AppendLine("[SKILLS ACTIVES]");
-            foreach (var skill in skills)
-            {
-                sb.AppendLine($"--- skill: {skill.Name} ---");
-                sb.AppendLine(skill.Content.Trim());
-                sb.AppendLine($"--- fin skill ---");
-            }
-            sb.AppendLine();
-        }
+        SkillService.AppendSkillsBlock(sb, skills);
 
         if (!string.IsNullOrWhiteSpace(contextContent))
         {
             sb.AppendLine("[CONTEXTE DOCUMENT]");
             sb.AppendLine("<contenu_note>");
-            sb.AppendLine(contextContent);
+            sb.AppendLine(EscapeXmlTags(contextContent));
             sb.AppendLine("</contenu_note>");
             sb.AppendLine();
         }
@@ -118,5 +108,11 @@ public class ChatService : IChatService
         sb.AppendLine("Tu es un assistant d'écriture. Aide l'utilisateur à améliorer, reformuler ou compléter son texte. Réponds en markdown. Si l'utilisateur demande une modification, fournis le texte complet modifié.");
 
         return sb.ToString();
+    }
+
+    private static string EscapeXmlTags(string content)
+    {
+        return content.Replace("</contenu_note>", "&lt;/contenu_note&gt;", StringComparison.OrdinalIgnoreCase)
+                      .Replace("<contenu_note>", "&lt;contenu_note&gt;", StringComparison.OrdinalIgnoreCase);
     }
 }

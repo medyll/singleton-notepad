@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -94,8 +95,12 @@ public partial class App : Application
 
         Window = new MainWindow();
         DispatcherQueue = Microsoft.UI.Dispatching.DispatcherQueue.GetForCurrentThread();
-        _ = ApplyInitialThemeAsync();
-        _ = InitializeSkillServiceAsync();
+        _ = ApplyInitialThemeAsync().ContinueWith(
+            t => Debug.WriteLine($"[Theme] Init error: {t.Exception?.Flatten().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
+        _ = InitializeSkillServiceAsync().ContinueWith(
+            t => Debug.WriteLine($"[SkillService] Init error: {t.Exception?.Flatten().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
         Window.Activate();
     }
 
@@ -107,7 +112,11 @@ public partial class App : Application
             var settings = await settingsService.LoadAsync();
             ApplyTheme(settings.Theme);
         }
-        catch
+        catch (IOException)
+        {
+            ApplyTheme("System");
+        }
+        catch (JsonException)
         {
             ApplyTheme("System");
         }

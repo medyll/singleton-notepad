@@ -72,13 +72,11 @@ public class NormalizationServiceTests
         Assert.IsFalse(result);
     }
 
-[TestMethod]
+    [TestMethod]
     public void IsRateLimited_ReturnsTrue_WhenContentUnchanged()
     {
         var content = "same content";
-        var rule = new NormalizationRule { Content = "" };
         _ = _service.NormalizeAsync(content).Result;
-        Thread.Sleep(50);
         var result = _service.IsRateLimited(content, out var remaining);
 
         Assert.IsTrue(result, $"Expected rate limited, remaining={remaining}");

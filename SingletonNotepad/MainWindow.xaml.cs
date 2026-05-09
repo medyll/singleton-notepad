@@ -33,7 +33,9 @@ public sealed partial class MainWindow : Window
         _settingsService = App.Services.GetRequiredService<ISettingsService>();
 
         // Restore window position from settings
-        _ = RestoreWindowPositionAsync();
+        _ = RestoreWindowPositionAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"[Window] Restore error: {t.Exception?.Flatten().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
 
         // Navigate the root frame to the main page on startup.
         RootFrame.Navigate(typeof(MainPage));
@@ -58,7 +60,12 @@ public sealed partial class MainWindow : Window
     /// </summary>
     public static Frame? GetRootFrame()
     {
-        return (App.Window as MainWindow)?.RootFrame;
+        if (App.Window is not MainWindow mw)
+        {
+            System.Diagnostics.Debug.WriteLine("[MainWindow] App.Window is not MainWindow type");
+            return null;
+        }
+        return mw.RootFrame;
     }
 
     private void OnTitleBarBackRequested(TitleBar sender, object args)
@@ -101,7 +108,11 @@ public sealed partial class MainWindow : Window
             if (settings.AlwaysOnTop && AppWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter p)
                 p.IsAlwaysOnTop = true;
         }
-        catch
+        catch (IOException)
+        {
+            // If anything fails, window stays at default position
+        }
+        catch (JsonException)
         {
             // If anything fails, window stays at default position
         }

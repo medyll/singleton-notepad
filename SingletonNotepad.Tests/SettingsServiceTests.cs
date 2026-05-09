@@ -1,5 +1,6 @@
 using System.Text.Json;
 using SingletonNotepad.Core.Models;
+using SingletonNotepad.Core.Services;
 
 namespace SingletonNotepad.Tests;
 
@@ -7,14 +8,12 @@ namespace SingletonNotepad.Tests;
 public class SettingsServiceTests
 {
     private string _testDir = string.Empty;
-    private string _settingsPath = string.Empty;
 
     [TestInitialize]
     public void Setup()
     {
         _testDir = Path.Combine(Path.GetTempPath(), $"sn-test-{Guid.NewGuid()}");
         Directory.CreateDirectory(_testDir);
-        _settingsPath = Path.Combine(_testDir, "settings.json");
     }
 
     [TestCleanup]
@@ -24,38 +23,13 @@ public class SettingsServiceTests
             Directory.Delete(_testDir, true);
     }
 
-    private static async Task<AppSettings> LoadFromFileAsync(string path, CancellationToken ct = default)
-    {
-        if (!File.Exists(path))
-            return new AppSettings();
-
-        try
-        {
-            var json = await File.ReadAllTextAsync(path, ct);
-            return JsonSerializer.Deserialize<AppSettings>(json, new JsonSerializerOptions { WriteIndented = true, PropertyNameCaseInsensitive = true }) ?? new AppSettings();
-        }
-        catch
-        {
-            return new AppSettings();
-        }
-    }
-
-    private static async Task SaveToFileAsync(string path, AppSettings settings, CancellationToken ct = default)
-    {
-        var directory = Path.GetDirectoryName(path);
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        var json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true, PropertyNameCaseInsensitive = true });
-        await File.WriteAllTextAsync(path, json, ct);
-    }
+    private SettingsService CreateService() => new(_testDir);
 
     [TestMethod]
     public async Task LoadAsync_ReturnsDefaults_WhenFileDoesNotExist()
     {
-        var settings = await LoadFromFileAsync(_settingsPath);
+        var service = CreateService();
+        var settings = await service.LoadAsync();
 
         Assert.IsNotNull(settings);
         Assert.AreEqual("System", settings.Theme);
@@ -67,6 +41,7 @@ public class SettingsServiceTests
     [TestMethod]
     public async Task SaveAsync_And_LoadAsync_RoundTrip()
     {
+        var service = CreateService();
         var expected = new AppSettings
         {
             Theme = "Dark",
@@ -75,8 +50,8 @@ public class SettingsServiceTests
             AutoSaveDelayMs = 5000,
         };
 
-        await SaveToFileAsync(_settingsPath, expected);
-        var loaded = await LoadFromFileAsync(_settingsPath);
+        await service.SaveAsync(expected);
+        var loaded = await service.LoadAsync();
 
         Assert.AreEqual("Dark", loaded.Theme);
         Assert.AreEqual(@"C:\test\notes.md", loaded.NotesFilePath);
@@ -88,24 +63,74 @@ public class SettingsServiceTests
     public async Task SaveAsync_CreatesDirectory_WhenNotExists()
     {
         var nestedDir = Path.Combine(_testDir, "nested", "deep");
-        var nestedPath = Path.Combine(nestedDir, "settings.json");
+        var service = new SettingsService(nestedDir);
 
-        await SaveToFileAsync(nestedPath, new AppSettings { Theme = "Light" });
+        await service.SaveAsync(new AppSettings { Theme = "Light" });
 
-        Assert.IsTrue(File.Exists(nestedPath));
-
-        if (Directory.Exists(nestedDir))
-            Directory.Delete(nestedDir, true);
+        var loaded = await service.LoadAsync();
+        Assert.AreEqual("Light", loaded.Theme);
     }
 
     [TestMethod]
     public async Task LoadAsync_ReturnsDefaults_WhenJsonIsCorrupt()
     {
-        await File.WriteAllTextAsync(_settingsPath, "{ invalid json }}}");
+        var settingsPath = Path.Combine(_testDir, "settings.json");
+        await File.WriteAllTextAsync(settingsPath, "{ invalid json }}}");
 
-        var settings = await LoadFromFileAsync(_settingsPath);
+        var service = CreateService();
+        var settings = await service.LoadAsync();
 
         Assert.IsNotNull(settings);
         Assert.AreEqual("System", settings.Theme);
+    }
+
+    [TestMethod]
+    public async Task LoadAsync_CachesResult()
+    {
+        var service = CreateService();
+        var first = await service.LoadAsync();
+        first.Theme = "Dark";
+        await service.SaveAsync(first);
+
+        var second = await service.LoadAsync();
+        Assert.AreSame(first, second);
+    }
+
+    [TestMethod]
+    public async Task ProtectApiKeyAsync_And_UnprotectApiKeyAsync_RoundTrip()
+    {
+        var service = CreateService();
+        var key = "sk-test-secret-key-12345";
+
+        var protectedKey = await service.ProtectApiKeyAsync(key);
+        Assert.AreNotEqual(key, protectedKey);
+        Assert.IsFalse(string.IsNullOrEmpty(protectedKey));
+
+        var unprotectedKey = await service.UnprotectApiKeyAsync(protectedKey);
+        Assert.AreEqual(key, unprotectedKey);
+    }
+
+    [TestMethod]
+    public async Task ProtectApiKeyAsync_ReturnsEmpty_WhenInputEmpty()
+    {
+        var service = CreateService();
+        var result = await service.ProtectApiKeyAsync("");
+        Assert.AreEqual(string.Empty, result);
+    }
+
+    [TestMethod]
+    public async Task UnprotectApiKeyAsync_ReturnsEmpty_WhenInputEmpty()
+    {
+        var service = CreateService();
+        var result = await service.UnprotectApiKeyAsync("");
+        Assert.AreEqual(string.Empty, result);
+    }
+
+    [TestMethod]
+    public async Task UnprotectApiKeyAsync_ReturnsEmpty_WhenInvalidBase64()
+    {
+        var service = CreateService();
+        var result = await service.UnprotectApiKeyAsync("not-valid-base64!!!");
+        Assert.AreEqual(string.Empty, result);
     }
 }

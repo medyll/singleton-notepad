@@ -1,3 +1,4 @@
+using System.Net.Http;
 using SingletonNotepad.Core.Providers;
 
 namespace SingletonNotepad.Core.Services;
@@ -20,7 +21,11 @@ public class ModelService : IModelService
         {
             return await provider.GetAvailableModelsAsync(ct);
         }
-        catch
+        catch (HttpRequestException)
+        {
+            return [];
+        }
+        catch (TaskCanceledException)
         {
             return [];
         }

@@ -1,4 +1,5 @@
 using SingletonNotepad.Core.Models;
+using SingletonNotepad.Core.Services;
 
 namespace SingletonNotepad.Tests;
 
@@ -8,7 +9,6 @@ public class FileServiceTests
     private string _testDir = string.Empty;
     private string _testFilePath = string.Empty;
     private string _settingsDir = string.Empty;
-    private string _settingsPath = string.Empty;
 
     [TestInitialize]
     public void Setup()
@@ -16,15 +16,13 @@ public class FileServiceTests
         _testDir = Path.Combine(Path.GetTempPath(), $"sn-fs-test-{Guid.NewGuid()}");
         Directory.CreateDirectory(_testDir);
         _testFilePath = Path.Combine(_testDir, "test.md");
-        
+
         _settingsDir = Path.Combine(Path.GetTempPath(), $"sn-settings-{Guid.NewGuid()}");
         Directory.CreateDirectory(_settingsDir);
-        _settingsPath = Path.Combine(_settingsDir, "settings.json");
-        
-        // Initialize settings file with test path
+
         var settings = new AppSettings { NotesFilePath = _testFilePath };
         var json = System.Text.Json.JsonSerializer.Serialize(settings, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
-        File.WriteAllText(_settingsPath, json);
+        File.WriteAllText(Path.Combine(_settingsDir, "settings.json"), json);
     }
 
     [TestCleanup]
@@ -36,48 +34,18 @@ public class FileServiceTests
             Directory.Delete(_settingsDir, true);
     }
 
-    private static async Task<string> LoadFromFileAsync(string path, CancellationToken ct = default)
+    private FileService CreateService()
     {
-        if (!File.Exists(path))
-        {
-            var directory = Path.GetDirectoryName(path);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-            await File.WriteAllTextAsync(path, string.Empty, ct);
-            return string.Empty;
-        }
-
-        return await File.ReadAllTextAsync(path, ct);
-    }
-
-    private static async Task SaveToFileAsync(string path, string content, CancellationToken ct = default)
-    {
-        const int maxRetries = 3;
-        var delays = new[] { 200, 400, 800 };
-
-        for (int attempt = 0; attempt < maxRetries; attempt++)
-        {
-            try
-            {
-                await File.WriteAllTextAsync(path, content, ct);
-                return;
-            }
-            catch (IOException) when (attempt < maxRetries - 1)
-            {
-                await Task.Delay(delays[attempt], ct);
-            }
-        }
-
-        await File.WriteAllTextAsync(path, content, ct);
+        var settingsService = new SettingsService(_settingsDir);
+        return new FileService(settingsService);
     }
 
     [TestMethod]
     public async Task LoadAsync_CreatesFile_WhenNotExists()
     {
-        var content = await LoadFromFileAsync(_testFilePath);
-        
+        using var service = CreateService();
+        var content = await service.LoadAsync();
+
         Assert.AreEqual(string.Empty, content);
         Assert.IsTrue(File.Exists(_testFilePath));
     }
@@ -85,8 +53,10 @@ public class FileServiceTests
     [TestMethod]
     public async Task SaveAsync_WritesContent()
     {
-        await SaveToFileAsync(_testFilePath, "# Test\n\nContent");
-        
+        using var service = CreateService();
+        await service.LoadAsync();
+        await service.SaveAsync("# Test\n\nContent");
+
         var saved = await File.ReadAllTextAsync(_testFilePath);
         Assert.AreEqual("# Test\n\nContent", saved);
     }
@@ -95,26 +65,76 @@ public class FileServiceTests
     public async Task LoadAsync_ReadsExistingFile()
     {
         await File.WriteAllTextAsync(_testFilePath, "# Existing\n\nContent");
-        
-        var content = await LoadFromFileAsync(_testFilePath);
+
+        using var service = CreateService();
+        var content = await service.LoadAsync();
         Assert.AreEqual("# Existing\n\nContent", content);
     }
 
     [TestMethod]
     public async Task SaveAsync_UsesRetryLogic_WhenFileLocked()
     {
-        await SaveToFileAsync(_testFilePath, "Initial");
-        
-        // Lock the file
+        using var service = CreateService();
+        await service.LoadAsync();
+        await service.SaveAsync("Initial");
+
+        var saved = false;
         using (var fs = new FileStream(_testFilePath, FileMode.Open, FileAccess.Read, FileShare.None))
         {
-            // Try to save - should retry then succeed after lock released
-            var saveTask = SaveToFileAsync(_testFilePath, "# Test");
+            var saveTask = service.SaveAsync("# Test");
             await Task.Delay(100);
+            fs.Close();
+            await saveTask;
+            saved = true;
         }
-        
-        await SaveToFileAsync(_testFilePath, "# After lock");
+
+        Assert.IsTrue(saved);
         var content = await File.ReadAllTextAsync(_testFilePath);
-        Assert.AreEqual("# After lock", content);
+        Assert.AreEqual("# Test", content);
+    }
+
+    [TestMethod]
+    public async Task QueueAutoSave_DebouncesWrites()
+    {
+        using var service = CreateService();
+        await service.LoadAsync();
+
+        var tcs = new TaskCompletionSource<bool>();
+        service.FileSaved += () => tcs.TrySetResult(true);
+
+        service.QueueAutoSave("First");
+        service.QueueAutoSave("Second");
+        service.QueueAutoSave("Third");
+
+        var signaled = await tcs.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.IsTrue(signaled);
+
+        var content = await File.ReadAllTextAsync(_testFilePath);
+        Assert.AreEqual("Third", content);
+    }
+
+    [TestMethod]
+    public async Task CancelAutoSave_PreventsPendingWrite()
+    {
+        using var service = CreateService();
+        await service.LoadAsync();
+
+        service.QueueAutoSave("Should not save");
+        service.CancelAutoSave();
+
+        await Task.Delay(3000);
+
+        var content = await File.ReadAllTextAsync(_testFilePath);
+        Assert.AreEqual(string.Empty, content);
+    }
+
+    [TestMethod]
+    public void Dispose_StopsWatcherAndTimers()
+    {
+        var service = CreateService();
+        service.Dispose();
+
+        // Should not throw — double dispose is safe
+        service.Dispose();
     }
 }

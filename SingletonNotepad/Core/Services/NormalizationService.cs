@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 using System.Text;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
@@ -15,6 +15,8 @@ public class NormalizationService : INormalizationService
     private const int MaxLineCount = 10_000;
     private const int MinNormalizeIntervalMinutes = 5;
     private const int DefaultMaxBackupCount = 10;
+    private const string TagNormalisation = "normalisation";
+    private const string TagWriting = "writing";
 
     private readonly IFileService _fileService;
     private readonly ISettingsService _settingsService;
@@ -83,7 +85,7 @@ public class NormalizationService : INormalizationService
             reason = $"File size ({byteCount / 1024} KB) exceeds {MaxFileSizeBytes / 1024} KB limit.";
             return true;
         }
-        var lineCount = content.Split('\n').Length;
+        var lineCount = CountLines(content);
         if (lineCount > MaxLineCount)
         {
             reason = $"Line count ({lineCount:N0}) exceeds {MaxLineCount:N0} limit.";
@@ -108,12 +110,11 @@ public class NormalizationService : INormalizationService
 
         var rules = await LoadRulesAsync(ct);
 
-        // Inject always-active and writing skills
+        // Inject skills tagged for writing/normalisation so user-defined personas apply to every normalize run.
+        // TagsLower is pre-lowercased at parse time, so Contains() avoids OrdinalIgnoreCase overhead here.
         var injectedSkills = _skillService != null
             ? _skillService.LoadedSkills
-                .Where(s => s.Always || s.Tags.Any(t =>
-                    t.Equals("normalisation", StringComparison.OrdinalIgnoreCase) ||
-                    t.Equals("writing", StringComparison.OrdinalIgnoreCase)))
+                .Where(s => s.Always || s.TagsLower.Contains(TagNormalisation) || s.TagsLower.Contains(TagWriting))
                 .ToList()
             : [];
 
@@ -302,17 +303,8 @@ public class NormalizationService : INormalizationService
     {
         var system = new StringBuilder();
 
-        if (skills != null && skills.Count > 0)
-        {
-            system.AppendLine("[SKILLS ACTIVES]");
-            foreach (var skill in skills)
-            {
-                system.AppendLine($"--- skill: {skill.Name} ---");
-                system.AppendLine(skill.Content.Trim());
-                system.AppendLine($"--- fin skill ---");
-            }
-            system.AppendLine();
-        }
+        if (skills != null)
+            SkillService.AppendSkillsBlock(system, skills);
 
         system.AppendLine("Tu es un assistant de normalisation de notes Markdown.");
         system.AppendLine("Normalise le contenu qui te sera envoyé. Retourne UNIQUEMENT le contenu normalisé, sans explication ni commentaire.");
@@ -334,7 +326,8 @@ public class NormalizationService : INormalizationService
             system.AppendLine("- Ne jamais inventer de contenu");
         }
 
-        var user = $"<contenu_a_normaliser>\n{content}\n</contenu_a_normaliser>";
+        var escapedContent = EscapeXmlTags(content);
+        var user = $"<contenu_a_normaliser>\n{escapedContent}\n</contenu_a_normaliser>";
 
         return (system.ToString(), user);
     }
@@ -442,6 +435,21 @@ public class NormalizationService : INormalizationService
         var bytes = Encoding.UTF8.GetBytes(input);
         var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash);
+    }
+
+    private static int CountLines(string content)
+    {
+        if (string.IsNullOrEmpty(content)) return 0;
+        int count = 1;
+        for (int i = 0; i < content.Length; i++)
+            if (content[i] == '\n') count++;
+        return count;
+    }
+
+    private static string EscapeXmlTags(string content)
+    {
+        return content.Replace("</contenu_a_normaliser>", "&lt;/contenu_a_normaliser&gt;", StringComparison.OrdinalIgnoreCase)
+                      .Replace("<contenu_a_normaliser>", "&lt;contenu_a_normaliser&gt;", StringComparison.OrdinalIgnoreCase);
     }
 
     private void EnsureAgentsFileExists()

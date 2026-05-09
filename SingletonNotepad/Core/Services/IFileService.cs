@@ -3,7 +3,7 @@ namespace SingletonNotepad.Core.Services;
 /// <summary>
 /// Responsible for reading, writing, and watching a single Markdown file.
 /// </summary>
-public interface IFileService
+public interface IFileService : IDisposable
 {
     /// <summary>
     /// Loads the content of the singleton file. Auto-creates if absent.

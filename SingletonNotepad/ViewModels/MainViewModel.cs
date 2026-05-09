@@ -17,8 +17,9 @@ public partial class MainViewModel : ObservableObject
     private readonly DispatcherQueue _dispatcherQueue;
     private readonly Timer _idleTimer;
     private DateTime _lastUserActivity;
+    private volatile bool _isReloading;
     private string _lastSavedContent = string.Empty;
-    private bool _isReloading;
+    private readonly object _saveLock = new();
 
     [ObservableProperty]
     public partial string EditorContent { get; set; } = string.Empty;
@@ -66,13 +67,13 @@ public partial class MainViewModel : ObservableObject
         _idleTimer = new Timer();
         _idleTimer.AutoReset = false;
         _idleTimer.Elapsed += OnIdleElapsed;
-        _lastUserActivity = DateTime.UtcNow;
+        lock (_saveLock) { _lastUserActivity = DateTime.UtcNow; }
     }
 
     public async Task LoadContentAsync(CancellationToken ct = default)
     {
         EditorContent = await _fileService.LoadAsync(ct);
-        _lastSavedContent = EditorContent;
+        lock (_saveLock) { _lastSavedContent = EditorContent; }
         _fileService.Watch(OnExternalChange);
         await ConfigureIdleTimerAsync();
         StartIdleTimer();
@@ -87,27 +88,27 @@ public partial class MainViewModel : ObservableObject
     partial void OnEditorContentChanged(string value)
     {
         if (_isReloading) return;
-        _lastUserActivity = DateTime.UtcNow;
+        lock (_saveLock) { _lastUserActivity = DateTime.UtcNow; }
         SyncState = "Saving...";
         _fileService.QueueAutoSave(value);
     }
 
     private void OnFileSaved()
     {
-        _lastSavedContent = EditorContent;
+        lock (_saveLock) { _lastSavedContent = EditorContent; }
         _dispatcherQueue.TryEnqueue(() => SyncState = "Sync ✓");
     }
 
     private void OnExternalChange(string newContent)
     {
-        // FileService already suppresses our own saves via content-hash compare.
-        // Anything reaching here is a genuine external edit.
         _dispatcherQueue.TryEnqueue(() =>
         {
-            if (EditorContent == _lastSavedContent)
+            string lastSaved;
+            lock (_saveLock) { lastSaved = _lastSavedContent; }
+            if (EditorContent == lastSaved)
             {
                 EditorContent = newContent;
-                _lastSavedContent = newContent;
+                lock (_saveLock) { _lastSavedContent = newContent; }
             }
             else
             {
@@ -136,7 +137,7 @@ public partial class MainViewModel : ObservableObject
         _fileService.CancelAutoSave();
         _isReloading = true;
         EditorContent = await _fileService.LoadAsync();
-        _lastSavedContent = EditorContent;
+        lock (_saveLock) { _lastSavedContent = EditorContent; }
         _isReloading = false;
         _fileService.Watch(OnExternalChange);
         HasExternalChange = false;
@@ -156,7 +157,7 @@ public partial class MainViewModel : ObservableObject
         _fileService.CancelAutoSave();
         _isReloading = true;
         EditorContent = await _fileService.LoadAsync();
-        _lastSavedContent = EditorContent;
+        lock (_saveLock) { _lastSavedContent = EditorContent; }
         HasExternalChange = false;
         _isReloading = false;
         SyncState = "Rechargé";
@@ -285,10 +286,7 @@ public partial class MainViewModel : ObservableObject
             await NormalizeInternalAsync(autoApply: true);
         }
 
-        if (_fileService is IDisposable fs)
-        {
-            fs.Dispose();
-        }
+        _fileService.Dispose();
     }
 
     private void StartIdleTimer()
@@ -302,13 +300,21 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var settings = await _settingsService.LoadAsync();
-            var idleDuration = DateTime.UtcNow - _lastUserActivity;
-            if (idleDuration >= TimeSpan.FromMinutes(settings.IdleMinutesBeforeNormalize) && !IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
+            DateTime lastActivity;
+            lock (_saveLock) { lastActivity = _lastUserActivity; }
+            var idleDuration = DateTime.UtcNow - lastActivity;
+            if (idleDuration >= TimeSpan.FromMinutes(settings.IdleMinutesBeforeNormalize))
             {
                 var tcs = new TaskCompletionSource();
                 _dispatcherQueue.TryEnqueue(async () =>
                 {
-                    try { await NormalizeInternalAsync(autoApply: true); }
+                    try
+                    {
+                        if (!IsNormalizing && !string.IsNullOrWhiteSpace(EditorContent))
+                        {
+                            await NormalizeInternalAsync(autoApply: true);
+                        }
+                    }
                     catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"[Idle] Normalize failed: {ex.Message}"); }
                     finally { tcs.TrySetResult(); }
                 });

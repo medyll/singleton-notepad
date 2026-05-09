@@ -19,7 +19,7 @@ public partial class SettingsViewModel : ObservableObject
 
     private static readonly HashSet<string> BuiltInProviders = ["Ollama", "OpenAI", "Anthropic"];
     private bool _isLoading;
-    private void SaveIfReady() { if (!_isLoading) _ = SaveSettingsAsync(); }
+    private void SaveIfReady() { if (!_isLoading) _ = SaveSettingsAsync().ContinueWith(t => System.Diagnostics.Debug.WriteLine($"[Settings] Save error: {t.Exception?.Flatten().Message}"), TaskContinuationOptions.OnlyOnFaulted); }
 
     [ObservableProperty]
     public partial string Theme { get; set; } = "System";
@@ -116,13 +116,16 @@ public partial class SettingsViewModel : ObservableObject
     public Visibility AnthropicSectionVisibility => LlmProvider == "Anthropic" ? Visibility.Visible : Visibility.Collapsed;
     public Visibility CustomProviderSectionVisibility => !BuiltInProviders.Contains(LlmProvider) ? Visibility.Visible : Visibility.Collapsed;
 
-    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService, ILlmProviderSelector providerSelector, IModelService modelService, ISkillService skillService)
+    private readonly IFileService _fileService;
+
+    public SettingsViewModel(ISettingsService settingsService, INormalizationService normalizationService, ILlmProviderSelector providerSelector, IModelService modelService, ISkillService skillService, IFileService fileService)
     {
         _settingsService = settingsService;
         _normalizationService = normalizationService;
         _providerSelector = providerSelector;
         _modelService = modelService;
         _skillService = skillService;
+        _fileService = fileService;
 
         foreach (var name in _providerSelector.AvailableProviders)
             AvailableProviders.Add(name);
@@ -175,7 +178,9 @@ public partial class SettingsViewModel : ObservableObject
             _isLoading = false;
         }
 
-        _ = RefreshModelsAsync();
+        _ = RefreshModelsAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"[Settings] RefreshModels error: {t.Exception?.Flatten().Message}"),
+            TaskContinuationOptions.OnlyOnFaulted);
     }
 
     public async Task SaveSettingsAsync(CancellationToken ct = default)
@@ -240,11 +245,7 @@ public partial class SettingsViewModel : ObservableObject
     {
         if (!File.Exists(path)) return;
         var content = await File.ReadAllTextAsync(path, ct);
-        var fileService = App.Services.GetService(typeof(IFileService)) as IFileService;
-        if (fileService != null)
-        {
-            await fileService.SaveAsync(content, ct);
-        }
+        await _fileService.SaveAsync(content, ct);
     }
 
     public async Task DeleteBackupAsync(string path, CancellationToken ct = default)
@@ -361,9 +362,7 @@ public partial class SettingsViewModel : ObservableObject
         picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.DocumentsLibrary;
         picker.FileTypeFilter.Add("*");
 
-        // WinUI3: initialize with window handle
-        var hwnd = WinRT.Interop.WindowNative.GetWindowHandle(App.Window);
-        WinRT.Interop.InitializeWithWindow.Initialize(picker, hwnd);
+        WinRT.Interop.InitializeWithWindow.Initialize(picker, App.WindowHandle);
 
         var folder = await picker.PickSingleFolderAsync();
         if (folder != null)
