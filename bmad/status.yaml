@@ -2,15 +2,15 @@
 project: singleton-notepad
 phase: development
 progress: 100
-next_action: "Implementing S5-05 (ChatBubble redesign) + S5-06 (spell check live refresh)."
+next_action: "Audit S6-01 story with user before implementing diff-in-WebView refactor."
 next_command: "bmad-continue"
-next_role: "Developer"
-active_role: "Developer"
-last_updated: "2026-05-08"
+next_role: "Architect"
+active_role: "PM"
+last_updated: "2026-05-09"
 
-marketing: "Post-v1.0: adding interactive LLM chat panel, dynamic model discovery, spell check with language detection. v1.0 shipped — 4 sprints, 44 tests green."
-product: "Sprint 5 planned: S5-01 chat bubble, S5-02 model management, S5-03 spell check, S5-04 scrollbar fix. S5-04 first (fast win)."
-far_vision: "v1.0 shipped. Sprint 5 = UX depth. Chat-on-content is core differentiator. Cloud sync still deferred."
+marketing: "Diff preview moves from WinUI overlay to git-style inline WebView rendering. No more full-screen takeover — diffs render in place with word-level highlights and sticky action bar."
+product: "Sprint 6 planned: S6-01 inline diff in WebView (delete InlineDiffEditor, replace DiffOverlay with WebView-rendered git-style diff)."
+far_vision: "v1.0 shipped. S5 UX complete. S6 = editor quality — diff as first-class feature in WebView, not bolted-on overlay."
 
 stack_migration:
   from: "Avalonia 11"
@@ -133,7 +133,7 @@ sprints:
         status: done
   - id: S5
     name: "Chat & Model UX"
-    status: in_progress
+    status: complete
     stories:
       - id: S5-01
         title: "Chat bubble — floating LLM chat panel (minimizable, context-aware)"
@@ -149,7 +149,14 @@ sprints:
         status: done
       - id: S5-05
         title: "ChatBubble redesign — rename, layout, simplify, wide, textarea input"
-        status: in_progress
+        status: done
       - id: S5-06
         title: "Spell check language live refresh on settings return"
-        status: in_progress
+        status: done
+  - id: S6
+    name: "Editor Quality"
+    status: planned
+    stories:
+      - id: S6-01
+        title: "Inline diff in WebView — git-style, replace DiffOverlay + InlineDiffEditor"
+        status: todo

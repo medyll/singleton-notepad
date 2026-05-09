@@ -118,12 +118,12 @@ public class NormalizationServiceTests
     }
 
     [TestMethod]
-    public async Task NormalizeAsync_ReturnsResultWithDiff()
+    public async Task NormalizeAsync_ReturnsResultWithDiffJson()
     {
         var result = await _service.NormalizeAsync("# Hello\n\nWorld");
 
         Assert.IsNotNull(result);
-        Assert.IsNotNull(result.Diff);
+        Assert.IsNotNull(result.DiffJson);
         Assert.AreEqual("# Hello\n\nWorld", result.OriginalContent);
         Assert.IsTrue(result.LinesAdded >= 0);
     }
@@ -192,5 +192,10 @@ internal class MockLlmProviderSelector : ILlmProviderSelector
 
     public void SelectProvider(string providerName)
     {
+    }
+
+    public ILlmProvider? GetProvider(string providerName)
+    {
+        return _provider.Name == providerName ? _provider : null;
     }
 }

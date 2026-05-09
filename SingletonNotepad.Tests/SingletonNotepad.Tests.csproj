@@ -42,6 +42,7 @@
     <Compile Include="..\SingletonNotepad\Core\Services\LanguageDetector.cs" Link="Core\Services\LanguageDetector.cs" />
     <Compile Include="..\SingletonNotepad\Core\Services\ChatService.cs" Link="Core\Services\ChatService.cs" />
     <Compile Include="..\SingletonNotepad\Core\Models\ChatMessage.cs" Link="Core\Models\ChatMessage.cs" />
+    <Compile Include="..\SingletonNotepad\Core\Models\DiffPayload.cs" Link="Core\Models\DiffPayload.cs" />
   </ItemGroup>
 
   <ItemGroup>

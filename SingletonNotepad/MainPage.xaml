@@ -73,15 +73,6 @@
                 Loaded="OnEditorWebViewLoaded" />
         </Grid>
 
-        <!-- Diff Preview Overlay (hidden until normalize runs) -->
-        <Border
-            x:Name="DiffOverlay"
-            Grid.Row="1"
-            Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"
-            Visibility="Collapsed">
-            <controls:InlineDiffEditor x:Name="DiffViewer" />
-        </Border>
-
         <!-- StatusBar -->
         <Border
             Grid.Row="2"

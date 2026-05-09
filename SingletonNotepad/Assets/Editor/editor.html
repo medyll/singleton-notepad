@@ -87,10 +87,66 @@
 
   /* Selection */
   ::selection { background: var(--selection-bg); }
+
+  /* Diff view styles */
+  #diff-view { display: none; font-family: 'Cascadia Mono', 'Cascadia Code', Consolas, monospace; font-size: 13px; line-height: 1.6; }
+  #diff-view.active { display: block; }
+  #editor.diff-hidden { display: none; }
+
+  .diff-action-bar {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+  }
+  .diff-action-bar .btn {
+    padding: 6px 16px; border: 1px solid var(--border); border-radius: 6px;
+    cursor: pointer; font-size: 13px; font-family: inherit;
+    background: var(--bg); color: var(--fg);
+  }
+  .diff-action-bar .btn-apply { background: #107C10; color: #fff; border-color: #107C10; }
+  .diff-action-bar .btn-apply:hover { background: #0e6e0e; }
+  .diff-action-bar .btn-cancel:hover { background: var(--code-bg); }
+  .diff-action-bar .stats { margin-left: auto; font-size: 12px; color: var(--blockquote-fg); }
+  .diff-action-bar .stats .added { color: #107C10; }
+  .diff-action-bar .stats .deleted { color: #D13438; }
+  .diff-action-bar .stats .modified { color: #FF8C00; }
+
+  .diff-hunk { margin: 8px 0; }
+  .diff-line {
+    padding: 2px 8px; white-space: pre-wrap; word-break: break-word;
+    border-left: 3px solid transparent;
+  }
+  .diff-line.context { color: var(--fg); }
+  .diff-line.del {
+    background: rgba(209,52,56,0.12); border-left-color: #D13438;
+    color: #D13438; text-decoration: line-through;
+  }
+  .diff-line.ins {
+    background: rgba(16,124,16,0.12); border-left-color: #107C10;
+    color: #107C10;
+  }
+  .diff-line.mod-old {
+    background: rgba(209,52,56,0.08); border-left-color: #D13438;
+  }
+  .diff-line.mod-new {
+    background: rgba(16,124,16,0.08); border-left-color: #107C10;
+  }
+  .diff-word-del { background: rgba(209,52,56,0.25); text-decoration: line-through; border-radius: 2px; padding: 0 2px; }
+  .diff-word-ins { background: rgba(16,124,16,0.25); border-radius: 2px; padding: 0 2px; }
+
+  body.dark .diff-line.del { background: rgba(209,52,56,0.2); }
+  body.dark .diff-line.ins { background: rgba(16,124,16,0.2); }
+  body.dark .diff-line.mod-old { background: rgba(209,52,56,0.15); }
+  body.dark .diff-line.mod-new { background: rgba(16,124,16,0.15); }
+  body.dark .diff-word-del { background: rgba(209,52,56,0.35); }
+  body.dark .diff-word-ins { background: rgba(16,124,16,0.35); }
 </style>
 </head>
 <body>
 <div id="editor"></div>
+<div id="diff-view"></div>
 <script src="tiptap.bundle.js"></script>
 <script>
 const { Editor, StarterKit, Placeholder, Markdown } = window.__TipTap;
@@ -163,11 +219,77 @@ window.chrome.webview.addEventListener('message', e => {
         document.body.setAttribute('lang', msg.lang);
       }
       break;
+    case 'showDiff':
+      renderDiff(msg.hunks, msg.stats);
+      break;
+    case 'clearDiff':
+      clearDiff();
+      break;
   }
 });
 
 function postToHost(obj) {
   window.chrome.webview.postMessage(JSON.stringify(obj));
+}
+
+function renderDiff(hunks, stats) {
+  const view = document.getElementById('diff-view');
+  const editorEl = document.getElementById('editor');
+  editorEl.classList.add('diff-hidden');
+  view.classList.add('active');
+
+  let html = '<div class="diff-action-bar">';
+  html += '<button class="btn btn-apply" onclick="postToHost({type:\'applyDiff\'})">✓ Appliquer</button>';
+  html += '<button class="btn btn-cancel" onclick="postToHost({type:\'cancelDiff\'})">✗ Annuler</button>';
+  html += '<span class="stats">';
+  if (stats.added) html += `<span class="added">+${stats.added}</span> `;
+  if (stats.deleted) html += `<span class="deleted">-${stats.deleted}</span> `;
+  if (stats.modified) html += `<span class="modified">~${stats.modified}</span>`;
+  html += '</span></div>';
+
+  for (const hunk of (hunks || [])) {
+    html += '<div class="diff-hunk">';
+    for (const ctx of (hunk.context_before || [])) {
+      html += `<div class="diff-line context">${esc(ctx)}</div>`;
+    }
+    for (const ch of (hunk.changes || [])) {
+      if (ch.kind === 'del') {
+        html += `<div class="diff-line del">− ${esc(ch.text)}</div>`;
+      } else if (ch.kind === 'ins') {
+        html += `<div class="diff-line ins">+ ${esc(ch.text)}</div>`;
+      } else if (ch.kind === 'mod') {
+        html += `<div class="diff-line mod-old">− ${renderWords(ch.old_words, 'del')}</div>`;
+        html += `<div class="diff-line mod-new">+ ${renderWords(ch.new_words, 'ins')}</div>`;
+      }
+    }
+    for (const ctx of (hunk.context_after || [])) {
+      html += `<div class="diff-line context">${esc(ctx)}</div>`;
+    }
+    html += '</div>';
+  }
+
+  view.innerHTML = html;
+}
+
+function renderWords(words, cls) {
+  if (!words || !words.length) return '';
+  return words.map(w => w.changed
+    ? `<span class="diff-word-${cls}">${esc(w.text)}</span>`
+    : esc(w.text)).join('');
+}
+
+function clearDiff() {
+  const view = document.getElementById('diff-view');
+  const editorEl = document.getElementById('editor');
+  editorEl.classList.remove('diff-hidden');
+  view.classList.remove('active');
+  view.innerHTML = '';
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
 }
 
 // Signal ready

@@ -38,7 +38,7 @@ public sealed partial class MainPage : Page
         rootGrid.Children.Add(_chatBubbleControl);
 
         ChatViewModel.SetContentProviders(
-            () => null, // No selection detection from WebView2 yet
+            () => null,
             () => ViewModel.EditorContent);
 
         _ = ChatViewModel.LoadStateAsync();
@@ -47,24 +47,11 @@ public sealed partial class MainPage : Page
         _webView2InitTask = EditorWebView.EnsureCoreWebView2Async().AsTask();
         _loadContentTask = ViewModel.LoadContentAsync();
 
-        DiffViewer.ApplyClicked += async (_, _) =>
-        {
-            await ViewModel.ApplyNormalizationCommand.ExecuteAsync(null);
-            HideDiff();
-        };
-
-        DiffViewer.CancelClicked += (_, _) =>
-        {
-            ViewModel.CancelNormalizationCommand.Execute(null);
-            HideDiff();
-        };
-
         ViewModel.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(ViewModel.PendingNormalization) && ViewModel.PendingNormalization != null)
             {
-                DiffViewer.SetDiff(ViewModel.PendingNormalization.Diff);
-                ShowDiff();
+                ShowDiffInWebView();
             }
             else if (args.PropertyName == nameof(ViewModel.EditorContent) && !_updatingFromWebView)
             {
@@ -153,7 +140,7 @@ public sealed partial class MainPage : Page
             return;
         }
 
-        App.DispatcherQueue.TryEnqueue(() =>
+        App.DispatcherQueue.TryEnqueue(async () =>
         {
             if (msg.Type == "change")
             {
@@ -161,6 +148,16 @@ public sealed partial class MainPage : Page
                 _updatingFromWebView = true;
                 ViewModel.EditorContent = msg.Content ?? string.Empty;
                 _updatingFromWebView = false;
+            }
+            else if (msg.Type == "applyDiff")
+            {
+                await ViewModel.ApplyNormalizationCommand.ExecuteAsync(null);
+                ClearDiffInWebView();
+            }
+            else if (msg.Type == "cancelDiff")
+            {
+                ViewModel.CancelNormalizationCommand.Execute(null);
+                ClearDiffInWebView();
             }
         });
     }
@@ -215,16 +212,22 @@ public sealed partial class MainPage : Page
 
     private void OnActualThemeChanged(FrameworkElement sender, object args) => SyncTheme();
 
-    private void ShowDiff()
+    private void ShowDiffInWebView()
     {
-        DiffOverlay.Visibility = Visibility.Visible;
+        if (ViewModel.PendingNormalization?.DiffJson is null) return;
+        var payload = JsonSerializer.Serialize(new
+        {
+            type = "showDiff",
+            hunks = ViewModel.PendingNormalization.DiffJson.Hunks,
+            stats = ViewModel.PendingNormalization.DiffJson.Stats,
+        });
+        EditorWebView.CoreWebView2?.PostWebMessageAsString(payload);
     }
 
-    private void HideDiff()
+    private void ClearDiffInWebView()
     {
-        DiffOverlay.Visibility = Visibility.Collapsed;
         EditorWebView.CoreWebView2?.PostWebMessageAsString(
-            JsonSerializer.Serialize(new { type = "focus" }));
+            JsonSerializer.Serialize(new { type = "clearDiff" }));
     }
 
     private void OnSelectAllClicked(object sender, RoutedEventArgs e)

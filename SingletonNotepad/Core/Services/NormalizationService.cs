@@ -2,6 +2,7 @@
 using System.Text;
 using DiffPlex;
 using DiffPlex.DiffBuilder;
+using DiffPlex.DiffBuilder.Model;
 using SingletonNotepad.Core.Models;
 using SingletonNotepad.Core.Providers;
 
@@ -113,22 +114,152 @@ public class NormalizationService : INormalizationService
         result.NormalizedContent = normalizedContent;
         result.Duration = sw.Elapsed;
 
-        var differ = new SideBySideDiffBuilder(new Differ());
-        result.Diff = differ.BuildDiffModel(content, normalizedContent);
-
-        foreach (var line in result.Diff.OldText.Lines)
-        {
-            if (line.Type == DiffPlex.DiffBuilder.Model.ChangeType.Deleted) result.LinesDeleted++;
-            else if (line.Type == DiffPlex.DiffBuilder.Model.ChangeType.Modified) result.LinesModified++;
-        }
-        foreach (var line in result.Diff.NewText.Lines)
-        {
-            if (line.Type == DiffPlex.DiffBuilder.Model.ChangeType.Inserted) result.LinesAdded++;
-        }
+        result.DiffJson = BuildDiffPayload(content, normalizedContent, out var added, out var deleted, out var modified);
+        result.LinesAdded = added;
+        result.LinesDeleted = deleted;
+        result.LinesModified = modified;
 
         _lastNormalizeTime = DateTime.UtcNow;
         _lastNormalizedHash = ComputeSha256(content);
         return result;
+    }
+
+    private static DiffPayload BuildDiffPayload(string original, string normalized, out int added, out int deleted, out int modified)
+    {
+        var differ = new SideBySideDiffBuilder(new Differ());
+        var diff = differ.BuildDiffModel(original, normalized);
+
+        var payload = new DiffPayload();
+        added = 0;
+        deleted = 0;
+        modified = 0;
+
+        var oldLines = diff.OldText.Lines;
+        var newLines = diff.NewText.Lines;
+
+        int i = 0, j = 0;
+        var currentHunk = new DiffHunk();
+        var hunkHasChanges = false;
+        var pendingContext = new List<string>();
+
+        while (i < oldLines.Count || j < newLines.Count)
+        {
+            var oldLine = i < oldLines.Count ? oldLines[i] : null;
+            var newLine = j < newLines.Count ? newLines[j] : null;
+
+            if (oldLine?.Type == ChangeType.Imaginary && newLine != null)
+            {
+                if (newLine.Type == ChangeType.Inserted)
+                {
+                    if (!hunkHasChanges)
+                    {
+                        FlushPendingContext(currentHunk, pendingContext);
+                        hunkHasChanges = true;
+                    }
+                    currentHunk.Changes.Add(new DiffChange { Kind = "ins", Text = newLine.Text });
+                    added++;
+                }
+                j++;
+            }
+            else if (newLine?.Type == ChangeType.Imaginary && oldLine != null)
+            {
+                if (oldLine.Type == ChangeType.Deleted)
+                {
+                    if (!hunkHasChanges)
+                    {
+                        FlushPendingContext(currentHunk, pendingContext);
+                        hunkHasChanges = true;
+                    }
+                    currentHunk.Changes.Add(new DiffChange { Kind = "del", Text = oldLine.Text });
+                    deleted++;
+                }
+                i++;
+            }
+            else if (oldLine?.Type == ChangeType.Modified && newLine?.Type == ChangeType.Modified)
+            {
+                if (!hunkHasChanges)
+                {
+                    FlushPendingContext(currentHunk, pendingContext);
+                    hunkHasChanges = true;
+                }
+                var wordDiff = ComputeWordDiff(oldLine.Text, newLine.Text);
+                currentHunk.Changes.Add(new DiffChange
+                {
+                    Kind = "mod",
+                    Old = oldLine.Text,
+                    New = newLine.Text,
+                    OldWords = wordDiff.OldWords,
+                    NewWords = wordDiff.NewWords,
+                });
+                modified++;
+                i++;
+                j++;
+            }
+            else if (oldLine?.Type == ChangeType.Unchanged && newLine?.Type == ChangeType.Unchanged)
+            {
+                if (hunkHasChanges)
+                {
+                    currentHunk.ContextAfter.Add(oldLine.Text);
+                    if (currentHunk.ContextAfter.Count >= 3)
+                    {
+                        payload.Hunks.Add(currentHunk);
+                        currentHunk = new DiffHunk();
+                        hunkHasChanges = false;
+                    }
+                }
+                else
+                {
+                    pendingContext.Add(oldLine.Text);
+                    if (pendingContext.Count > 3)
+                        pendingContext.RemoveAt(0);
+                }
+                i++;
+                j++;
+            }
+            else
+            {
+                i++;
+                j++;
+            }
+        }
+
+        if (hunkHasChanges && currentHunk.Changes.Count > 0)
+        {
+            payload.Hunks.Add(currentHunk);
+        }
+
+        payload.Stats = new DiffStats { Added = added, Deleted = deleted, Modified = modified };
+        return payload;
+    }
+
+    private static void FlushPendingContext(DiffHunk hunk, List<string> pending)
+    {
+        hunk.ContextBefore.AddRange(pending);
+        pending.Clear();
+    }
+
+    private static (List<DiffWord> OldWords, List<DiffWord> NewWords) ComputeWordDiff(string oldText, string newText)
+    {
+        var differ = new InlineDiffBuilder(new Differ());
+        var wordDiff = differ.BuildDiffModel(oldText, newText);
+
+        var oldResult = new List<DiffWord>();
+        var newResult = new List<DiffWord>();
+
+        foreach (var line in wordDiff.Lines)
+        {
+            if (line.Type == ChangeType.Deleted || line.Type == ChangeType.Modified)
+                oldResult.Add(new DiffWord { Text = line.Text, Changed = true });
+            else if (line.Type == ChangeType.Inserted)
+                newResult.Add(new DiffWord { Text = line.Text, Changed = true });
+            else if (line.Type == ChangeType.Unchanged)
+            {
+                oldResult.Add(new DiffWord { Text = line.Text, Changed = false });
+                newResult.Add(new DiffWord { Text = line.Text, Changed = false });
+            }
+        }
+
+        return (oldResult, newResult);
     }
 
     private static (string system, string user) BuildPrompt(string rules, string content)

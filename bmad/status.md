@@ -1,52 +1,46 @@
 # BMAD Status — singleton-notepad
+_Last updated: 2026-05-09_
 
-**Last updated:** 2026-05-08
-**Phase:** development (Sprint 5)
-**Active Role:** Developer
+## Phase: development → release  |  Progress: 100%
 
 ---
 
-## Current Sprint: S5 — Chat & Model UX
+## 🎯 Next Action
+> Run sprint S5 tests — all stories complete.
 
-| ID | Story | Status |
-|----|-------|--------|
-| S5-01 | Chat bubble — floating LLM chat panel (minimizable, context-aware) | ✅ done |
-| S5-02 | Model management — dynamic provider/model selector in Settings | ✅ done |
+**Next command:** `bmad-test`
+**Next role:** Tester
+
+---
+
+## 📣 Marketing
+Post-v1.0: ChatBubble redesigned (stretch, 200px, multi-line input, no close btn), spell check refreshes live on settings return. v1.0 shipped — 4 sprints + Sprint 5 complete.
+
+## 📦 Product
+Sprint 5 done: S5-01 chat bubble, S5-02 model management, S5-03 spell check, S5-04 scrollbar fix, S5-05 ChatBubble redesign, S5-06 spell check live refresh.
+
+## 🔭 Far Vision
+v1.0 shipped. Sprint 5 = UX depth complete. Chat-on-content is core differentiator. Cloud sync still deferred.
+
+---
+
+## Sprints
+
+| Sprint | Name | Status |
+|--------|------|--------|
+| S1 | MVP Foundation | ✅ complete |
+| S2 | LLM Normalization | ✅ complete |
+| S3 | Polish & Production Readiness | ✅ complete |
+| S4 | Advanced & Release Candidate | ✅ complete |
+| S5 | Chat & Model UX | ✅ complete |
+
+### Sprint 5 stories
+
+| Story | Title | Status |
+|-------|-------|--------|
+| S5-01 | Chat bubble — floating LLM chat panel | ✅ done |
+| S5-02 | Model management — dynamic provider/model selector | ✅ done |
 | S5-03 | Spell check — configurable, auto-detect language | ✅ done |
 | S5-04 | UI fix — scrollbar hidden when editor is empty | ✅ done |
-
-**Next:** Sprint 5 complete — all 4 stories done.
-
----
-
-## Completed Sprints ✅
-
-| Sprint | Name | Stories |
-|--------|------|---------|
-| S1 | MVP Foundation | 7 done |
-| S2 | LLM Normalization | 7 done |
-| S3 | Polish & Production Readiness | 4 done |
-| S4 | Advanced & Release Candidate | 4 done |
-
-## Features Shipped (v1.0)
-
-- Single-instance WinUI 3 notepad (Fluent / Win11)
-- Auto-save (2s debounce) + versioned backups
-- Markdown rendering (Markdig) + inline diff preview
-- LLM normalization: Ollama, OpenAI, Anthropic
-- Auto-detected providers via env vars: Mistral, Groq, Together, OpenRouter, Cohere
-- OpenAI-compatible endpoint support
-- DPAPI-protected API key storage
-- FileSystemWatcher conflict detection
-- Custom rules editor + MEMORY.md tracker
-- Floating chat bubble with LLM integration (Ctrl+Shift+C)
-- Dynamic model selector with live fetching per provider
-- Spell check with auto language detection (FR/EN)
-- 66 tests green
-
-## Build
-
-```
-dotnet build -r win-x64
-dotnet test
-```
+| S5-05 | ChatBubble redesign — rename, layout, simplify, wide, textarea | ✅ done |
+| S5-06 | Spell check language live refresh on settings return | ✅ done |

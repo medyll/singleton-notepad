@@ -1,12 +1,10 @@
-using DiffPlex.DiffBuilder.Model;
-
 namespace SingletonNotepad.Core.Models;
 
 public class NormalizationResult
 {
     public string OriginalContent { get; set; } = string.Empty;
     public string NormalizedContent { get; set; } = string.Empty;
-    public SideBySideDiffModel Diff { get; set; } = new();
+    public DiffPayload DiffJson { get; set; } = new();
     public int LinesAdded { get; set; }
     public int LinesDeleted { get; set; }
     public int LinesModified { get; set; }
