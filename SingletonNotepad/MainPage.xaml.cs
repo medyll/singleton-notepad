@@ -187,10 +187,16 @@ public sealed partial class MainPage : Page
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        if (_themeHandlerWired) return;
-        _themeHandlerWired = true;
-        ActualThemeChanged += OnActualThemeChanged;
-        KeyDown += OnPageKeyDown;
+
+        if (!_themeHandlerWired)
+        {
+            _themeHandlerWired = true;
+            ActualThemeChanged += OnActualThemeChanged;
+            KeyDown += OnPageKeyDown;
+        }
+
+        if (_editorInitialized)
+            _ = ApplySpellCheckSettingsAsync();
     }
 
     private void OnPageKeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
