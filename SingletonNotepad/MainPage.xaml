@@ -35,6 +35,13 @@
                         <FontIcon Glyph="&#xE8BD;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
+                <AppBarSeparator />
+                <AppBarButton Label="Mode Chat" Command="{x:Bind ChatViewModel.ToggleChatModeCommand}"
+                              ToolTipService.ToolTip="Basculer mode chat (flottant/intégré)">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE943;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
             </CommandBar>
             <Button HorizontalAlignment="Right" VerticalAlignment="Center"
                     Margin="0,0,8,0"
@@ -50,6 +57,8 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
+                <RowDefinition Height="4" />
+                <RowDefinition Height="250" />
             </Grid.RowDefinitions>
 
             <!-- External change notification banner -->
@@ -71,6 +80,88 @@
                 x:Name="EditorWebView"
                 Grid.Row="1"
                 Loaded="OnEditorWebViewLoaded" />
+
+            <!-- GridSplitter for resize -->
+            <GridSplitter
+                Grid.Row="2"
+                Height="4"
+                HorizontalAlignment="Stretch"
+                Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+
+            <!-- Split mode chat panel -->
+            <Grid Grid.Row="3">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                
+                <!-- Header -->
+                <Grid Grid.Row="0" Padding="12,8" Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Chat IA" FontWeight="SemiBold" VerticalAlignment="Center" />
+                    <Button Grid.Column="1" Width="32" Height="32" Padding="0" Margin="0,0,4,0"
+                            Command="{x:Bind ChatViewModel.ToggleChatModeCommand}"
+                            ToolTipService.ToolTip="Changer mode (flottant/intégré)">
+                        <FontIcon Glyph="&#xE943;" FontSize="12" />
+                    </Button>
+                    <Button Grid.Column="2" Width="32" Height="32" Padding="0"
+                            Command="{x:Bind ChatViewModel.TogglePanelCommand}"
+                            ToolTipService.ToolTip="Réduire">
+                        <FontIcon Glyph="&#xE921;" FontSize="12" />
+                    </Button>
+                </Grid>
+                
+                <!-- Messages -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" Padding="12,8">
+                    <ItemsControl ItemsSource="{x:Bind ChatViewModel.Messages, Mode=OneWay}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Margin="0,4">
+                                    <TextBlock FontWeight="SemiBold" FontSize="12"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                                        <Run Text="{Binding Role}" />
+                                        <Run Text=" —" />
+                                        <Run Text="{Binding Timestamp}" />
+                                    </TextBlock>
+                                    <TextBlock Text="{Binding Content}" TextWrapping="Wrap"
+                                               FontSize="13" Margin="4,2,0,0" />
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </ScrollViewer>
+                
+                <!-- Input -->
+                <Grid Grid.Row="2" Padding="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Text="{x:Bind ChatViewModel.UserInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                             PlaceholderText="Demander à l'IA... (Ctrl+Entrée pour envoyer)"
+                             AcceptsReturn="True"
+                             TextWrapping="Wrap"
+                             MinHeight="48"
+                             MaxHeight="150" />
+                    <Button Grid.Column="1" Margin="4,0,0,0"
+                            Command="{x:Bind ChatViewModel.ClearChatCommand}"
+                            ToolTipService.ToolTip="Effacer le chat">
+                        <FontIcon Glyph="&#xE74D;" FontSize="14" />
+                    </Button>
+                    <Button Grid.Column="2" Margin="4,0,0,0"
+                            Command="{x:Bind ChatViewModel.SendCommand}"
+                            Style="{ThemeResource AccentButtonStyle}">
+                        <FontIcon Glyph="&#xE724;" FontSize="14" />
+                    </Button>
+                </Grid>
+            </Grid>
         </Grid>
 
         <!-- StatusBar -->

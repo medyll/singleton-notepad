@@ -26,10 +26,18 @@ public partial class ChatViewModel : ObservableObject
     public partial string PanelState { get; set; } = "minimized";
 
     [ObservableProperty]
+    public partial string ChatMode { get; set; } = "floating";
+
+    [ObservableProperty]
+    public partial int SplitHeight { get; set; } = 250;
+
+    [ObservableProperty]
     public partial string LastResponse { get; set; } = string.Empty;
 
     public bool IsOpen => PanelState == "open";
     public bool IsMinimized => PanelState == "minimized";
+    public bool IsFloating => ChatMode == "floating";
+    public bool IsSplit => ChatMode == "split";
 
     public ChatViewModel(IChatService chatService, ISettingsService settingsService)
     {
@@ -47,12 +55,16 @@ public partial class ChatViewModel : ObservableObject
     {
         var settings = await _settingsService.LoadAsync(ct);
         PanelState = settings.ChatBubbleState;
+        ChatMode = settings.ChatBubbleMode;
+        SplitHeight = settings.ChatSplitHeight;
     }
 
     private async Task SaveStateAsync()
     {
         var settings = await _settingsService.LoadAsync();
         settings.ChatBubbleState = PanelState;
+        settings.ChatBubbleMode = ChatMode;
+        settings.ChatSplitHeight = SplitHeight;
         await _settingsService.SaveAsync(settings);
     }
 
@@ -60,6 +72,22 @@ public partial class ChatViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsOpen));
         OnPropertyChanged(nameof(IsMinimized));
+        _ = SaveStateAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"[Chat] SaveState error: {t.Exception?.Flatten().Message}"),
+            System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    partial void OnChatModeChanged(string value)
+    {
+        OnPropertyChanged(nameof(IsFloating));
+        OnPropertyChanged(nameof(IsSplit));
+        _ = SaveStateAsync().ContinueWith(
+            t => System.Diagnostics.Debug.WriteLine($"[Chat] SaveState error: {t.Exception?.Flatten().Message}"),
+            System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    partial void OnSplitHeightChanged(int value)
+    {
         _ = SaveStateAsync().ContinueWith(
             t => System.Diagnostics.Debug.WriteLine($"[Chat] SaveState error: {t.Exception?.Flatten().Message}"),
             System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
@@ -122,6 +150,14 @@ public partial class ChatViewModel : ObservableObject
     public void TogglePanel()
     {
         PanelState = PanelState == "open" ? "minimized" : "open";
+    }
+
+    [RelayCommand]
+    public void ToggleChatMode()
+    {
+        ChatMode = ChatMode == "floating" ? "split" : "floating";
+        if (ChatMode == "split" && PanelState == "minimized")
+            PanelState = "open";
     }
 
     [RelayCommand]

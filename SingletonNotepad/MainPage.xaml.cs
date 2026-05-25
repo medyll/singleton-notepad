@@ -36,6 +36,14 @@ public sealed partial class MainPage : Page
         if (Content is not Grid rootGrid) return;
         Grid.SetRowSpan(_chatBubbleControl, 3);
         rootGrid.Children.Add(_chatBubbleControl);
+        
+        UpdateChatVisibility();
+        ChatViewModel.PropertyChanged += (_, args) =>
+        {
+            if (args.PropertyName == nameof(ChatViewModel.ChatMode) ||
+                args.PropertyName == nameof(ChatViewModel.PanelState))
+                UpdateChatVisibility();
+        };
 
         ChatViewModel.SetContentProviders(
             () => null,
@@ -274,6 +282,12 @@ public sealed partial class MainPage : Page
         var text = await view.GetTextAsync();
         var payload = JsonSerializer.Serialize(new { type = "paste", text });
         EditorWebView.CoreWebView2?.PostWebMessageAsString(payload);
+    }
+
+    private void UpdateChatVisibility()
+    {
+        if (_chatBubbleControl == null) return;
+        _chatBubbleControl.Visibility = ChatViewModel.IsFloating ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private sealed record EditorMessage(string? Type, string? Content);

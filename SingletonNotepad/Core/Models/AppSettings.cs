@@ -108,6 +108,16 @@ public class AppSettings
     /// </summary>
     public string ChatBubbleState { get; set; } = "minimized";
 
+    /// <summary>
+    /// Chat layout mode: "floating" or "split".
+    /// </summary>
+    public string ChatBubbleMode { get; set; } = "floating";
+
+    /// <summary>
+    /// Chat panel height in split mode (pixels).
+    /// </summary>
+    public int ChatSplitHeight { get; set; } = 250;
+
     public string ChatLlmProvider { get; set; } = string.Empty;
 }
 
