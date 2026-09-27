@@ -1,36 +1,37 @@
 project: singleton-notepad
 phase: development
-progress: 60
-next_action: "Continue S6: S6-04 (ChatBubble float/split redesign) next."
+progress: 75
+next_action: "Continue S6: S6-05 (ChatBubble UX polish) next, then S6-06 (NormalizeRateLimitSeconds slider)."
 next_command: "bmad-continue"
 next_role: "Developer"
 active_role: "Developer"
-last_updated: "2026-05-09"
+last_updated: "2026-08-23"
 
 marketing: "Skills system is live: the notepad auto-detects relevant expert modes from skill .md files and injects them silently into every chat/normalization request. Power users can invoke /skill-name manually."
-product: "S6-07 done (TipTap bundle with ProseMirror exports), S6-03 done (inline diff via decorations), S6-02 done (dead code removed). Editor now shows normalization diff inline with colored marks, no overlay. Chat bubble redesign (S6-04) next."
+product: "S6-01..S6-04, S6-07, S6-08 done. Inline diff via ProseMirror decorations, chat float/split modes with persisted settings, skills integration. 2026-08-23 audit: fixed broken build (invalid GridSplitter in MainPage.xaml — replaced with custom drag splitter), fixed editor.html min-height (83/83 tests). Remaining: S6-05 (chat polish), S6-06 (rate-limit slider)."
 far_vision: "v1.0 shipped. S5 UX complete. S6 = editor quality + skills ecosystem."
 
 stack_migration:
   from: "Avalonia 11"
-  to: "WinUI 3 (Windows App SDK 1.7)"
+  to: "WinUI 3 (Windows App SDK 2.0.1)"
   date: "2026-05-04"
   reason: "Native Win11 Fluent UX. Previous Avalonia code deleted. Clean restart."
 
 detected:
-  languages: ["csharp"]
+  languages: ["csharp", "javascript"]
   has_package_json: false
   has_requirements_txt: false
-  has_src: false
-  has_tests: false
+  has_src: true
+  has_tests: true
   install_command: "dotnet restore"
   run_command: "dotnet run -r win-x64"
-  test_command: "dotnet test"
+  test_command: "dotnet test SingletonNotepad.Tests/SingletonNotepad.Tests.csproj -p:Platform=x64"
+  build_command: "dotnet build SingletonNotepad/SingletonNotepad.csproj -p:Platform=x64"
   top_dependencies:
-    - "Microsoft.WindowsAppSDK 1.7"
-    - "CommunityToolkit.Mvvm 8.3"
-    - "Markdig 3.x"
-    - "DiffPlex 1.9"
+    - "Microsoft.WindowsAppSDK 2.0.1"
+    - "CommunityToolkit.Mvvm 8.4.2"
+    - "Markdig 0.38.0"
+    - "DiffPlex 1.9.0"
 
 phases:
   - name: planning
@@ -230,7 +231,14 @@ sprints:
 
       - id: S6-04
         title: "ChatBubble — float/split layout redesign"
-        status: todo
+        status: done
+        note: >
+          Implemented in e67e84c (ChatBubbleMode/ChatSplitHeight settings, CommandBar toggle,
+          split panel in MainPage, FAB float panel). Build was broken: GridSplitter is not a WinUI 3
+          type → XamlCompiler silent crash. Fixed 2026-08-23: custom drag splitter with pointer
+          capture, row height bound to ChatViewModel.SplitHeight (min 120, max 70% of window,
+          500ms-debounced persistence). Acceptance criteria met. Spec deviations: FAB bottom-center
+          (spec: bottom-right), float panel fixed 200px (spec: 320px default) — see S6-05 polish.
         goal: >
           Chat bubble supports two modes: floating overlay (current default) and
           vertical split (chat shares main window space with editor).
@@ -347,4 +355,8 @@ sprints:
 
       - id: S6-08
         title: "Skills integration — auto-select + manual invoke + injection chat + normalisation"
-        status: todo
+        status: done
+        note: >
+          Implemented in b41154b + f9f0228: SkillService with auto-selection and manual /skill
+          invocation, injected into ChatService and NormalizationService prompts, wired in App DI
+          and SettingsViewModel, covered by SkillServiceTests.

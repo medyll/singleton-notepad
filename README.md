@@ -4,13 +4,16 @@
 
 A minimalist Windows 11 desktop app for rapid note-taking, anchored on a single Markdown file. Combats note fragmentation with LLM-driven normalization of content using user-defined rules.
 
-## Features (Planned)
+## Features
 
 - **Single-file discipline:** Reads/writes only `MY_SINGLETON_NOTEPAD.md`
 - **Auto-save:** 2s debounce, no manual saving needed
-- **LLM normalization:** Restructure notes using custom rules (Ollama, OpenAI, Anthropic)
-- **Inline diff preview:** See changes before applying normalization
-- **Change tracking:** Automatic backup and memory log
+- **LLM normalization:** Restructure notes using custom rules (Ollama, OpenAI, Anthropic, OpenAI-compatible)
+- **Inline diff preview:** ProseMirror decorations inside the TipTap editor — see changes before applying normalization
+- **Change tracking:** Automatic backup (versioned) and memory log (`NOTEPAD_SINGLETON_MEMORY.md`)
+- **LLM chat:** Floating (FAB) or split chat panel, context-aware (selection or full note)
+- **Skills:** Auto-detected skill files silently injected into chat/normalization prompts; manual `/skill` invocation
+- **Skills & settings:** Dynamic model selector, spell check with language auto-detect, DPAPI-encrypted API keys
 - **Native Win11 feel:** Fluent Design, MSIX-packaged
 
 ## Tech Stack
@@ -20,19 +23,21 @@ A minimalist Windows 11 desktop app for rapid note-taking, anchored on a single 
 | UI | WinUI 3 / Windows App SDK **2.0.1** (MSIX packaged, single-project) |
 | Runtime | **.NET 10** — `net10.0-windows10.0.26100.0` |
 | Min Windows | `10.0.17763.0` |
-| MVVM | CommunityToolkit.Mvvm **8.3.2** (source generators) |
+| Editor | **TipTap/ProseMirror** in WebView2 (esbuild bundle in `Assets/Editor/`, build tooling in `_tiptap-build/`) |
+| MVVM | CommunityToolkit.Mvvm **8.4.2** (source generators) |
 | DI | Microsoft.Extensions.DependencyInjection **8.0.1** |
 | Diff | DiffPlex **1.9.0** |
-| Markdown | Markdig **0.40.0** |
-| Tests | MSTest |
+| Markdown | Markdig **0.38.0** |
+| Key storage | System.Security.Cryptography.ProtectedData **8.0.0** (DPAPI) |
+| Tests | MSTest **4.0.2** |
 
 ## Current Status
 
-**Phase:** Sprint 2 — LLM Normalization — **in progress** (74%)
+**Phase:** Sprint 6 — Editor Quality & UX Refactor — **in progress** (75% overall)
 
-**Completed:** Sprint 1 (MVP: file I/O, settings, window persistence, single-instance, UI shells) + S2-01 (ILlmProvider + OllamaProvider). 16 tests passing.
+**Completed:** Sprints 1–5 (MVP, LLM normalization, polish, backups, chat & model UX) + S6-01..S6-04, S6-07, S6-08 (inline ProseMirror diff, dead-code sweep, TipTap bundle audit, chat float/split modes, skills integration). Build green, **83/83 tests passing**.
 
-**Next:** S2-02 — NormalizationService (rules loader, rate-limit, diff computation).
+**Next:** S6-05 — ChatBubble UX polish (loading indicator, user/AI message styling, clear confirmation, error InfoBar). Then S6-06 — NormalizeRateLimitSeconds slider in Settings.
 
 ## ⚠️ Critical Build Constraints
 
@@ -99,30 +104,32 @@ XamlCompiler crashes silently. Add XAML + code-behind together, never XAML alone
 
 ```
 D:\development\singleton-notepad\
-├── SingletonNotepad\
+├── SingletonNotepad\                 ← WinUI3 project + solution folder
 │   ├── SingletonNotepad.slnx         ← solution (slnx, explicit x64/x86/ARM64 platforms)
-│   └── SingletonNotepad\             ← WinUI3 project
-│       ├── SingletonNotepad.csproj
-│       ├── App.xaml(.cs)             ← namespace SingletonNotepad
-│       ├── MainWindow.xaml(.cs)      ← namespace SingletonNotepad
-│       ├── MainPage.xaml(.cs)        ← namespace SingletonNotepad
-│       ├── Package.appxmanifest
-│       ├── app.manifest
-│       ├── Assets/
-│       ├── Core/
-│       │   ├── Models/               ← AppSettings, NormalizationRule, ChangeRecord
-│       │   ├── Services/             ← IFileService, ISettingsService, etc.
-│       │   ├── Providers/            ← ILlmProvider
-│       │   └── Helpers/              ← MonitorHelper, PathHelper
-│       ├── ViewModels/               ← MainViewModel, SettingsViewModel
-│       ├── Views/
-│       │   ├── SettingsPage.xaml(.cs)
-│       │   └── Controls/
-│       │       ├── MarkdownEditor.xaml(.cs)
-│       │       └── InlineDiffEditor.xaml(.cs)
-│       └── Resources/
-│           └── DefaultRules.md
-└── bmad/
+│   ├── SingletonNotepad.csproj
+│   ├── App.xaml(.cs)                 ← DI bootstrap, named Mutex single-instance
+│   ├── MainWindow.xaml(.cs)          ← AppWindow positioning, monitor logic
+│   ├── MainPage.xaml(.cs)            ← CommandBar + WebView2 editor + StatusBar + split chat
+│   ├── Package.appxmanifest
+│   ├── app.manifest
+│   ├── Assets/
+│   │   └── Editor/                   ← editor.html + tiptap.bundle.js (WebView2 TipTap editor)
+│   ├── Core/
+│   │   ├── Models/                   ← AppSettings, NormalizationRule/Result, ChangeRecord, ChatMessage, SkillDefinition, DiffPayload
+│   │   ├── Services/                 ← FileService, SettingsService, NormalizationService, MemoryTrackerService, ChatService, ModelService, SkillService, LanguageDetector, ProviderDetectionService
+│   │   ├── Providers/                ← ILlmProvider + Ollama/OpenAi/Anthropic/OpenAiCompatible + LlmProviderSelector
+│   │   └── Helpers/                  ← MonitorHelper
+│   ├── ViewModels/                   ← MainViewModel, SettingsViewModel, ChatViewModel
+│   ├── Views/
+│   │   ├── SettingsPage.xaml(.cs)
+│   │   ├── Converters/
+│   │   └── Controls/
+│   │       └── ChatBubble.xaml(.cs)  ← floating chat panel (FAB + expanded)
+│   └── Resources/
+│       └── DefaultRules.md
+├── SingletonNotepad.Tests\           ← MSTest (compiles Core sources via <Compile> links)
+├── _tiptap-build\                    ← esbuild tooling for tiptap.bundle.js (see BUILDING.md)
+└── bmad\                             ← BMAD artifacts (PRD, architecture, sprints, stories)
 ```
 
 ## Build
@@ -130,7 +137,7 @@ D:\development\singleton-notepad\
 > ⚠️ **Cibler le `.csproj` directement** — la `.slnx` ne propage pas `-p:Platform` et génère "ProcessorArchitecture neutral".
 
 ```bash
-# Depuis SingletonNotepad/SingletonNotepad/
+# Depuis SingletonNotepad/
 dotnet build SingletonNotepad.csproj -p:Platform=x64
 
 # Tests
@@ -141,12 +148,14 @@ Même info dans : `SingletonNotepad.csproj` (commentaire haut) · `SingletonNote
 
 ## Roadmap
 
-| Sprint | Goal |
-|--------|------|
-| 1 | MVP Foundation (file I/O, settings, window, single-instance, UI shell) |
-| 2 | LLM Normalization (Ollama provider, diff preview, MEMORY tracking) |
-| 3 | Polish (Markdown highlighting, OpenAI/Anthropic, DPAPI keys, theme) |
-| 4 | Advanced (FSWatcher, versioned backups, plugin system) |
+| Sprint | Goal | Status |
+|--------|------|--------|
+| 1 | MVP Foundation (file I/O, settings, window, single-instance, UI shell) | ✅ |
+| 2 | LLM Normalization (Ollama provider, diff preview, MEMORY tracking) | ✅ |
+| 3 | Polish (Markdown highlighting, OpenAI/Anthropic, DPAPI keys, theme) | ✅ |
+| 4 | Advanced (versioned backups, rules editor, release candidate) | ✅ |
+| 5 | Chat & Model UX (floating chat, model selector, spell check) | ✅ |
+| 6 | Editor Quality & UX Refactor (ProseMirror inline diff, chat float/split, skills) | 🔄 in progress |
 
 ## License
 

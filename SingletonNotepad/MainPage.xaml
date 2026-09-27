@@ -57,8 +57,8 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="4" />
-                <RowDefinition Height="250" />
+                <RowDefinition x:Name="ChatSplitterRow" Height="Auto" />
+                <RowDefinition x:Name="ChatRow" Height="250" />
             </Grid.RowDefinitions>
 
             <!-- External change notification banner -->
@@ -81,12 +81,18 @@
                 Grid.Row="1"
                 Loaded="OnEditorWebViewLoaded" />
 
-            <!-- GridSplitter for resize -->
-            <GridSplitter
+            <!-- Splitter for resize (drag to adjust chat height) -->
+            <Grid
+                x:Name="ChatSplitter"
                 Grid.Row="2"
-                Height="4"
-                HorizontalAlignment="Stretch"
-                Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+                Height="6"
+                Background="Transparent"
+                PointerPressed="OnChatSplitterPointerPressed"
+                PointerMoved="OnChatSplitterPointerMoved"
+                PointerReleased="OnChatSplitterPointerReleased">
+                <Border Height="2" VerticalAlignment="Center"
+                        Background="{ThemeResource CardStrokeColorDefaultBrush}" />
+            </Grid>
 
             <!-- Split mode chat panel -->
             <Grid Grid.Row="3">

@@ -41,7 +41,8 @@ public sealed partial class MainPage : Page
         ChatViewModel.PropertyChanged += (_, args) =>
         {
             if (args.PropertyName == nameof(ChatViewModel.ChatMode) ||
-                args.PropertyName == nameof(ChatViewModel.PanelState))
+                args.PropertyName == nameof(ChatViewModel.PanelState) ||
+                args.PropertyName == nameof(ChatViewModel.SplitHeight))
                 UpdateChatVisibility();
         };
 
@@ -288,6 +289,41 @@ public sealed partial class MainPage : Page
     {
         if (_chatBubbleControl == null) return;
         _chatBubbleControl.Visibility = ChatViewModel.IsFloating ? Visibility.Visible : Visibility.Collapsed;
+
+        bool splitVisible = ChatViewModel.IsSplit && ChatViewModel.IsOpen;
+        ChatSplitter.Visibility = splitVisible ? Visibility.Visible : Visibility.Collapsed;
+        ChatRow.Height = splitVisible
+            ? new GridLength(Math.Clamp(ChatViewModel.SplitHeight, MinChatSplitHeight, MaxChatSplitHeight()))
+            : new GridLength(0);
+    }
+
+    private const int MinChatSplitHeight = 120;
+
+    private double MaxChatSplitHeight() => Math.Max(MinChatSplitHeight, ActualHeight * 0.7);
+
+    private double? _splitterDragStartY;
+    private int _splitterDragStartHeight;
+
+    private void OnChatSplitterPointerPressed(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        _splitterDragStartY = e.GetCurrentPoint(this).Position.Y;
+        _splitterDragStartHeight = ChatViewModel.SplitHeight;
+        ChatSplitter.CapturePointer(e.Pointer);
+    }
+
+    private void OnChatSplitterPointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        if (_splitterDragStartY is not double startY) return;
+        double y = e.GetCurrentPoint(this).Position.Y;
+        double delta = startY - y;
+        ChatViewModel.SplitHeight = (int)Math.Clamp(
+            _splitterDragStartHeight + delta, MinChatSplitHeight, MaxChatSplitHeight());
+    }
+
+    private void OnChatSplitterPointerReleased(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs e)
+    {
+        _splitterDragStartY = null;
+        ChatSplitter.ReleasePointerCapture(e.Pointer);
     }
 
     private sealed record EditorMessage(string? Type, string? Content);

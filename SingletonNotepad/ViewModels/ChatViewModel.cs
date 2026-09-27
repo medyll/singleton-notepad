@@ -86,11 +86,20 @@ public partial class ChatViewModel : ObservableObject
             System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
     }
 
+    private CancellationTokenSource? _splitSaveCts;
+
     partial void OnSplitHeightChanged(int value)
     {
-        _ = SaveStateAsync().ContinueWith(
-            t => System.Diagnostics.Debug.WriteLine($"[Chat] SaveState error: {t.Exception?.Flatten().Message}"),
-            System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted);
+        _splitSaveCts?.Cancel();
+        _splitSaveCts = new CancellationTokenSource();
+        _ = DebouncedSplitHeightSaveAsync(_splitSaveCts.Token);
+    }
+
+    private async Task DebouncedSplitHeightSaveAsync(CancellationToken token)
+    {
+        try { await Task.Delay(500, token); }
+        catch (OperationCanceledException) { return; }
+        await SaveStateAsync();
     }
 
     [RelayCommand]
